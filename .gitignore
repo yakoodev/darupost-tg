@@ -1,0 +1,12 @@
+bin/
+obj/
+dist/
+node_modules/
+.vs/
+.vscode/
+*.user
+*.suo
+*.log
+.env
+polzaapikey.txt
+info.txt

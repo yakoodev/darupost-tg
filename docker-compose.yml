@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tg_autoposter
+      POSTGRES_USER: tg_autoposter
+      POSTGRES_PASSWORD: tg_autoposter
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/TgAutoposter.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=tg_autoposter;Username=tg_autoposter;Password=tg_autoposter
+      ConnectionStrings__Redis: redis:6379
+      Ai__Polza__Enabled: ${POLZA_ENABLED:-false}
+      Ai__Polza__ApiKey: ${POLZA_API_KEY:-}
+      Ai__Polza__BaseUrl: ${POLZA_BASE_URL:-https://polza.ai/api/v1}
+      Ai__Polza__ChatCompletionPath: ${POLZA_CHAT_COMPLETION_PATH:-/chat/completions}
+      Ai__Polza__DefaultModel: ${POLZA_DEFAULT_MODEL:-openai/gpt-5.5}
+      Ai__Polza__ImageModel: ${POLZA_IMAGE_MODEL:-openai/gpt-5.4-image-2}
+      Ai__Polza__TimeoutSeconds: ${POLZA_TIMEOUT_SECONDS:-180}
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      Telegram__ModerationChatId: ${TELEGRAM_MODERATION_CHAT_ID:-}
+      Telegram__ModeratorChatIdsCsv: ${TELEGRAM_MODERATOR_CHAT_IDS:-}
+      Telegram__Proxy__Enabled: ${TELEGRAM_PROXY_ENABLED:-true}
+      Telegram__Proxy__Type: ${TELEGRAM_PROXY_TYPE:-Http}
+      Telegram__Proxy__Host: ${TELEGRAM_PROXY_HOST:-}
+      Telegram__Proxy__Port: ${TELEGRAM_PROXY_PORT:-0}
+      Telegram__Proxy__Username: ${TELEGRAM_PROXY_USERNAME:-}
+      Telegram__Proxy__Password: ${TELEGRAM_PROXY_PASSWORD:-}
+      Worker__Enabled: ${WORKER_ENABLED:-false}
+      Worker__IntervalMinutes: ${WORKER_INTERVAL_MINUTES:-15}
+      Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
+    ports:
+      - "${API_HOST_PORT:-5000}:8080"
+    depends_on:
+      - postgres
+      - redis
+
+  admin:
+    build:
+      context: src/TgAutoposter.Admin
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    ports:
+      - "${ADMIN_HOST_PORT:-5173}:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:

@@ -1,0 +1,6 @@
+@TgAutoposter.Api_HostAddress = http://localhost:5113
+
+GET {{TgAutoposter.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

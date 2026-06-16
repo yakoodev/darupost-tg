@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{272AFA75-A615-4AB4-AC56-C1EC05914ACF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgAutoposter.Domain", "src\TgAutoposter.Domain\TgAutoposter.Domain.csproj", "{70EDE625-511E-4CFB-9F26-303A6638C81A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgAutoposter.Application", "src\TgAutoposter.Application\TgAutoposter.Application.csproj", "{F8C64386-641A-4D5F-8959-F541040C49ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgAutoposter.Infrastructure", "src\TgAutoposter.Infrastructure\TgAutoposter.Infrastructure.csproj", "{93541883-C918-43BA-ABE7-88B7F1CF8A3F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgAutoposter.Api", "src\TgAutoposter.Api\TgAutoposter.Api.csproj", "{11E90D6A-363F-46D9-AC8C-414AD802456B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{70EDE625-511E-4CFB-9F26-303A6638C81A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70EDE625-511E-4CFB-9F26-303A6638C81A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70EDE625-511E-4CFB-9F26-303A6638C81A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70EDE625-511E-4CFB-9F26-303A6638C81A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8C64386-641A-4D5F-8959-F541040C49ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8C64386-641A-4D5F-8959-F541040C49ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8C64386-641A-4D5F-8959-F541040C49ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C64386-641A-4D5F-8959-F541040C49ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93541883-C918-43BA-ABE7-88B7F1CF8A3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93541883-C918-43BA-ABE7-88B7F1CF8A3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93541883-C918-43BA-ABE7-88B7F1CF8A3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93541883-C918-43BA-ABE7-88B7F1CF8A3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11E90D6A-363F-46D9-AC8C-414AD802456B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11E90D6A-363F-46D9-AC8C-414AD802456B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11E90D6A-363F-46D9-AC8C-414AD802456B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11E90D6A-363F-46D9-AC8C-414AD802456B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{70EDE625-511E-4CFB-9F26-303A6638C81A} = {272AFA75-A615-4AB4-AC56-C1EC05914ACF}
+		{F8C64386-641A-4D5F-8959-F541040C49ED} = {272AFA75-A615-4AB4-AC56-C1EC05914ACF}
+		{93541883-C918-43BA-ABE7-88B7F1CF8A3F} = {272AFA75-A615-4AB4-AC56-C1EC05914ACF}
+		{11E90D6A-363F-46D9-AC8C-414AD802456B} = {272AFA75-A615-4AB4-AC56-C1EC05914ACF}
+	EndGlobalSection
+EndGlobal
