@@ -84,6 +84,8 @@ public static class NewsCardRenderer
         }
     }
 
+    private static readonly SKColor Accent = new(94, 106, 210);
+
     private static void DrawCard(
         SKCanvas canvas,
         SKBitmap visual,
@@ -92,147 +94,82 @@ public static class NewsCardRenderer
         string rubric,
         string mainThesis)
     {
-        canvas.Clear(new SKColor(5, 6, 8));
-        DrawBackground(canvas);
-        DrawVisual(canvas, visual);
-        DrawFrame(canvas);
-        DrawText(canvas, channel, post, rubric, mainThesis);
+        canvas.Clear(new SKColor(8, 8, 12));
+        DrawFullBleedVisual(canvas, visual);
+        DrawRubricChip(canvas, post, rubric);
+        DrawHeadline(canvas, channel, mainThesis);
     }
 
-    private static void DrawBackground(SKCanvas canvas)
+    private static void DrawFullBleedVisual(SKCanvas canvas, SKBitmap visual)
     {
-        using var fill = new SKPaint
-        {
-            IsAntialias = true,
-            Shader = SKShader.CreateLinearGradient(
-                new SKPoint(0, 0),
-                new SKPoint(Width, Height),
-                new[] { new SKColor(4, 5, 7), new SKColor(13, 15, 20), new SKColor(3, 4, 6) },
-                [0f, 0.55f, 1f],
-                SKShaderTileMode.Clamp)
-        };
-        canvas.DrawRect(0, 0, Width, Height, fill);
-
-        using var linePaint = new SKPaint
-        {
-            Color = new SKColor(46, 55, 76, 95),
-            StrokeWidth = 1,
-            IsAntialias = true
-        };
-
-        canvas.DrawLine(Margin + 24, 214, Width - Margin - 24, 214, linePaint);
-        canvas.DrawLine(Margin + 24, Height - 184, Width - Margin - 24, Height - 184, linePaint);
-        canvas.DrawLine(542, 260, 542, Height - 238, linePaint);
-
-        using var accentPaint = new SKPaint
-        {
-            Color = new SKColor(52, 118, 255, 230),
-            StrokeWidth = 3,
-            IsAntialias = true
-        };
-        canvas.DrawLine(Margin + 24, 155, Margin + 188, 155, accentPaint);
-        canvas.DrawLine(Width - Margin - 196, Height - 155, Width - Margin - 24, Height - 155, accentPaint);
-
-        using var dotPaint = new SKPaint
-        {
-            Color = new SKColor(255, 255, 255, 24),
-            IsAntialias = true
-        };
-
-        for (var x = 610; x <= 978; x += 28)
-        {
-            for (var y = 190; y <= 1110; y += 28)
-            {
-                canvas.DrawCircle(x, y, 1.35f, dotPaint);
-            }
-        }
-    }
-
-    private static void DrawVisual(SKCanvas canvas, SKBitmap visual)
-    {
-        var destination = new SKRect(578, 300, 980, 980);
-        var source = CropToCover(visual, destination.Width / destination.Height);
-
-        canvas.Save();
-        using var clipPath = new SKPath();
-        clipPath.AddRoundRect(destination, 22, 22);
-        canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
-
-        using var imagePaint = new SKPaint
-        {
-            IsAntialias = true,
-            FilterQuality = SKFilterQuality.High
-        };
+        var destination = new SKRect(0, 0, Width, Height);
+        var source = CropToCover(visual, Width / (float)Height);
+        using var imagePaint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         canvas.DrawBitmap(visual, source, destination, imagePaint);
 
-        using var overlay = new SKPaint
+        // Top scrim so the rubric chip stays readable over bright images.
+        using var topScrim = new SKPaint
         {
-            IsAntialias = true,
             Shader = SKShader.CreateLinearGradient(
-                new SKPoint(destination.Left, destination.Top),
-                new SKPoint(destination.Right, destination.Bottom),
-                new[] { new SKColor(0, 0, 0, 36), new SKColor(0, 0, 0, 96) },
+                new SKPoint(0, 0),
+                new SKPoint(0, 320),
+                new[] { new SKColor(0, 0, 0, 150), new SKColor(0, 0, 0, 0) },
                 [0f, 1f],
                 SKShaderTileMode.Clamp)
         };
-        canvas.DrawRect(destination, overlay);
-        canvas.Restore();
+        canvas.DrawRect(0, 0, Width, 320, topScrim);
 
-        using var border = new SKPaint
+        // Bottom scrim carrying the headline + brand.
+        using var bottomScrim = new SKPaint
         {
-            Color = new SKColor(85, 97, 126, 120),
-            StrokeWidth = 1,
-            Style = SKPaintStyle.Stroke,
-            IsAntialias = true
+            Shader = SKShader.CreateLinearGradient(
+                new SKPoint(0, Height - 720),
+                new SKPoint(0, Height),
+                new[] { new SKColor(0, 0, 0, 0), new SKColor(6, 6, 10, 160), new SKColor(4, 4, 8, 244) },
+                [0f, 0.55f, 1f],
+                SKShaderTileMode.Clamp)
         };
-        canvas.DrawRoundRect(destination, 22, 22, border);
+        canvas.DrawRect(0, Height - 720, Width, Height, bottomScrim);
     }
 
-    private static void DrawFrame(SKCanvas canvas)
+    private static void DrawRubricChip(SKCanvas canvas, Post post, string rubric)
     {
-        using var frame = new SKPaint
-        {
-            Color = new SKColor(82, 92, 118, 160),
-            StrokeWidth = 1,
-            Style = SKPaintStyle.Stroke,
-            IsAntialias = true
-        };
-
-        canvas.DrawRoundRect(new SKRect(Margin, Margin, Width - Margin, Height - Margin), 18, 18, frame);
-    }
-
-    private static void DrawText(
-        SKCanvas canvas,
-        Channel channel,
-        Post post,
-        string rubric,
-        string mainThesis)
-    {
-        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? "Daru Games" : channel.Name.Trim();
-        var title = CleanDisplayText(mainThesis);
         var rubricText = CleanDisplayText(rubric).ToUpperInvariant();
-        var meta = post.PublicationKind == PublicationKind.Trailer
-            ? "VIDEO"
-            : post.PublicationKind == PublicationKind.Deal
-                ? "DEAL"
-                : "NEWS";
+        var meta = post.PublicationKind switch
+        {
+            PublicationKind.Trailer => "VIDEO",
+            PublicationKind.Deal => "DEAL",
+            PublicationKind.Meme => "MEME",
+            _ => "NEWS"
+        };
 
-        using var rubricPaint = CreatePaint(29, SKFontStyleWeight.SemiBold, new SKColor(137, 172, 255));
-        using var brandPaint = CreatePaint(30, SKFontStyleWeight.SemiBold, new SKColor(247, 248, 248));
-        using var metaPaint = CreatePaint(21, SKFontStyleWeight.Medium, new SKColor(138, 143, 152));
+        using var chipText = CreatePaint(28, SKFontStyleWeight.Bold, SKColors.White);
+        var textWidth = chipText.MeasureText(rubricText);
+        const float padX = 20f;
+        const float padY = 13f;
+        var chip = new SKRect(Margin, Margin, Margin + textWidth + padX * 2, Margin + chipText.TextSize + padY * 2);
 
-        DrawTextLine(canvas, rubricText, 82, 132, rubricPaint);
-        DrawTextLine(canvas, meta, Width - Margin - 110, 132, metaPaint);
+        using var chipFill = new SKPaint { IsAntialias = true, Color = Accent };
+        canvas.DrawRoundRect(chip, 10, 10, chipFill);
+        canvas.DrawText(rubricText, chip.Left + padX, chip.Top + padY + chipText.TextSize - 4, chipText);
 
-        // Auto-fit the headline: pick the largest size that fits in <= maxLines without mid-word cuts.
-        const float maxWidth = 466f;
-        const int maxLines = 5;
-        SKPaint titlePaint = CreatePaint(70, SKFontStyleWeight.Bold, new SKColor(247, 248, 248));
+        using var metaPaint = CreatePaint(22, SKFontStyleWeight.Medium, new SKColor(220, 222, 235));
+        canvas.DrawText(meta, Width - Margin - metaPaint.MeasureText(meta), chip.MidY + 8, metaPaint);
+    }
+
+    private static void DrawHeadline(SKCanvas canvas, Channel channel, string mainThesis)
+    {
+        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? "Только игры" : channel.Name.Trim();
+        var title = CleanDisplayText(mainThesis);
+
+        var maxWidth = Width - Margin * 2f;
+        const int maxLines = 4;
+        SKPaint titlePaint = CreatePaint(92, SKFontStyleWeight.Bold, SKColors.White);
         var wrapped = new List<string>();
-        for (var size = 70; size >= 40; size -= 3)
+        for (var size = 92; size >= 50; size -= 4)
         {
             titlePaint.Dispose();
-            titlePaint = CreatePaint(size, SKFontStyleWeight.Bold, new SKColor(247, 248, 248));
+            titlePaint = CreatePaint(size, SKFontStyleWeight.Bold, SKColors.White);
             var (lines, truncated) = WrapText(title, titlePaint, maxWidth, maxLines);
             wrapped = lines;
             if (!truncated)
@@ -241,17 +178,25 @@ public static class NewsCardRenderer
             }
         }
 
-        var lineHeight = titlePaint.TextSize * 1.18f;
-        var titleHeight = wrapped.Count * lineHeight;
-        var y = 300 + (680 - titleHeight) / 2f + titlePaint.TextSize;
-        foreach (var line in wrapped)
+        titlePaint.ImageFilter = SKImageFilter.CreateDropShadow(0, 2, 6, 6, new SKColor(0, 0, 0, 200));
+
+        // Brand line at the very bottom; headline stacked just above it.
+        var brandBaseline = Height - 70f;
+        using var accentLine = new SKPaint { Color = Accent, IsAntialias = true, StrokeWidth = 5 };
+        canvas.DrawLine(Margin, brandBaseline - 92, Margin + 66, brandBaseline - 92, accentLine);
+
+        using var brandPaint = CreatePaint(31, SKFontStyleWeight.SemiBold, new SKColor(232, 233, 242));
+        canvas.DrawText(brandName, Margin, brandBaseline, brandPaint);
+
+        var lineHeight = titlePaint.TextSize * 1.16f;
+        var bottomBaseline = brandBaseline - 150f;
+        for (var i = 0; i < wrapped.Count; i++)
         {
-            DrawTextLine(canvas, line, 82, y, titlePaint);
-            y += lineHeight;
+            var baseline = bottomBaseline - (wrapped.Count - 1 - i) * lineHeight;
+            canvas.DrawText(wrapped[i], Margin, baseline, titlePaint);
         }
 
         titlePaint.Dispose();
-        DrawTextLine(canvas, brandName, 82, Height - 98, brandPaint);
     }
 
     private static SKPaint CreatePaint(float textSize, SKFontStyleWeight weight, SKColor color)
@@ -267,11 +212,6 @@ public static class NewsCardRenderer
             SubpixelText = true,
             LcdRenderText = true
         };
-    }
-
-    private static void DrawTextLine(SKCanvas canvas, string text, float x, float baselineY, SKPaint paint)
-    {
-        canvas.DrawText(text, x, baselineY, paint);
     }
 
     private static (List<string> Lines, bool Truncated) WrapText(string text, SKPaint paint, float maxWidth, int maxLines)
