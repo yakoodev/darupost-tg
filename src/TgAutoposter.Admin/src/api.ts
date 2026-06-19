@@ -1,5 +1,25 @@
 export const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
+export function resolveMediaUrl(value?: string | null) {
+  if (!value) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value
+  }
+
+  if (value.startsWith('/api/media/')) {
+    return `${API_BASE}${value}`
+  }
+
+  if (value.startsWith('media/')) {
+    return `${API_BASE}/api/${value}`
+  }
+
+  return value
+}
+
 export type ModerationMode = 'Manual' | 'Automatic'
 export type ChannelStatus = 'Draft' | 'Connected' | 'Disabled' | 'Error'
 export type SourceKind = 'Reddit' | 'Web' | 'AiWebSearch' | 'Rss' | 'Telegram'
