@@ -38,6 +38,7 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<DbSeeder>();
 
         services.AddHttpClient<IAiProvider, PolzaAiProvider>();
+        services.AddHttpClient<IEmbeddingProvider, PolzaEmbeddingClient>();
         services.AddHttpClient<IImageGenerator, PolzaImageGenerator>();
         services.AddHttpClient<IAiAccountStatusClient, PolzaAccountStatusClient>();
         services.AddHttpClient<IContentCollector, RedditCollector>();

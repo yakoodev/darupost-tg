@@ -8,6 +8,7 @@ public sealed class PolzaOptions
     public string ChatCompletionPath { get; set; } = "/chat/completions";
     public string DefaultModel { get; set; } = "openai/gpt-5.5";
     public string ImageModel { get; set; } = "openai/gpt-5.4-image-2";
+    public string EmbeddingModel { get; set; } = "openai/text-embedding-3-small";
     public int MaxTokens { get; set; } = 900;
     public double Temperature { get; set; } = 0.55;
     public string ImageAspectRatio { get; set; } = "4:5";

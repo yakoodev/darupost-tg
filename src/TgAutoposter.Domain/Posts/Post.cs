@@ -27,6 +27,8 @@ public sealed class Post : Entity
     public string? FactCheckSummary { get; set; }
     public DeduplicationStatus DeduplicationStatus { get; set; } = DeduplicationStatus.NotChecked;
     public string? DeduplicationSummary { get; set; }
+    /// <summary>Embedding of title+summary (JSON float array) for semantic deduplication.</summary>
+    public string? EmbeddingJson { get; set; }
     public string? Prompt { get; set; }
     public string? Model { get; set; }
     public string? GeneratedText { get; set; }

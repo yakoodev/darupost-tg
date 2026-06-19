@@ -21,6 +21,7 @@ public sealed class AutopostingPipeline(
     IFactCheckService factCheckService,
     IPostTextGenerator postTextGenerator,
     IImageGenerator imageGenerator,
+    IEmbeddingProvider embeddingProvider,
     IModerationNotifier moderationNotifier,
     ITelegramPublisher telegramPublisher,
     IDateTimeProvider clock,
@@ -152,6 +153,7 @@ public sealed class AutopostingPipeline(
 
                 var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken);
                 var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
+                post.EmbeddingJson = await ComputeEmbeddingJsonAsync(channel.Id, post, cancellationToken);
 
                 if (ShouldGenerateImage(channel, publicationType, post))
                 {
@@ -519,6 +521,16 @@ public sealed class AutopostingPipeline(
             logger.LogWarning(ex, "Image generation failed for post {PostId}.", post.Id);
             warnings.Add($"Картинка не сгенерирована для {publicationType.Name}: {ex.Message}");
         }
+    }
+
+    private async Task<string?> ComputeEmbeddingJsonAsync(Guid channelId, Post post, CancellationToken cancellationToken)
+    {
+        var vector = await embeddingProvider.EmbedAsync(
+            channelId,
+            AiDeduplicationService.EmbeddingText(post.SourceTitle, post.OriginalSummary),
+            cancellationToken);
+
+        return vector is null ? null : JsonSerializer.Serialize(vector);
     }
 
     private static bool ShouldGenerateImage(Channel channel, PublicationTypeSetting publicationType, Post post)

@@ -12,20 +12,26 @@ using TgAutoposter.Infrastructure.Persistence;
 namespace TgAutoposter.Infrastructure.Services;
 
 /// <summary>
-/// Semantic deduplication (ТЗ §12). First runs the cheap heuristic; if it is confident (Duplicate /
-/// Continuation) we trust it. Otherwise — when Polza is enabled and a recent post shares a strong entity
-/// token with the candidate — we ask the model whether it's the same event, which catches the same news
-/// reported by different outlets or in a different language (where token-overlap heuristics fail).
+/// Semantic deduplication (ТЗ §12) via embeddings. Pipeline:
+/// 1. cheap heuristic (URL / title similarity) — trusted when confident;
+/// 2. embedding vector search: embed the candidate once and compare (cosine) against stored embeddings
+///    of recent posts — catches the same event reported by different outlets / in another language;
+/// 3. only for the ambiguous similarity band do we spend one chat call to confirm duplicate vs continuation.
+/// So there is no expensive chat call per candidate — just a cheap embedding plus an in-memory compare.
 /// </summary>
 public sealed class AiDeduplicationService(
     AppDbContext db,
     BasicDeduplicationService heuristic,
+    IEmbeddingProvider embeddingProvider,
     IAiProvider aiProvider,
     IOptions<PolzaOptions> polzaOptions,
     ILogger<AiDeduplicationService> logger) : IDeduplicationService
 {
-    private const int LookbackDays = 4;
-    private const int MaxCandidates = 20;
+    private const int LookbackDays = 5;
+    private const double DuplicateThreshold = 0.90;
+    private const double GrayZoneThreshold = 0.82;
+
+    public static string EmbeddingText(string title, string? summary) => $"{title}\n{summary}".Trim();
 
     public async Task<DeduplicationResult> CheckAsync(SourceCandidate candidate, CancellationToken cancellationToken)
     {
@@ -42,71 +48,90 @@ public sealed class AiDeduplicationService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "AI deduplication failed, keeping heuristic verdict for channel {ChannelId}.", candidate.ChannelId);
+            logger.LogWarning(ex, "Semantic deduplication failed, keeping heuristic verdict for channel {ChannelId}.", candidate.ChannelId);
             return heuristicResult;
         }
     }
 
     private async Task<DeduplicationResult?> CheckSemanticAsync(SourceCandidate candidate, CancellationToken cancellationToken)
     {
+        var candidateVector = await embeddingProvider.EmbedAsync(
+            candidate.ChannelId, EmbeddingText(candidate.Title, candidate.Summary), cancellationToken);
+        if (candidateVector is null)
+        {
+            return null;
+        }
+
         var since = DateTimeOffset.UtcNow.AddDays(-LookbackDays);
         var recent = await db.Posts
             .AsNoTracking()
             .Where(post => post.ChannelId == candidate.ChannelId &&
                            post.CreatedAtUtc >= since &&
+                           post.EmbeddingJson != null &&
                            post.Status != PostStatus.Rejected &&
                            post.Status != PostStatus.Duplicate)
             .OrderByDescending(post => post.CreatedAtUtc)
-            .Select(post => new { post.Id, post.SourceTitle, post.OriginalSummary })
-            .Take(120)
+            .Select(post => new { post.Id, post.SourceTitle, post.EmbeddingJson })
+            .Take(200)
             .ToListAsync(cancellationToken);
 
-        var candidateTokens = StrongTokens($"{candidate.Title} {candidate.Summary}");
-        if (candidateTokens.Count == 0)
-        {
-            return null;
-        }
-
-        // Prefilter: only consider posts that share a strong entity token (game/studio/platform names
-        // survive translation), so we don't spend an AI call when nothing is even remotely related.
-        var shortlist = recent
-            .Where(post => StrongTokens(post.SourceTitle).Overlaps(candidateTokens))
-            .Take(MaxCandidates)
+        var scored = recent
+            .Select(post => new { post.Id, post.SourceTitle, Score = CosineSimilarity(candidateVector, Deserialize(post.EmbeddingJson)) })
+            .Where(x => x.Score > 0)
+            .OrderByDescending(x => x.Score)
             .ToList();
 
-        if (shortlist.Count == 0)
+        if (scored.Count == 0)
         {
             return null;
         }
 
+        var best = scored[0];
+        if (best.Score >= DuplicateThreshold)
+        {
+            return new DeduplicationResult(
+                DeduplicationStatus.Duplicate,
+                $"Семантический дубль (cosine={best.Score:0.00}): «{best.SourceTitle}».",
+                best.Id);
+        }
+
+        if (best.Score >= GrayZoneThreshold)
+        {
+            // Ambiguous: confirm with a single chat call over the closest few posts only.
+            var shortlist = scored.Take(6).ToList();
+            return await ConfirmWithChatAsync(candidate, shortlist.Select(x => (x.Id, x.SourceTitle)).ToList(), best.Score, cancellationToken);
+        }
+
+        return null;
+    }
+
+    private async Task<DeduplicationResult?> ConfirmWithChatAsync(
+        SourceCandidate candidate,
+        IReadOnlyList<(Guid Id, string Title)> shortlist,
+        double topScore,
+        CancellationToken cancellationToken)
+    {
         var system = new StringBuilder()
-            .AppendLine("Ты редактор игрового канала и проверяешь, не дублирует ли новый инфоповод уже опубликованные.")
-            .AppendLine("Дубль — это про ТО ЖЕ событие/новость (даже если другой источник, другие слова или другой язык).")
-            .AppendLine("Развитие темы (continuation) — новые детали по уже освещённому событию.")
-            .AppendLine("Ответь СТРОГО одним JSON без markdown: {\"match\":<номер из списка или -1>,\"relation\":\"duplicate|continuation|unique\",\"reason\":\"кратко\"}")
+            .AppendLine("Ты редактор игрового канала. Решаешь, дублирует ли новый инфоповод уже опубликованные.")
+            .AppendLine("duplicate — то же событие (даже другой источник/слова/язык). continuation — новые детали по уже освещённому событию. unique — другое.")
+            .AppendLine("Ответь СТРОГО одним JSON без markdown: {\"match\":<номер или -1>,\"relation\":\"duplicate|continuation|unique\"}")
             .ToString();
 
         var user = new StringBuilder();
-        user.AppendLine("НОВЫЙ ИНФОПОВОД:");
-        user.AppendLine($"Заголовок: {candidate.Title}");
-        user.AppendLine($"Суть: {Truncate(candidate.Summary, 400)}");
+        user.AppendLine($"НОВЫЙ: {candidate.Title}");
+        user.AppendLine($"Суть: {Truncate(candidate.Summary, 300)}");
         user.AppendLine();
-        user.AppendLine("УЖЕ ОПУБЛИКОВАННЫЕ (последние дни):");
+        user.AppendLine("УЖЕ ОПУБЛИКОВАНО:");
         for (var i = 0; i < shortlist.Count; i++)
         {
-            user.AppendLine($"{i}. {shortlist[i].SourceTitle}");
+            user.AppendLine($"{i}. {shortlist[i].Title}");
         }
 
         var response = await aiProvider.CompleteAsync(
             new AiRequest(candidate.ChannelId, AiTaskType.Deduplication, system, user.ToString(), RequireJson: true),
             cancellationToken);
 
-        return MapVerdict(response.Text, shortlist.Select(x => x.Id).ToList());
-    }
-
-    private static DeduplicationResult? MapVerdict(string? text, IReadOnlyList<Guid> ids)
-    {
-        var json = ExtractJsonObject(text);
+        var json = ExtractJsonObject(response.Text);
         if (json is null)
         {
             return null;
@@ -114,58 +139,62 @@ public sealed class AiDeduplicationService(
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-
         var relation = root.TryGetProperty("relation", out var rel) && rel.ValueKind == JsonValueKind.String
             ? rel.GetString()?.Trim().ToLowerInvariant()
             : "unique";
-        var reason = root.TryGetProperty("reason", out var re) && re.ValueKind == JsonValueKind.String
-            ? re.GetString()?.Trim()
-            : null;
-
-        var matchIndex = root.TryGetProperty("match", out var m) && m.ValueKind == JsonValueKind.Number && m.TryGetInt32(out var idx)
-            ? idx
-            : -1;
-        Guid? matchedId = matchIndex >= 0 && matchIndex < ids.Count ? ids[matchIndex] : null;
+        var matchIndex = root.TryGetProperty("match", out var m) && m.ValueKind == JsonValueKind.Number && m.TryGetInt32(out var idx) ? idx : -1;
+        Guid? matchedId = matchIndex >= 0 && matchIndex < shortlist.Count ? shortlist[matchIndex].Id : shortlist[0].Id;
 
         return relation switch
         {
-            "duplicate" when matchedId is not null =>
-                new DeduplicationResult(DeduplicationStatus.Duplicate, $"AI: тот же инфоповод. {reason}", matchedId),
-            "continuation" when matchedId is not null =>
-                new DeduplicationResult(DeduplicationStatus.Continuation, $"AI: развитие уже освещённой темы. {reason}", matchedId),
+            "duplicate" => new DeduplicationResult(DeduplicationStatus.Duplicate, $"AI-дубль (cosine={topScore:0.00}).", matchedId),
+            "continuation" => new DeduplicationResult(DeduplicationStatus.Continuation, $"AI: развитие темы (cosine={topScore:0.00}).", matchedId),
             _ => null,
         };
     }
 
-    private static HashSet<string> StrongTokens(string? value)
+    private static float[] Deserialize(string? json)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(json))
         {
             return [];
         }
 
-        var chars = value.ToLowerInvariant().Select(ch => char.IsLetterOrDigit(ch) ? ch : ' ').ToArray();
-        return new string(chars)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Where(token => token.Length >= 4 && !StopWords.Contains(token))
-            .ToHashSet(StringComparer.Ordinal);
+        try
+        {
+            return JsonSerializer.Deserialize<float[]>(json) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
-    private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
+    private static double CosineSimilarity(float[] a, float[] b)
     {
-        "game", "games", "this", "that", "with", "from", "have", "will", "your", "play", "новый", "новая",
-        "будет", "может", "игре", "игры", "игру", "теперь", "после", "часть", "вышел", "вышла",
-    };
-
-    private static string Truncate(string? value, int max)
-    {
-        if (string.IsNullOrWhiteSpace(value))
+        if (a.Length == 0 || a.Length != b.Length)
         {
-            return string.Empty;
+            return 0;
         }
 
-        return value.Length <= max ? value : value[..max];
+        double dot = 0, normA = 0, normB = 0;
+        for (var i = 0; i < a.Length; i++)
+        {
+            dot += a[i] * b[i];
+            normA += a[i] * a[i];
+            normB += b[i] * b[i];
+        }
+
+        if (normA == 0 || normB == 0)
+        {
+            return 0;
+        }
+
+        return dot / (Math.Sqrt(normA) * Math.Sqrt(normB));
     }
+
+    private static string Truncate(string? value, int max)
+        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Length <= max ? value : value[..max];
 
     private static string? ExtractJsonObject(string? text)
     {
