@@ -60,7 +60,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
             builder.Property(x => x.TelegramUsername).HasMaxLength(128);
             builder.Property(x => x.Email).HasMaxLength(256);
+            builder.Property(x => x.PasswordHash).HasMaxLength(512);
             builder.HasIndex(x => x.TelegramUserId).IsUnique().HasFilter("\"TelegramUserId\" IS NOT NULL");
+            builder.HasIndex(x => x.Email).IsUnique().HasFilter("\"Email\" IS NOT NULL");
         });
 
         modelBuilder.Entity<ChannelRole>(builder =>

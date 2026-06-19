@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using TgAutoposter.Api.Auth;
 using TgAutoposter.Api.Contracts;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Domain.Ai;
+using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
 using TgAutoposter.Domain.Sources;
@@ -57,6 +60,8 @@ public static class PostEndpoints
 
         group.MapPost("/generate-draft", async (
             GenerateDraftPostRequest request,
+            ClaimsPrincipal principal,
+            IChannelAccess access,
             AppDbContext db,
             IPostTextGenerator generator,
             IModerationNotifier moderationNotifier,
@@ -64,6 +69,11 @@ public static class PostEndpoints
             IRealtimeNotifier realtimeNotifier,
             CancellationToken cancellationToken) =>
         {
+            if (!await access.HasAtLeastAsync(principal, request.ChannelId, ChannelRoleType.Moderator, cancellationToken))
+            {
+                return Results.Forbid();
+            }
+
             var title = request.SourceTitle?.Trim() ?? string.Empty;
             var summary = request.Summary?.Trim() ?? string.Empty;
             var sourceUrl = request.SourceUrl?.Trim();
@@ -204,10 +214,12 @@ public static class PostEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("post-updated", post.ChannelId, post.Id, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 
         group.MapPost("/{id:guid}/publish", async (
             Guid id,
+            ClaimsPrincipal principal,
+            IAuditLogger audit,
             AppDbContext db,
             IImageGenerator imageGenerator,
             ITelegramPublisher publisher,
@@ -269,13 +281,15 @@ public static class PostEndpoints
 
             post.Status = PostStatus.Published;
             post.PublishedAtUtc = clock.UtcNow;
+            post.ApprovedByUserId = principal.GetUserId();
             post.TelegramMessageId = result.TelegramMessageId;
             post.TelegramPostUrl = result.PublicUrl;
+            audit.Record(principal, "post.publish", nameof(Post), post.Id.ToString(), post.ChannelId);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("post-published", post.ChannelId, post.Id, cancellationToken);
 
             return Results.Ok(ToResponse(post));
-        });
+        }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 
         group.MapPost("/{id:guid}/rewrite", async (
             Guid id,
@@ -359,7 +373,7 @@ public static class PostEndpoints
             await realtimeNotifier.StateChangedAsync("post-rewritten", post.ChannelId, post.Id, cancellationToken);
 
             return Results.Ok(ToResponse(post));
-        });
+        }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 
         group.MapPost("/{id:guid}/regenerate-image", async (
             Guid id,
@@ -420,11 +434,13 @@ public static class PostEndpoints
             await realtimeNotifier.StateChangedAsync("post-image-regenerated", post.ChannelId, post.Id, cancellationToken);
 
             return Results.Ok(ToResponse(post));
-        });
+        }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 
         group.MapPost("/{id:guid}/reject", async (
             Guid id,
             RejectPostRequest request,
+            ClaimsPrincipal principal,
+            IAuditLogger audit,
             AppDbContext db,
             IRealtimeNotifier realtimeNotifier,
             CancellationToken cancellationToken) =>
@@ -437,10 +453,12 @@ public static class PostEndpoints
 
             post.Status = PostStatus.Rejected;
             post.RejectionReason = request.Reason;
+            post.RejectedByUserId = principal.GetUserId();
+            audit.Record(principal, "post.reject", nameof(Post), post.Id.ToString(), post.ChannelId, request.Reason);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("post-rejected", post.ChannelId, post.Id, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 
         return app;
     }

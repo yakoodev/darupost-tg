@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TgAutoposter.Api.Auth;
 using TgAutoposter.Api.Contracts;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Domain.Channels;
@@ -87,7 +88,7 @@ public static class ChannelEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("channel-created", channel.Id, null, cancellationToken);
             return Results.Created($"/api/channels/{channel.Id}", new { channel.Id });
-        });
+        }).RequireGlobalOwner();
 
         group.MapPut("/{id:guid}", async (
             Guid id,
@@ -110,7 +111,7 @@ public static class ChannelEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("channel-updated", channel.Id, null, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
 
         group.MapPut("/{id:guid}/autopilot", async (
             Guid id,
@@ -173,7 +174,7 @@ public static class ChannelEndpoints
                 channel.DailyPostLimit,
                 channel.DailyAiBudgetLimit,
                 channel.IsEnabled));
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
 
         group.MapGet("/{id:guid}/publication-types", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
         {
@@ -230,7 +231,7 @@ public static class ChannelEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("publication-type-updated", channelId, null, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         group.MapGet("/{id:guid}/footer-links", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
         {
@@ -304,7 +305,7 @@ public static class ChannelEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("footer-links-updated", id, null, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
 
         return app;
     }

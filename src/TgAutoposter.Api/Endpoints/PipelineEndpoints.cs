@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TgAutoposter.Api.Auth;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Pipeline;
 using TgAutoposter.Domain.Common;
@@ -41,7 +42,7 @@ public static class PipelineEndpoints
 
             await realtimeNotifier.StateChangedAsync("pipeline-run", channelId, null, cancellationToken);
             return Results.Ok(result);
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         return app;
     }

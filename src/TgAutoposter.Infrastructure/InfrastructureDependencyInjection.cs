@@ -23,10 +23,13 @@ public static class InfrastructureDependencyInjection
         services.Configure<PolzaOptions>(configuration.GetSection("Ai:Polza"));
         services.Configure<TelegramOptions>(configuration.GetSection("Telegram"));
         services.Configure<WorkerOptions>(configuration.GetSection("Worker"));
+        services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-        services.AddScoped<IDeduplicationService, BasicDeduplicationService>();
-        services.AddScoped<IFactCheckService, BasicFactCheckService>();
+        services.AddScoped<BasicDeduplicationService>();
+        services.AddScoped<IDeduplicationService, AiDeduplicationService>();
+        services.AddScoped<BasicFactCheckService>();
+        services.AddScoped<IFactCheckService, AiFactCheckService>();
         services.AddScoped<IPostTextGenerator, PostTextGenerator>();
         services.AddScoped<IModerationNotifier, TelegramModerationNotifier>();
         services.AddScoped<ITelegramPublisher, TelegramPublisher>();
@@ -61,8 +64,7 @@ public static class InfrastructureDependencyInjection
             {
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                await db.Database.EnsureCreatedAsync(cancellationToken);
-                await EnsureOperationalSchemaAsync(db, cancellationToken);
+                await db.Database.MigrateAsync(cancellationToken);
 
                 var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
                 await seeder.SeedAsync(cancellationToken);
@@ -74,47 +76,5 @@ public static class InfrastructureDependencyInjection
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
             }
         }
-    }
-
-    private static async Task EnsureOperationalSchemaAsync(AppDbContext db, CancellationToken cancellationToken)
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS "ModerationMessages" (
-                "Id" uuid NOT NULL PRIMARY KEY,
-                "CreatedAtUtc" timestamp with time zone NOT NULL,
-                "UpdatedAtUtc" timestamp with time zone NULL,
-                "PostId" uuid NOT NULL,
-                "ChatId" character varying(128) NOT NULL,
-                "TextMessageId" integer NOT NULL,
-                "ImageMessageId" integer NULL,
-                "IsActive" boolean NOT NULL DEFAULT TRUE,
-                "Resolution" character varying(120) NULL,
-                "ResolvedAtUtc" timestamp with time zone NULL,
-                CONSTRAINT "FK_ModerationMessages_Posts_PostId" FOREIGN KEY ("PostId") REFERENCES "Posts" ("Id") ON DELETE CASCADE
-            );
-
-            CREATE INDEX IF NOT EXISTS "IX_ModerationMessages_PostId_IsActive"
-            ON "ModerationMessages" ("PostId", "IsActive");
-
-            ALTER TABLE "AiUsageRecords"
-            ADD COLUMN IF NOT EXISTS "ProviderCostAmount" numeric NULL;
-
-            ALTER TABLE "AiUsageRecords"
-            ADD COLUMN IF NOT EXISTS "ProviderCostCurrency" character varying(8) NOT NULL DEFAULT 'RUB';
-
-            ALTER TABLE "SourceCandidates"
-            ADD COLUMN IF NOT EXISTS "VideoUrl" character varying(2048) NULL;
-
-            ALTER TABLE "SourceCandidates"
-            ADD COLUMN IF NOT EXISTS "MediaUrlsJson" text NULL;
-
-            ALTER TABLE "Posts"
-            ADD COLUMN IF NOT EXISTS "VideoUrl" character varying(2048) NULL;
-
-            ALTER TABLE "Posts"
-            ADD COLUMN IF NOT EXISTS "MediaUrlsJson" text NULL;
-            """,
-            cancellationToken);
     }
 }

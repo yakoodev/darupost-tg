@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using TgAutoposter.Api.Auth;
 using TgAutoposter.Api.Contracts;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
 using TgAutoposter.Infrastructure.Persistence;
 
@@ -55,7 +57,7 @@ public static class SourceEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("source-created", channelId, null, cancellationToken);
             return Results.Created($"/api/channels/{channelId}/sources/{source.Id}", new { source.Id });
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         group.MapPut("/{sourceId:guid}", async (
             Guid channelId,
@@ -78,7 +80,7 @@ public static class SourceEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("source-updated", channelId, null, cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         return app;
     }

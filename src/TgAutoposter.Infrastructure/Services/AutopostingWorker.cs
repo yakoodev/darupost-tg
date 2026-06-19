@@ -24,10 +24,12 @@ public sealed class AutopostingWorker(
             return;
         }
 
-        var delay = TimeSpan.FromMinutes(Math.Max(1, options.IntervalMinutes));
+        var interval = TimeSpan.FromMinutes(Math.Max(1, options.IntervalMinutes));
+        var consecutiveFailures = 0;
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var delay = interval;
             try
             {
                 using var scope = scopeFactory.CreateScope();
@@ -46,6 +48,8 @@ public sealed class AutopostingWorker(
                 {
                     await pipeline.RunForChannelAsync(channelId, runOptions, stoppingToken);
                 }
+
+                consecutiveFailures = 0;
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -53,10 +57,26 @@ public sealed class AutopostingWorker(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Autoposting worker iteration failed.");
+                consecutiveFailures++;
+                // Exponential backoff capped at 30 min so a persistent failure (e.g. DB down)
+                // doesn't hot-loop and flood the logs every interval.
+                var backoffSeconds = Math.Min(30 * 60, 30 * (int)Math.Pow(2, Math.Min(consecutiveFailures - 1, 6)));
+                delay = TimeSpan.FromSeconds(backoffSeconds);
+                logger.LogError(
+                    ex,
+                    "Autoposting worker iteration failed ({FailureCount} in a row). Backing off for {Delay}.",
+                    consecutiveFailures,
+                    delay);
             }
 
-            await Task.Delay(delay, stoppingToken);
+            try
+            {
+                await Task.Delay(delay, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
         }
     }
 }

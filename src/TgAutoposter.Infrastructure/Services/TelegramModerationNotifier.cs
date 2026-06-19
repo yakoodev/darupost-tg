@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Domain.Channels;
+using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
 using TgAutoposter.Infrastructure.Options;
 using TgAutoposter.Infrastructure.Persistence;
@@ -12,6 +13,7 @@ namespace TgAutoposter.Infrastructure.Services;
 public sealed class TelegramModerationNotifier(
     TelegramHttpClientFactory httpClientFactory,
     IOptions<TelegramOptions> optionsAccessor,
+    IOptions<MediaOptions> mediaOptionsAccessor,
     AppDbContext db,
     ILogger<TelegramModerationNotifier> logger) : IModerationNotifier
 {
@@ -25,6 +27,10 @@ public sealed class TelegramModerationNotifier(
             return;
         }
 
+        var bodyText = post.PublicationKind == PublicationKind.Meme
+            ? null
+            : post.FinalText ?? post.GeneratedText;
+
         var text = $"""
         Пост ожидает модерации
 
@@ -36,7 +42,7 @@ public sealed class TelegramModerationNotifier(
 
         {post.Header}
 
-        {post.FinalText ?? post.GeneratedText}
+        {bodyText}
 
         {BuildVideoLine(post)}
 
@@ -66,7 +72,7 @@ public sealed class TelegramModerationNotifier(
         var photoUrl = NormalizeTelegramPhotoUrl(post.ImagePath);
         var imageMessageId = string.IsNullOrWhiteSpace(photoUrl)
                 ? null
-                : await TrySendImagePreviewAsync(client, options, chatId, post, photoUrl, cancellationToken);
+                : await TrySendImagePreviewAsync(client, options, mediaOptionsAccessor.Value, chatId, post, photoUrl, cancellationToken);
 
             using var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -107,17 +113,13 @@ public sealed class TelegramModerationNotifier(
     private async Task<int?> TrySendImagePreviewAsync(
         HttpClient client,
         TelegramOptions options,
+        MediaOptions mediaOptions,
         string chatId,
         Post post,
         string photoUrl,
         CancellationToken cancellationToken)
     {
-        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["chat_id"] = chatId,
-            ["photo"] = photoUrl,
-            ["caption"] = ClampCaption($"Картинка к посту: {post.SourceTitle}")
-        });
+        using var content = BuildPhotoPreviewContent(mediaOptions, chatId, post, photoUrl);
 
         using var response = await client.PostAsync($"https://api.telegram.org/bot{options.BotToken}/sendPhoto", content, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -128,6 +130,29 @@ public sealed class TelegramModerationNotifier(
         }
 
         return ExtractMessageId(raw);
+    }
+
+    private static HttpContent BuildPhotoPreviewContent(MediaOptions mediaOptions, string chatId, Post post, string photoUrl)
+    {
+        if (LocalMediaPaths.TryResolve(mediaOptions, photoUrl, out var fullPath))
+        {
+            var multipart = new MultipartFormDataContent
+            {
+                { new StringContent(chatId), "chat_id" },
+                { new StringContent(ClampCaption($"Картинка к посту: {post.SourceTitle}")), "caption" }
+            };
+
+            var stream = File.OpenRead(fullPath);
+            multipart.Add(new StreamContent(stream), "photo", Path.GetFileName(fullPath));
+            return multipart;
+        }
+
+        return new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["chat_id"] = chatId,
+            ["photo"] = photoUrl,
+            ["caption"] = ClampCaption($"Картинка к посту: {post.SourceTitle}")
+        });
     }
 
     private static string? NormalizeTelegramPhotoUrl(string? value)

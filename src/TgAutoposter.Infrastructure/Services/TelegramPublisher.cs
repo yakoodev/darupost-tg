@@ -10,7 +10,10 @@ using TgAutoposter.Infrastructure.Options;
 
 namespace TgAutoposter.Infrastructure.Services;
 
-public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactory, IOptions<TelegramOptions> optionsAccessor) : ITelegramPublisher
+public sealed class TelegramPublisher(
+    TelegramHttpClientFactory httpClientFactory,
+    IOptions<TelegramOptions> optionsAccessor,
+    IOptions<MediaOptions> mediaOptionsAccessor) : ITelegramPublisher
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -44,12 +47,12 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
 
         if (photoUrls.Count > 1)
         {
-            return await PublishMediaGroupAsync(options, channel, chatId, photoUrls, text, cancellationToken);
+            return await PublishMediaGroupAsync(options, mediaOptionsAccessor.Value, channel, chatId, photoUrls, text, cancellationToken);
         }
 
         if (photoUrls.Count == 1)
         {
-            using var photoContent = BuildPhotoContent(chatId, photoUrls[0], text);
+            using var photoContent = BuildPhotoContent(chatId, photoUrls[0], text, mediaOptionsAccessor.Value);
             return await SendAsync(client, options, channel, "sendPhoto", photoContent, cancellationToken);
         }
 
@@ -118,6 +121,7 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
 
     private async Task<PublishResult> PublishMediaGroupAsync(
         TelegramOptions options,
+        MediaOptions mediaOptions,
         Channel channel,
         string chatId,
         IReadOnlyList<string> photoUrls,
@@ -125,7 +129,7 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
         CancellationToken cancellationToken)
     {
         using var client = httpClientFactory.CreateClient();
-        using var content = BuildMediaGroupContent(chatId, photoUrls, caption);
+        using var content = BuildMediaGroupContent(chatId, photoUrls, caption, mediaOptions);
         return await SendAsync(client, options, channel, "sendMediaGroup", content, cancellationToken);
     }
 
@@ -140,7 +144,17 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
         });
     }
 
-    private static FormUrlEncodedContent BuildPhotoContent(string chatId, string photoUrl, string caption)
+    private static HttpContent BuildPhotoContent(string chatId, string photoUrl, string caption, MediaOptions mediaOptions)
+    {
+        if (LocalMediaPaths.TryResolve(mediaOptions, photoUrl, out var fullPath))
+        {
+            return BuildUploadedPhotoContent(chatId, fullPath, caption);
+        }
+
+        return BuildRemotePhotoContent(chatId, photoUrl, caption);
+    }
+
+    private static FormUrlEncodedContent BuildRemotePhotoContent(string chatId, string photoUrl, string caption)
     {
         return new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -149,6 +163,20 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
             ["caption"] = ClampCaption(caption),
             ["parse_mode"] = "Markdown"
         });
+    }
+
+    private static MultipartFormDataContent BuildUploadedPhotoContent(string chatId, string filePath, string caption)
+    {
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent(chatId), "chat_id" },
+            { new StringContent(ClampCaption(caption)), "caption" },
+            { new StringContent("Markdown"), "parse_mode" }
+        };
+
+        var stream = File.OpenRead(filePath);
+        content.Add(new StreamContent(stream), "photo", Path.GetFileName(filePath));
+        return content;
     }
 
     private static FormUrlEncodedContent BuildRemoteVideoContent(string chatId, string videoUrl, string caption)
@@ -178,22 +206,51 @@ public sealed class TelegramPublisher(TelegramHttpClientFactory httpClientFactor
         return content;
     }
 
-    private static FormUrlEncodedContent BuildMediaGroupContent(string chatId, IReadOnlyList<string> photoUrls, string caption)
+    private static HttpContent BuildMediaGroupContent(string chatId, IReadOnlyList<string> photoUrls, string caption, MediaOptions mediaOptions)
     {
+        var localFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var media = photoUrls
             .Take(10)
-            .Select((url, index) => new InputMediaPhoto(
-                "photo",
-                url,
-                index == 0 && !string.IsNullOrWhiteSpace(caption) ? ClampCaption(caption) : null,
-                index == 0 && !string.IsNullOrWhiteSpace(caption) ? "Markdown" : null))
+            .Select((url, index) =>
+            {
+                var mediaValue = url;
+                if (LocalMediaPaths.TryResolve(mediaOptions, url, out var fullPath))
+                {
+                    var attachmentName = $"photo{index}";
+                    mediaValue = $"attach://{attachmentName}";
+                    localFiles[attachmentName] = fullPath;
+                }
+
+                return new InputMediaPhoto(
+                    "photo",
+                    mediaValue,
+                    index == 0 && !string.IsNullOrWhiteSpace(caption) ? ClampCaption(caption) : null,
+                    index == 0 && !string.IsNullOrWhiteSpace(caption) ? "Markdown" : null);
+            })
             .ToArray();
 
-        return new FormUrlEncodedContent(new Dictionary<string, string>
+        if (localFiles.Count == 0)
         {
-            ["chat_id"] = chatId,
-            ["media"] = JsonSerializer.Serialize(media, JsonOptions)
-        });
+            return new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["chat_id"] = chatId,
+                ["media"] = JsonSerializer.Serialize(media, JsonOptions)
+            });
+        }
+
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent(chatId), "chat_id" },
+            { new StringContent(JsonSerializer.Serialize(media, JsonOptions)), "media" }
+        };
+
+        foreach (var (attachmentName, fullPath) in localFiles)
+        {
+            var stream = File.OpenRead(fullPath);
+            content.Add(new StreamContent(stream), attachmentName, Path.GetFileName(fullPath));
+        }
+
+        return content;
     }
 
     private static string BuildTelegramText(Post post)

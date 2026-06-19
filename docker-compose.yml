@@ -23,6 +23,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=tg_autoposter;Username=tg_autoposter;Password=tg_autoposter
       ConnectionStrings__Redis: redis:6379
+      Auth__Jwt__Key: ${AUTH_JWT_KEY:-dev-only-insecure-signing-key-change-me-please-32+chars}
+      Auth__Jwt__AccessTokenHours: ${AUTH_JWT_HOURS:-12}
+      Auth__OwnerEmail: ${AUTH_OWNER_EMAIL:-owner@local}
+      Auth__OwnerPassword: ${AUTH_OWNER_PASSWORD:-changeme123}
+      Auth__OwnerDisplayName: ${AUTH_OWNER_NAME:-Owner}
       Ai__Polza__Enabled: ${POLZA_ENABLED:-false}
       Ai__Polza__ApiKey: ${POLZA_API_KEY:-}
       Ai__Polza__BaseUrl: ${POLZA_BASE_URL:-https://polza.ai/api/v1}
@@ -39,11 +44,14 @@ services:
       Telegram__Proxy__Port: ${TELEGRAM_PROXY_PORT:-0}
       Telegram__Proxy__Username: ${TELEGRAM_PROXY_USERNAME:-}
       Telegram__Proxy__Password: ${TELEGRAM_PROXY_PASSWORD:-}
+      Media__RootPath: /app/media
       Worker__Enabled: ${WORKER_ENABLED:-false}
       Worker__IntervalMinutes: ${WORKER_INTERVAL_MINUTES:-15}
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
     ports:
       - "${API_HOST_PORT:-5000}:8080"
+    volumes:
+      - api-media:/app/media
     depends_on:
       - postgres
       - redis
@@ -60,3 +68,4 @@ services:
 
 volumes:
   postgres-data:
+  api-media:

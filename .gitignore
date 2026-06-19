@@ -10,3 +10,7 @@ node_modules/
 .env
 polzaapikey.txt
 info.txt
+media/
+
+# Playwright MCP artifacts
+.playwright-mcp/

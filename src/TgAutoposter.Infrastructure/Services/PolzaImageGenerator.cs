@@ -10,7 +10,10 @@ using TgAutoposter.Infrastructure.Options;
 
 namespace TgAutoposter.Infrastructure.Services;
 
-public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOptions> optionsAccessor) : IImageGenerator
+public sealed class PolzaImageGenerator(
+    HttpClient httpClient,
+    IOptions<PolzaOptions> optionsAccessor,
+    IOptions<MediaOptions> mediaOptionsAccessor) : IImageGenerator
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -37,6 +40,18 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
 
         httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(120, options.TimeoutSeconds));
 
+        if (referenceImages.Count > 0)
+        {
+            // Polza can't fetch hotlinked Reddit images ("image fetch failed ... use File Upload API"),
+            // so we download them ourselves and inline as data URLs. Without a reachable reference a meme
+            // can't be localized, so fail loudly instead of generating an unrelated picture.
+            referenceImages = await InlineReferenceImagesAsync(referenceImages, cancellationToken);
+            if (referenceImages.Count == 0 && post.PublicationKind == PublicationKind.Meme)
+            {
+                throw new InvalidOperationException("Не удалось скачать исходное изображение мема для локализации.");
+            }
+        }
+
         var aspectRatios = options.ImageAspectRatio.Equals("4:5", StringComparison.OrdinalIgnoreCase)
             ? new[] { options.ImageAspectRatio, "3:4" }
             : new[] { options.ImageAspectRatio };
@@ -46,7 +61,8 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
         {
             try
             {
-                return await GenerateViaMediaApiAsync(options, channel.Id, model, prompt, aspectRatio, referenceImages, cancellationToken);
+                var generated = await GenerateViaMediaApiAsync(options, channel.Id, model, prompt, aspectRatio, referenceImages, cancellationToken);
+                return await ApplyNewsTemplateAsync(channel, post, generated, cancellationToken);
             }
             catch (HttpRequestException ex) when (aspectRatios.Length > 1 && ex.Message.Contains("aspect_ratio", StringComparison.OrdinalIgnoreCase))
             {
@@ -84,7 +100,12 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
 
         if (referenceImages.Count > 0)
         {
-            input["images"] = referenceImages;
+            // Polza media API expects images as MediaFileDto objects { type, data }, not bare strings.
+            input["images"] = referenceImages
+                .Select(reference => reference.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? new { type = "base64", data = reference }
+                    : new { type = "url", data = reference })
+                .ToArray();
         }
 
         var payload = new
@@ -165,39 +186,113 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
         }
 
         return $"""
-        Создай вертикальную новостную картинку 4:5 для Telegram-канала об играх по одному фиксированному шаблону.
+        Создай вертикальный контекстный визуал 4:5 для новостной карточки Telegram-канала об играх.
 
-        Стиль: тёмная editorial-карточка игрового медиа, Figma-style, минимализм. Не AI-art, не 3D-render, не фэнтези-постер, не инфографика.
-        Важно: все картинки канала должны выглядеть 1 в 1 по сетке, отступам, расположению текста, рамке, синим линиям и размеру брендовой подписи. Меняется только тезис, рубрика и визуальный объект справа.
+        Стиль: тёмный editorial-визуал игрового медиа, минимализм, реалистичная/полуреалистичная предметная метафора. Не AI-art, не 3D-render, не фэнтези-постер, не инфографика.
+        Важно: не добавляй текст, надписи, логотипы, водяные знаки, рамки, UI-таблицы, source-строки и бренд канала. Текст, рамку и сетку backend наложит отдельно одинаковым шаблоном.
 
-        Фиксированная композиция:
-        - холст 4:5;
-        - внешний отступ 56 px;
-        - тонкая рамка 1 px по периметру;
-        - сверху слева маленькая рубрика: {rubric};
-        - слева по центру крупный основной тезис, максимум 2-3 строки;
-        - справа один визуальный объект: {visualSubject};
-        - снизу слева только бренд: {brandName};
-        - лёгкие UI-линии и один синий акцент.
+        Композиция визуала:
+        - тёмный графитовый фон;
+        - справа или в центре один крупный визуальный объект: {visualSubject};
+        - слева оставить свободное тёмное пространство под текст;
+        - лёгкий синий акцент допустим только как свет/контур, без букв и цифр.
 
         Цвета:
         чёрный/графитовый фон, белый текст, синий акцент.
 
-        Текст:
-        {rubric}
-
-        {mainThesis}
-
-        {brandName}
-
         Требования:
-        крупный читаемый текст, без ошибок, минимум элементов, без лишних фраз, без официальных логотипов, без водяных знаков, без мелкой инфографики, без домена, без имени источника, без автора и без строки source.
+        без любого текста на изображении, минимум элементов, без лишних фраз, без официальных логотипов, без водяных знаков, без мелкой инфографики, без домена, без имени источника, без автора и без строки source.
+
+        Текст, который будет наложен отдельно:
+        Рубрика: {rubric}
+        Тезис: {mainThesis}
+        Бренд: {brandName}
 
         Контекст новости:
         Заголовок источника: {post.SourceTitle}
         URL: {post.SourceUrl}
         Текст поста: {text}
         """;
+    }
+
+    private async Task<ImageGenerationResult> ApplyNewsTemplateAsync(
+        Channel channel,
+        Post post,
+        ImageGenerationResult generated,
+        CancellationToken cancellationToken)
+    {
+        if (post.PublicationKind == PublicationKind.Meme || string.IsNullOrWhiteSpace(generated.ImageUrl))
+        {
+            return generated;
+        }
+
+        var text = post.FinalText ?? post.GeneratedText ?? post.OriginalSummary;
+        text = text.ReplaceLineEndings(" ").Trim();
+        if (text.Length > 900)
+        {
+            text = $"{text[..900]}...";
+        }
+
+        try
+        {
+            var localImagePath = await NewsCardRenderer.RenderAsync(
+                httpClient,
+                mediaOptionsAccessor.Value,
+                channel,
+                post,
+                generated.ImageUrl,
+                ResolveRubric(post),
+                ExtractMainThesis(post, text),
+                cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(localImagePath))
+            {
+                return generated with
+                {
+                    ImageUrl = localImagePath,
+                    UsageMetadataJson = MergeTemplateMetadata(generated.UsageMetadataJson, generated.ImageUrl, localImagePath)
+                };
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or HttpRequestException)
+        {
+            return generated with
+            {
+                UsageMetadataJson = MergeTemplateMetadata(generated.UsageMetadataJson, generated.ImageUrl, null, ex.Message)
+            };
+        }
+
+        return generated;
+    }
+
+    private static string MergeTemplateMetadata(string? metadataJson, string sourceImageUrl, string? localImagePath, string? error = null)
+    {
+        Dictionary<string, object?> metadata;
+        if (string.IsNullOrWhiteSpace(metadataJson))
+        {
+            metadata = [];
+        }
+        else
+        {
+            try
+            {
+                metadata = JsonSerializer.Deserialize<Dictionary<string, object?>>(metadataJson, JsonOptions) ?? [];
+            }
+            catch (JsonException)
+            {
+                metadata = [];
+            }
+        }
+
+        metadata["template"] = new
+        {
+            name = "fixed-news-card-v1",
+            sourceImageUrl,
+            localImagePath,
+            error
+        };
+
+        return JsonSerializer.Serialize(metadata, JsonOptions);
     }
 
     private static string ResolveRubric(Post post)
@@ -216,6 +311,12 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
 
     private static string ExtractMainThesis(Post post, string text)
     {
+        var sourceTitle = RemoveMarkdown(post.SourceTitle);
+        if (sourceTitle.Length is >= 18 and <= 84)
+        {
+            return ClampWords(sourceTitle, 10, 84);
+        }
+
         var candidates = text
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(line => line.Trim(' ', '-', '—', '*'))
@@ -343,6 +444,52 @@ public sealed class PolzaImageGenerator(HttpClient httpClient, IOptions<PolzaOpt
         return element.TryGetProperty(name, out var property) && property.ValueKind == JsonValueKind.String
             ? property.GetString()
             : null;
+    }
+
+    private async Task<IReadOnlyCollection<string>> InlineReferenceImagesAsync(
+        IReadOnlyCollection<string> urls,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<string>();
+        foreach (var url in urls)
+        {
+            if (url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                result.Add(url);
+                continue;
+            }
+
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.UserAgent.ParseAdd("tg-autoposter/1.0 (+https://t.me)");
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    continue;
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+                if (!contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                if (bytes.Length is 0 or > 8_000_000)
+                {
+                    continue;
+                }
+
+                result.Add($"data:{contentType};base64,{Convert.ToBase64String(bytes)}");
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+            {
+                // Unreachable reference image — skip it; caller decides whether the remainder is enough.
+            }
+        }
+
+        return result;
     }
 
     private static IReadOnlyCollection<string> ResolveReferenceImages(Post post)
