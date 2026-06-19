@@ -218,22 +218,39 @@ public static class NewsCardRenderer
                 : "NEWS";
 
         using var rubricPaint = CreatePaint(29, SKFontStyleWeight.SemiBold, new SKColor(137, 172, 255));
-        using var titlePaint = CreatePaint(69, SKFontStyleWeight.SemiBold, new SKColor(247, 248, 248));
         using var brandPaint = CreatePaint(30, SKFontStyleWeight.SemiBold, new SKColor(247, 248, 248));
         using var metaPaint = CreatePaint(21, SKFontStyleWeight.Medium, new SKColor(138, 143, 152));
 
         DrawTextLine(canvas, rubricText, 82, 132, rubricPaint);
         DrawTextLine(canvas, meta, Width - Margin - 110, 132, metaPaint);
 
-        var wrapped = WrapText(title, titlePaint, 450, 4);
-        var titleHeight = wrapped.Count * 82;
-        var y = 575 - titleHeight / 2f;
+        // Auto-fit the headline: pick the largest size that fits in <= maxLines without mid-word cuts.
+        const float maxWidth = 466f;
+        const int maxLines = 5;
+        SKPaint titlePaint = CreatePaint(70, SKFontStyleWeight.Bold, new SKColor(247, 248, 248));
+        var wrapped = new List<string>();
+        for (var size = 70; size >= 40; size -= 3)
+        {
+            titlePaint.Dispose();
+            titlePaint = CreatePaint(size, SKFontStyleWeight.Bold, new SKColor(247, 248, 248));
+            var (lines, truncated) = WrapText(title, titlePaint, maxWidth, maxLines);
+            wrapped = lines;
+            if (!truncated)
+            {
+                break;
+            }
+        }
+
+        var lineHeight = titlePaint.TextSize * 1.18f;
+        var titleHeight = wrapped.Count * lineHeight;
+        var y = 300 + (680 - titleHeight) / 2f + titlePaint.TextSize;
         foreach (var line in wrapped)
         {
             DrawTextLine(canvas, line, 82, y, titlePaint);
-            y += 82;
+            y += lineHeight;
         }
 
+        titlePaint.Dispose();
         DrawTextLine(canvas, brandName, 82, Height - 98, brandPaint);
     }
 
@@ -257,58 +274,98 @@ public static class NewsCardRenderer
         canvas.DrawText(text, x, baselineY, paint);
     }
 
-    private static List<string> WrapText(string text, SKPaint paint, float maxWidth, int maxLines)
+    private static (List<string> Lines, bool Truncated) WrapText(string text, SKPaint paint, float maxWidth, int maxLines)
     {
-        var words = text
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
-
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var lines = new List<string>();
         var current = string.Empty;
+        var consumed = 0;
+
         foreach (var word in words)
         {
-            var candidate = string.IsNullOrWhiteSpace(current) ? word : $"{current} {word}";
-            if (paint.MeasureText(candidate) <= maxWidth)
+            // A single word wider than the column: hard-break by characters (last resort).
+            var pieces = paint.MeasureText(word) > maxWidth ? HardBreak(word, paint, maxWidth) : [word];
+
+            foreach (var piece in pieces)
             {
-                current = candidate;
-                continue;
+                var candidate = current.Length == 0 ? piece : $"{current} {piece}";
+                if (paint.MeasureText(candidate) <= maxWidth)
+                {
+                    current = candidate;
+                }
+                else
+                {
+                    if (current.Length > 0)
+                    {
+                        lines.Add(current);
+                    }
+
+                    current = piece;
+                    if (lines.Count >= maxLines)
+                    {
+                        break;
+                    }
+                }
             }
 
-            if (!string.IsNullOrWhiteSpace(current))
-            {
-                lines.Add(current);
-            }
-
-            current = word;
-            if (lines.Count == maxLines)
+            if (lines.Count >= maxLines)
             {
                 break;
             }
+
+            consumed++;
         }
 
-        if (lines.Count < maxLines && !string.IsNullOrWhiteSpace(current))
+        if (lines.Count < maxLines && current.Length > 0)
         {
             lines.Add(current);
+            consumed = words.Length;
         }
 
-        if (lines.Count > maxLines)
+        var truncated = consumed < words.Length;
+        if (truncated && lines.Count > 0)
         {
-            lines = lines.Take(maxLines).ToList();
-        }
-
-        if (lines.Count == maxLines && words.Count > string.Join(' ', lines).Split(' ', StringSplitOptions.RemoveEmptyEntries).Length)
-        {
-            var last = lines[^1].TrimEnd('.', '…');
-            while (paint.MeasureText($"{last}…") > maxWidth && last.Length > 3)
+            // Trim a trailing hanging short word (preposition/conjunction), then add an ellipsis,
+            // shrinking at word boundary until the ellipsis fits.
+            var last = lines[^1].TrimEnd('.', '…', ',', ' ');
+            var parts = last.Split(' ');
+            if (parts.Length > 1 && parts[^1].Length <= 2)
             {
-                var lastSpace = last.LastIndexOf(' ');
-                last = lastSpace > 0 ? last[..lastSpace] : last[..^1];
+                last = string.Join(' ', parts[..^1]);
+            }
+
+            while (last.Contains(' ') && paint.MeasureText($"{last}…") > maxWidth)
+            {
+                last = last[..last.LastIndexOf(' ')];
             }
 
             lines[^1] = $"{last}…";
         }
 
-        return lines.Count == 0 ? [text] : lines;
+        return lines.Count == 0 ? ([text], false) : (lines, truncated);
+    }
+
+    private static List<string> HardBreak(string word, SKPaint paint, float maxWidth)
+    {
+        var pieces = new List<string>();
+        var chunk = string.Empty;
+        foreach (var ch in word)
+        {
+            if (paint.MeasureText(chunk + ch) > maxWidth && chunk.Length > 0)
+            {
+                pieces.Add(chunk);
+                chunk = string.Empty;
+            }
+
+            chunk += ch;
+        }
+
+        if (chunk.Length > 0)
+        {
+            pieces.Add(chunk);
+        }
+
+        return pieces;
     }
 
     private static SKRect CropToCover(SKBitmap bitmap, float targetAspect)

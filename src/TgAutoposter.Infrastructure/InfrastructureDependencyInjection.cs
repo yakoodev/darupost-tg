@@ -15,6 +15,9 @@ public static class InfrastructureDependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        // Allow decoding legacy-encoded feeds (e.g. windows-1251 used by some RU gaming sites).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         var connectionString = configuration.GetConnectionString("Postgres")
             ?? "Host=localhost;Port=5432;Database=tg_autoposter;Username=tg_autoposter;Password=tg_autoposter";
 

@@ -19,6 +19,7 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.8" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
     <PackageReference Include="StackExchange.Redis" Version="2.*" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.*" />
     <PackageReference Include="Telegram.Bot" Version="22.*" />
   </ItemGroup>
 

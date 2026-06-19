@@ -311,22 +311,44 @@ public sealed class PolzaImageGenerator(
 
     private static string ExtractMainThesis(Post post, string text)
     {
-        var sourceTitle = RemoveMarkdown(post.SourceTitle);
-        if (sourceTitle.Length is >= 18 and <= 84)
+        // Prefer a Russian headline from the generated post body (the channel is RU) over the source
+        // title, which is frequently English and would render an English card.
+        var headline = FirstSentence(text);
+        if (LooksRussian(headline) && headline.Length >= 16)
         {
-            return ClampWords(sourceTitle, 10, 84);
+            return ClampWords(headline, 12, 90);
         }
 
-        var candidates = text
+        var sourceTitle = RemoveMarkdown(post.SourceTitle);
+        if (LooksRussian(sourceTitle) && sourceTitle.Length is >= 16 and <= 96)
+        {
+            return ClampWords(sourceTitle, 12, 90);
+        }
+
+        // No Russian source available — use whatever headline we have rather than an English title.
+        var fallback = !string.IsNullOrWhiteSpace(headline) ? headline : sourceTitle;
+        return ClampWords(fallback, 12, 90);
+    }
+
+    private static string FirstSentence(string text)
+    {
+        var cleaned = RemoveMarkdown(text.ReplaceLineEndings("\n"));
+        // Drop a leading header line like "🎮 Только игры" if present.
+        var lines = cleaned
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(line => line.Trim(' ', '-', '—', '*'))
-            .Where(line => line.Length > 12)
+            .Select(line => line.Trim(' ', '-', '—', '*', '•'))
+            .Where(line => line.Length > 0)
             .ToList();
 
-        var thesis = candidates.FirstOrDefault() ?? post.SourceTitle;
-        thesis = RemoveMarkdown(thesis);
+        var body = lines.FirstOrDefault(line => line.Length > 24) ?? lines.FirstOrDefault() ?? string.Empty;
+        var end = body.IndexOfAny(['.', '!', '?', '\n']);
+        var sentence = end > 24 ? body[..end] : body;
+        return sentence.Trim();
+    }
 
-        return ClampWords(thesis, 9, 68);
+    private static bool LooksRussian(string value)
+    {
+        return value.Count(ch => ch is >= 'а' and <= 'я' or >= 'А' and <= 'Я' or 'ё' or 'Ё') >= 4;
     }
 
     private static string ExtractVisualSubject(Post post, string text)

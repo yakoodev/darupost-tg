@@ -220,8 +220,8 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var xml = await response.Content.ReadAsStringAsync(cancellationToken);
-        var document = XDocument.Parse(xml);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
         var filters = CreateFilters(source);
         var result = new List<CollectedCandidate>();
         var entries = document
@@ -328,10 +328,10 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
                 : DateTimeOffset.UtcNow;
 
             result.Add(new CollectedCandidate(
-                title.Trim(),
+                Sanitize(title),
                 GetString(item, "url"),
-                summary.Trim(),
-                summary.Trim(),
+                Sanitize(summary),
+                Sanitize(summary),
                 GetString(item, "imageUrl"),
                 null,
                 null,
@@ -668,8 +668,8 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var xml = await response.Content.ReadAsStringAsync(cancellationToken);
-        var document = XDocument.Parse(xml);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
         var filters = CreateFilters(source);
         var result = new List<CollectedCandidate>();
 
@@ -926,8 +926,9 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
             return title;
         }
 
-        var normalized = text.ReplaceLineEndings(" ").Trim();
-        return normalized.Length <= 500 ? $"{title}\n{normalized}" : $"{title}\n{normalized[..500]}...";
+        var normalized = Sanitize(text.ReplaceLineEndings(" "));
+        var cleanTitle = Sanitize(title);
+        return normalized.Length <= 500 ? $"{cleanTitle}\n{normalized}" : $"{cleanTitle}\n{normalized[..500]}...";
     }
 
     private static List<string> SplitCsv(string? value)
@@ -1014,7 +1015,37 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
 
         var withoutTags = Regex.Replace(html, "<.*?>", " ");
         var decoded = System.Net.WebUtility.HtmlDecode(withoutTags);
-        return Regex.Replace(decoded, "\\s+", " ").Trim();
+        return Sanitize(Regex.Replace(decoded, "\\s+", " ").Trim());
+    }
+
+    /// <summary>
+    /// Drops the Unicode replacement char (U+FFFD) and stray control characters that leak in from
+    /// mis-decoded feeds or scraped pages, so corrupted glyphs never reach posts.
+    /// </summary>
+    private static string Sanitize(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder(value.Length);
+        foreach (var ch in value)
+        {
+            if (ch == '�')
+            {
+                continue;
+            }
+
+            if (char.IsControl(ch) && ch is not ('\n' or '\t'))
+            {
+                continue;
+            }
+
+            builder.Append(ch);
+        }
+
+        return Regex.Replace(builder.ToString(), " {2,}", " ").Trim();
     }
 
     private static bool LooksLikeImage(string? value)
