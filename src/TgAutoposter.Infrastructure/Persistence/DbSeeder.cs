@@ -33,7 +33,7 @@ public sealed class DbSeeder(AppDbContext db)
 
         channel.PublicationTypes.AddRange([
             CreatePublicationType(PublicationKind.News, "Новость", "Короткая игровая новость", 100, ModerationMode.Manual, FactCheckMode.Medium, true, MediaGenerationMode.GeneratePoster),
-            CreatePublicationType(PublicationKind.Rumor, "Слух / утечка", "Неофициальные игровые слухи и утечки", 80, ModerationMode.Manual, FactCheckMode.Medium),
+            CreatePublicationType(PublicationKind.Rumor, "Слух / утечка", "Неофициальные игровые слухи и утечки", 80, ModerationMode.Manual, FactCheckMode.Medium, true, MediaGenerationMode.GeneratePoster),
             CreatePublicationType(PublicationKind.Meme, "Мем", "Игровой мем с Reddit", 40, ModerationMode.Manual, FactCheckMode.Soft, false, MediaGenerationMode.TranslateMeme),
             CreatePublicationType(PublicationKind.Digest, "Дайджест", "Подборка нескольких инфоповодов", 60, ModerationMode.Manual, FactCheckMode.Soft, true, MediaGenerationMode.GeneratePoster),
             CreatePublicationType(PublicationKind.Deal, "Раздача / скидка", "Сильная скидка, бесплатная игра или подписочная раздача", 55, ModerationMode.Manual, FactCheckMode.Soft, true, MediaGenerationMode.GeneratePoster),
@@ -110,6 +110,11 @@ public sealed class DbSeeder(AppDbContext db)
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        // Rumors used to ship without a poster; give existing ones a card like other types.
+        await db.PublicationTypes
+            .Where(type => type.Kind == PublicationKind.Rumor && type.MediaMode == MediaGenerationMode.None)
+            .ExecuteUpdateAsync(updates => updates.SetProperty(type => type.MediaMode, MediaGenerationMode.GeneratePoster), cancellationToken);
     }
 
     private async Task EnsureDefaultGamingFeedsAsync(CancellationToken cancellationToken)
@@ -248,7 +253,7 @@ public sealed class DbSeeder(AppDbContext db)
         return
         [
             CreatePublicationType(PublicationKind.News, "Новость", "Короткая игровая новость", 100, ModerationMode.Manual, FactCheckMode.Medium, true, MediaGenerationMode.GeneratePoster),
-            CreatePublicationType(PublicationKind.Rumor, "Слух / утечка", "Неофициальные игровые слухи и утечки", 80, ModerationMode.Manual, FactCheckMode.Medium),
+            CreatePublicationType(PublicationKind.Rumor, "Слух / утечка", "Неофициальные игровые слухи и утечки", 80, ModerationMode.Manual, FactCheckMode.Medium, true, MediaGenerationMode.GeneratePoster),
             CreatePublicationType(PublicationKind.Meme, "Мем", "Игровой мем с Reddit", 40, ModerationMode.Manual, FactCheckMode.Soft, false, MediaGenerationMode.TranslateMeme),
             CreatePublicationType(PublicationKind.Digest, "Дайджест", "Подборка нескольких инфоповодов", 60, ModerationMode.Manual, FactCheckMode.Soft, true, MediaGenerationMode.GeneratePoster),
             CreatePublicationType(PublicationKind.Deal, "Раздача / скидка", "Сильная скидка, бесплатная игра или подписочная раздача", 55, ModerationMode.Manual, FactCheckMode.Soft, true, MediaGenerationMode.GeneratePoster),

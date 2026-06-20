@@ -1022,31 +1022,7 @@ public sealed class RedditCollector(HttpClient httpClient, IOptions<PolzaOptions
     /// Drops the Unicode replacement char (U+FFFD) and stray control characters that leak in from
     /// mis-decoded feeds or scraped pages, so corrupted glyphs never reach posts.
     /// </summary>
-    private static string Sanitize(string? value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-
-        var builder = new StringBuilder(value.Length);
-        foreach (var ch in value)
-        {
-            if (ch == '�')
-            {
-                continue;
-            }
-
-            if (char.IsControl(ch) && ch is not ('\n' or '\t'))
-            {
-                continue;
-            }
-
-            builder.Append(ch);
-        }
-
-        return Regex.Replace(builder.ToString(), " {2,}", " ").Trim();
-    }
+    private static string Sanitize(string? value) => TextSanitizer.Clean(value);
 
     private static bool LooksLikeImage(string? value)
     {

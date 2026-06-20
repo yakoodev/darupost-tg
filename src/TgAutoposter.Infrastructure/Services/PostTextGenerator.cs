@@ -48,7 +48,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider) :
             ? BuildLocalText(publicationType, candidate)
             : response.Text.Trim();
 
-        text = ClampText(text, publicationType.MaxTextLength);
+        text = ClampText(TextSanitizer.Clean(text), publicationType.MaxTextLength);
 
         return new PostTextResult(
             text,
