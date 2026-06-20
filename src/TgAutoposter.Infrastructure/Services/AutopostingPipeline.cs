@@ -51,22 +51,6 @@ public sealed class AutopostingPipeline(
             .ThenBy(source => source.Name)
             .ToList();
 
-        if (sourcesToCheck.Count > 0)
-        {
-            db.AiUsageRecords.Add(new AiUsageRecord
-            {
-                ChannelId = channel.Id,
-                Provider = "fixed",
-                Model = "news-research",
-                TaskType = AiTaskType.StructuredOutput,
-                CostAmount = AiCostDefaults.NewsResearchRub,
-                CostCurrency = AiCostDefaults.Currency,
-                RequestMetadataJson = $$"""
-                {"sourcesToCheck":{{sourcesToCheck.Count}},"ignoreSourceSchedule":{{options.IgnoreSourceSchedule.ToString().ToLowerInvariant()}}}
-                """
-            });
-        }
-
         var sourcesChecked = 0;
         var candidatesCollected = 0;
         var postsCreated = 0;
@@ -509,7 +493,7 @@ public sealed class AutopostingPipeline(
                 Provider = image.Provider,
                 Model = image.Model,
                 TaskType = AiTaskType.ImageGeneration,
-                CostAmount = AiCostDefaults.ImageGenerationRub,
+                CostAmount = image.CostAmount ?? AiCostDefaults.ImageGenerationRub,
                 CostCurrency = AiCostDefaults.Currency,
                 ProviderCostAmount = image.CostAmount,
                 ProviderCostCurrency = image.CostCurrency,
