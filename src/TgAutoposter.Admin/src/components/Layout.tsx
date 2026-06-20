@@ -82,12 +82,19 @@ export default function Layout() {
               {channels.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-          {selectedChannel && (
-            <span className={`badge ${selectedChannel.defaultModerationMode === 'Automatic' ? 'green' : 'amber'}`}>
-              <Power size={12} />
-              {selectedChannel.defaultModerationMode === 'Automatic' ? 'автопилот' : 'ручная модерация'}
-            </span>
-          )}
+          {selectedChannel && (() => {
+            const mode = !selectedChannel.isEnabled
+              ? { tone: 'red', label: 'выключен' }
+              : selectedChannel.defaultModerationMode === 'Automatic'
+                ? { tone: 'green', label: 'авторежим' }
+                : { tone: 'amber', label: 'с модерацией' }
+            return (
+              <span className={`badge ${mode.tone}`}>
+                <Power size={12} />
+                {mode.label}
+              </span>
+            )
+          })()}
           <div className="spacer" />
           {selectedChannel?.telegramUsername && (
             <span className="faint mono">{selectedChannel.telegramUsername}</span>

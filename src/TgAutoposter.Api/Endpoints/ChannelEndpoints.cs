@@ -176,6 +176,63 @@ public static class ChannelEndpoints
                 channel.IsEnabled));
         }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
 
+        group.MapPut("/{id:guid}/mode", async (
+            Guid id,
+            SetChannelModeRequest request,
+            AppDbContext db,
+            IRealtimeNotifier realtimeNotifier,
+            CancellationToken cancellationToken) =>
+        {
+            var mode = request.Mode?.Trim().ToLowerInvariant();
+            if (mode is not ("off" or "moderated" or "auto"))
+            {
+                return Results.BadRequest(new { error = "Режим должен быть Off, Moderated или Auto." });
+            }
+
+            var channel = await db.Channels
+                .Include(channel => channel.PublicationTypes)
+                .FirstOrDefaultAsync(channel => channel.Id == id, cancellationToken);
+            if (channel is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (mode == "off")
+            {
+                // Pause: the worker skips disabled channels, so no collection / web-search / generation spend.
+                channel.IsEnabled = false;
+            }
+            else
+            {
+                channel.IsEnabled = true;
+                channel.DefaultModerationMode = mode == "auto" ? ModerationMode.Automatic : ModerationMode.Manual;
+
+                foreach (var type in channel.PublicationTypes)
+                {
+                    if (mode == "moderated")
+                    {
+                        type.ModerationMode = ModerationMode.Manual;
+                    }
+                    else if (type.Kind == PublicationKind.Rumor)
+                    {
+                        // Rumors always go through manual review even in auto mode.
+                        type.ModerationMode = ModerationMode.Manual;
+                        type.FactCheckMode = FactCheckMode.Medium;
+                        type.RequiresFactCheck = true;
+                    }
+                    else
+                    {
+                        type.ModerationMode = ModerationMode.Automatic;
+                        type.FactCheckMode = FactCheckMode.Soft;
+                    }
+                }
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            await realtimeNotifier.StateChangedAsync("channel-mode-updated", channel.Id, null, cancellationToken);
+            return Results.Ok(new { channel.Id, channel.IsEnabled, channel.DefaultModerationMode });
+        }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
+
         group.MapGet("/{id:guid}/publication-types", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
         {
             var items = await db.PublicationTypes

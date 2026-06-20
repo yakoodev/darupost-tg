@@ -45,6 +45,9 @@ public sealed record UpsertChannelRequest(
 
 public sealed record SetAutopilotRequest(bool Enabled);
 
+/// <summary>Three channel modes per ТЗ: Off (paused, no spend), Moderated (prepare drafts for review), Auto (auto-publish).</summary>
+public sealed record SetChannelModeRequest(string Mode);
+
 public sealed record PublicationTypeResponse(
     Guid Id,
     PublicationKind Kind,

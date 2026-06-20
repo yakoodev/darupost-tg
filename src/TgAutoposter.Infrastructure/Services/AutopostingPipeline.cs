@@ -126,8 +126,9 @@ public sealed class AutopostingPipeline(
                 }
 
                 var factCheck = await factCheckService.CheckAsync(channel, publicationType, candidate, cancellationToken);
-                if (factCheck.Status == FactCheckStatus.Failed ||
-                    (channel.DefaultModerationMode == ModerationMode.Automatic && factCheck.Status != FactCheckStatus.Passed))
+                // Only a hard "Failed" is dropped. "NeedsManualReview" must go to moderation, not the bin —
+                // otherwise autopilot silently publishes nothing whenever the fact check is unsure.
+                if (factCheck.Status == FactCheckStatus.Failed)
                 {
                     factCheckFailed++;
                     await CreateFactCheckFailedPostAsync(channel, source, candidate, publicationType, factCheck, deduplication, cancellationToken);

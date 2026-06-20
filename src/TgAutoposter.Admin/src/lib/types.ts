@@ -6,6 +6,7 @@ export type FactCheckMode = 'Soft' | 'Medium' | 'Strict' | 'Custom'
 export type RumorPolicy = 'Deny' | 'AllowWithLabel' | 'WhitelistedOnly' | 'AlwaysManual'
 export type MediaGenerationMode = 'None' | 'UseSourceImage' | 'GeneratePoster' | 'TranslateMeme'
 export type ChannelRoleType = 'Owner' | 'ChannelAdmin' | 'Moderator'
+export type ChannelMode = 'Off' | 'Moderated' | 'Auto'
 export type PublicationKind = 'News' | 'BreakingNews' | 'Rumor' | 'Meme' | 'Digest' | 'Deal' | 'Trailer'
 export type PostStatus =
   | 'CandidateFound' | 'WaitingFactCheck' | 'FactCheckFailed' | 'Duplicate'

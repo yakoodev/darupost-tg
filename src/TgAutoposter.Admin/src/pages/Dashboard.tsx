@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Power, Sparkles, Zap } from 'lucide-react'
+import { Eye, Power, Sparkles, Zap } from 'lucide-react'
 import { useAppData } from '../lib/appData'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../lib/toast'
@@ -7,9 +7,10 @@ import { api } from '../lib/api'
 import { money } from '../lib/format'
 import { kindLabels } from '../lib/format'
 import { Button, Card, PageHead, Select, Stat } from '../components/ui'
-import type { PublicationKind } from '../lib/types'
+import type { ChannelMode, PublicationKind } from '../lib/types'
 
 const KINDS: PublicationKind[] = ['News', 'Rumor', 'Meme', 'Digest', 'Deal', 'Trailer']
+const MODE_LABELS: Record<ChannelMode, string> = { Off: 'Выключен', Moderated: 'С модерацией', Auto: 'Авто' }
 
 export default function Dashboard() {
   const { dashboard, selectedChannel, selectedChannelId, polza, worker, refresh } = useAppData()
@@ -19,22 +20,37 @@ export default function Dashboard() {
   const [busy, setBusy] = useState('')
 
   const isAdmin = canOn(selectedChannelId, 'ChannelAdmin')
-  const autopilot = selectedChannel?.defaultModerationMode === 'Automatic'
+  const currentMode: ChannelMode = !selectedChannel?.isEnabled
+    ? 'Off'
+    : selectedChannel.defaultModerationMode === 'Automatic'
+      ? 'Auto'
+      : 'Moderated'
 
-  async function run(action: 'generate' | 'now' | 'autopilot') {
+  async function run(action: 'generate' | 'now') {
     if (!selectedChannelId) return
     setBusy(action)
     try {
       if (action === 'generate') {
         const r = await api.runPipeline(selectedChannelId, { maxPostsToCreate: 1, publicationKind: kind, ignoreSourceSchedule: true })
         toast.success(`Готово: создано ${r.postsCreated}, дублей ${r.duplicatesSkipped}`)
-      } else if (action === 'now') {
+      } else {
         const r = await api.runPipeline(selectedChannelId, { maxPostsToCreate: 1, publishNewPostsImmediately: true, ignoreSourceSchedule: true, bypassDailyLimit: true })
         toast.success(`Запуск: опубликовано ${r.publishedThisRun}, создано ${r.postsCreated}`)
-      } else {
-        await api.setAutopilot(selectedChannelId, !autopilot)
-        toast.success(!autopilot ? 'Автопилот включён' : 'Автопилот выключен')
       }
+      refresh()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Ошибка')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function changeMode(mode: ChannelMode) {
+    if (!selectedChannelId || mode === currentMode) return
+    setBusy(`mode:${mode}`)
+    try {
+      await api.setMode(selectedChannelId, mode)
+      toast.success(`Режим: ${MODE_LABELS[mode]}`)
       refresh()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Ошибка')
@@ -51,9 +67,17 @@ export default function Dashboard() {
         title={selectedChannel?.name ?? 'Обзор'}
         subtitle="Сводка по каналу и быстрый запуск пайплайна"
         actions={isAdmin && (
-          <Button variant={autopilot ? 'success' : 'default'} loading={busy === 'autopilot'} onClick={() => run('autopilot')}>
-            <Power size={16} /> {autopilot ? 'Автопилот вкл' : 'Автопилот выкл'}
-          </Button>
+          <div className="row" style={{ gap: 6 }}>
+            <Button size="sm" variant={currentMode === 'Off' ? 'danger' : 'ghost'} loading={busy === 'mode:Off'} onClick={() => changeMode('Off')}>
+              <Power size={15} /> Выключен
+            </Button>
+            <Button size="sm" variant={currentMode === 'Moderated' ? 'primary' : 'ghost'} loading={busy === 'mode:Moderated'} onClick={() => changeMode('Moderated')}>
+              <Eye size={15} /> С модерацией
+            </Button>
+            <Button size="sm" variant={currentMode === 'Auto' ? 'success' : 'ghost'} loading={busy === 'mode:Auto'} onClick={() => changeMode('Auto')}>
+              <Zap size={15} /> Авто
+            </Button>
+          </div>
         )}
       />
 

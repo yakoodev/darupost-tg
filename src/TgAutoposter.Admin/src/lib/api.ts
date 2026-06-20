@@ -1,5 +1,5 @@
 import type {
-  AiAccountStatus, ChannelDetails, ChannelListItem, ChannelRoleType, CurrentUser, Dashboard,
+  AiAccountStatus, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard,
   FooterLinkItem, GenerateDraftPostRequest, LoginResponse, PipelineRunResult, PostItem, PostStatus,
   PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, UserListItem,
   WorkerStatus,
@@ -105,6 +105,8 @@ export const api = {
     request<void>(`/api/channels/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   setAutopilot: (id: string, enabled: boolean) =>
     request<ChannelDetails>(`/api/channels/${id}/autopilot`, { method: 'PUT', body: JSON.stringify({ enabled }) }),
+  setMode: (id: string, mode: ChannelMode) =>
+    request<void>(`/api/channels/${id}/mode`, { method: 'PUT', body: JSON.stringify({ mode }) }),
 
   // publication types
   publicationTypes: (channelId: string) =>
