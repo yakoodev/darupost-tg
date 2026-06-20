@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Pipeline;
+using TgAutoposter.Domain.Common;
 using TgAutoposter.Infrastructure.Options;
 using TgAutoposter.Infrastructure.Persistence;
 
@@ -39,8 +40,10 @@ public sealed class AutopostingWorker(
                     PublishNewPostsImmediately: false,
                     MaxPostsToCreate: Math.Max(1, options.MaxPostsPerRun));
 
+                // Only autopilot (Automatic) channels run unattended. When autopilot is off the service
+                // must not spend on collection/web-search/generation — that's the "pause".
                 var channelIds = await db.Channels
-                    .Where(channel => channel.IsEnabled)
+                    .Where(channel => channel.IsEnabled && channel.DefaultModerationMode == ModerationMode.Automatic)
                     .Select(channel => channel.Id)
                     .ToListAsync(stoppingToken);
 
