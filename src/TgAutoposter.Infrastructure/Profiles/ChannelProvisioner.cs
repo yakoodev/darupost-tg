@@ -96,6 +96,7 @@ public static class ChannelProvisioner
             BlacklistKeywordsCsv = template.BlacklistKeywordsCsv,
             Language = template.Language,
             AllowNsfw = template.AllowNsfw,
+            RequireNewsSignal = template.RequireNewsSignal ?? template.Kind is not (SourceKind.Telegram or SourceKind.YouTube),
             AllowRumors = template.AllowedPublicationKindsCsv?.Contains("Rumor", StringComparison.OrdinalIgnoreCase) == true,
             IsEnabled = template.IsEnabled
         };

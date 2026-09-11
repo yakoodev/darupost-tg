@@ -52,6 +52,14 @@ services:
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
       Ingest__Enabled: ${INGEST_ENABLED:-true}
       Ingest__IntervalMinutes: ${INGEST_INTERVAL_MINUTES:-10}
+      Wspanel__Enabled: ${WSPANEL_ENABLED:-false}
+      Wspanel__BaseUrl: ${WSPANEL_BASE_URL:-}
+      Wspanel__ApiKey: ${WSPANEL_API_KEY:-}
+      Wspanel__Profile: ${WSPANEL_PROFILE:-}
+      Wspanel__Program: ${WSPANEL_PROGRAM:-google-chrome}
+      Wspanel__WaitMs: ${WSPANEL_WAIT_MS:-4000}
+      Wspanel__InsecureTls: ${WSPANEL_INSECURE_TLS:-true}
+      Wspanel__UseForTelegram: ${WSPANEL_USE_FOR_TELEGRAM:-true}
     ports:
       - "${API_HOST_PORT:-5000}:8080"
     volumes:

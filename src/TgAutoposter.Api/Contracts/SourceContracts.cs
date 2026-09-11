@@ -15,7 +15,14 @@ public sealed record SourceResponse(
     int MinimumScore,
     int MinimumComments,
     string? AllowedPublicationKindsCsv,
-    DateTimeOffset? LastCheckedAtUtc);
+    string? WhitelistKeywordsCsv,
+    string? BlacklistKeywordsCsv,
+    bool AllowNsfw,
+    bool AllowRumors,
+    bool RequireNewsSignal,
+    DateTimeOffset? LastCheckedAtUtc,
+    int LastCollectedCount,
+    string? LastError);
 
 public sealed record UpsertSourceRequest(
     string Name,
@@ -31,4 +38,5 @@ public sealed record UpsertSourceRequest(
     string? BlacklistKeywordsCsv,
     string? AllowedPublicationKindsCsv,
     bool AllowNsfw,
-    bool AllowRumors);
+    bool AllowRumors,
+    bool? RequireNewsSignal = null);

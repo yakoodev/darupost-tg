@@ -128,6 +128,7 @@ public sealed class NicheSource
     public string? BlacklistKeywordsCsv { get; init; }
     public string Language { get; init; } = "en";
     public bool AllowNsfw { get; init; }
+    public bool? RequireNewsSignal { get; init; }
     public bool IsEnabled { get; init; } = true;
 }
 

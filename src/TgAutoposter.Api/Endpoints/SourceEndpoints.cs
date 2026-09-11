@@ -32,7 +32,14 @@ public static class SourceEndpoints
                     source.MinimumScore,
                     source.MinimumComments,
                     source.AllowedPublicationKindsCsv,
-                    source.LastCheckedAtUtc))
+                    source.WhitelistKeywordsCsv,
+                    source.BlacklistKeywordsCsv,
+                    source.AllowNsfw,
+                    source.AllowRumors,
+                    source.RequireNewsSignal,
+                    source.LastCheckedAtUtc,
+                    source.LastCollectedCount,
+                    source.LastError))
                 .ToListAsync(cancellationToken);
 
             return Results.Ok(items);
@@ -87,6 +94,7 @@ public static class SourceEndpoints
 
     private static void Apply(Source source, UpsertSourceRequest request)
     {
+        var identityChanged = source.Kind != request.Kind || source.Url != NormalizeOptional(request.Url);
         source.Name = request.Name.Trim();
         source.Kind = request.Kind;
         source.IsEnabled = request.IsEnabled;
@@ -101,6 +109,12 @@ public static class SourceEndpoints
         source.AllowedPublicationKindsCsv = NormalizeOptional(request.AllowedPublicationKindsCsv);
         source.AllowNsfw = request.AllowNsfw;
         source.AllowRumors = request.AllowRumors;
+        // Curated feeds (Telegram channels, YouTube) default to "take everything"; Reddit/RSS keep the news gate.
+        source.RequireNewsSignal = request.RequireNewsSignal ?? request.Kind is not (SourceKind.Telegram or SourceKind.YouTube);
+        if (identityChanged)
+        {
+            source.SettingsJson = null;
+        }
     }
 
     private static string? NormalizeOptional(string? value)

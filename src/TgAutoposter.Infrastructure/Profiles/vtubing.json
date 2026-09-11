@@ -48,34 +48,235 @@
   },
   "markers": {
     "lowValue": [
-      "fan art", "fanart", "my drawing", "i drew", "wallpaper", "who is your favorite", "what is your favorite",
-      "discussion thread", "weekly thread", "daily thread", "megathread", "free talk", "rate my", "unpopular opinion",
-      "recommend me", "looking for", "help me find", "quiz"
+      "fan art",
+      "fanart",
+      "my drawing",
+      "i drew",
+      "wallpaper",
+      "who is your favorite",
+      "what is your favorite",
+      "discussion thread",
+      "weekly thread",
+      "daily thread",
+      "megathread",
+      "free talk",
+      "rate my",
+      "unpopular opinion",
+      "recommend me",
+      "looking for",
+      "help me find",
+      "quiz"
     ],
     "newsSignal": [
-      "debut", "graduat", "terminat", "announc", "collab", "milestone", "subscribers", "million", "1m", "2m", "3m",
-      "concert", "3d live", "3d debut", "new outfit", "new model", "redebut", "re-debut", "merch", "goods", "birthday",
-      "anniversary", "hiatus", "return", "comeback", "suspend", "lawsuit", "sues", "affiliate", "joins", "leaves", "leaving",
-      "retire", "reveal", "original song", "cover", "mv", "sponsor", "partnership", "event", "expo", "fes", "convention",
-      "gen ", "wave", "auditions", "official", "statement", "apolog", "contract", "ceo", "cover corp", "anycolor",
-      "hololive", "nijisanji", "vshojo", "phase connect", "idol corp", "prism", "vtuber",
-      "дебют", "выпуск", "граду", "коллаб", "анонс", "концерт", "мерч", "покин", "ушл", "ушёл", "ушел", "юбилей",
-      "миллион", "новая модель", "новый костюм", "заявлен", "контракт"
+      "debut",
+      "graduat",
+      "terminat",
+      "announc",
+      "collab",
+      "milestone",
+      "subscribers",
+      "million",
+      "1m",
+      "2m",
+      "3m",
+      "concert",
+      "3d live",
+      "3d debut",
+      "new outfit",
+      "new model",
+      "redebut",
+      "re-debut",
+      "merch",
+      "goods",
+      "birthday",
+      "anniversary",
+      "hiatus",
+      "return",
+      "comeback",
+      "suspend",
+      "lawsuit",
+      "sues",
+      "affiliate",
+      "joins",
+      "leaves",
+      "leaving",
+      "retire",
+      "reveal",
+      "original song",
+      "cover",
+      "mv",
+      "sponsor",
+      "partnership",
+      "event",
+      "expo",
+      "fes",
+      "convention",
+      "gen ",
+      "wave",
+      "auditions",
+      "official",
+      "statement",
+      "apolog",
+      "contract",
+      "ceo",
+      "cover corp",
+      "anycolor",
+      "hololive",
+      "nijisanji",
+      "vshojo",
+      "phase connect",
+      "idol corp",
+      "prism",
+      "vtuber",
+      "дебют",
+      "выпуск",
+      "граду",
+      "коллаб",
+      "анонс",
+      "концерт",
+      "мерч",
+      "покин",
+      "ушл",
+      "ушёл",
+      "ушел",
+      "юбилей",
+      "миллион",
+      "новая модель",
+      "новый костюм",
+      "заявлен",
+      "контракт"
     ],
     "dedupStopWords": [
-      "official", "announcement", "announce", "announced", "new", "revealed", "stream", "live", "today",
-      "hololive", "nijisanji", "vshojo", "vtuber", "en", "jp", "id",
-      "новый", "новая", "анонс", "анонсировали", "стрим", "сегодня"
+      "official",
+      "announcement",
+      "announce",
+      "announced",
+      "new",
+      "revealed",
+      "stream",
+      "live",
+      "today",
+      "hololive",
+      "nijisanji",
+      "vshojo",
+      "vtuber",
+      "en",
+      "jp",
+      "id",
+      "новый",
+      "новая",
+      "анонс",
+      "анонсировали",
+      "стрим",
+      "сегодня"
     ],
-    "videoSignal": ["debut", "mv", "original song", "cover", "3d live", "concert", "trailer", "teaser", "дебют", "клип", "трейлер", "тизер"],
-    "breakingSignal": ["graduat", "terminat", "passed away", "suspend", "hiatus", "leaves", "leaving", "retire", "contract ended", "выпуск", "покин", "ушл", "ушёл", "ушел"]
+    "videoSignal": [
+      "debut",
+      "mv",
+      "original song",
+      "cover",
+      "3d live",
+      "concert",
+      "trailer",
+      "teaser",
+      "дебют",
+      "клип",
+      "трейлер",
+      "тизер"
+    ],
+    "breakingSignal": [
+      "graduat",
+      "terminat",
+      "passed away",
+      "suspend",
+      "hiatus",
+      "leaves",
+      "leaving",
+      "retire",
+      "contract ended",
+      "выпуск",
+      "покин",
+      "ушл",
+      "ушёл",
+      "ушел"
+    ]
   },
   "classification": [
-    { "kind": "meme", "keywords": ["meme", "memes", "мем", "shitpost"], "sourceNameHints": ["meme"] },
-    { "kind": "rumor", "keywords": ["rumor", "rumour", "leak", "insider", "allegedly", "reportedly", "unconfirmed", "слух", "утеч", "якобы"] },
-    { "kind": "breakingNews", "keywords": ["graduat", "terminat", "passed away", "suspended", "hiatus", "contract ended", "leaves hololive", "leaves nijisanji", "выпуск", "покида", "уходит"] },
-    { "kind": "deal", "keywords": ["merch", "goods", "ticket", "pre-order", "preorder", "booth", "мерч", "билет", "предзаказ"] },
-    { "kind": "trailer", "keywords": ["debut stream", "debut trailer", "mv", "original song", "cover song", "3d live", "3d debut", "concert", "trailer", "teaser", "клип", "трейлер", "тизер"] }
+    {
+      "kind": "meme",
+      "keywords": [
+        "meme",
+        "memes",
+        "мем",
+        "shitpost"
+      ],
+      "sourceNameHints": [
+        "meme"
+      ]
+    },
+    {
+      "kind": "rumor",
+      "keywords": [
+        "rumor",
+        "rumour",
+        "leak",
+        "insider",
+        "allegedly",
+        "reportedly",
+        "unconfirmed",
+        "слух",
+        "утеч",
+        "якобы"
+      ]
+    },
+    {
+      "kind": "breakingNews",
+      "keywords": [
+        "graduat",
+        "terminat",
+        "passed away",
+        "suspended",
+        "hiatus",
+        "contract ended",
+        "leaves hololive",
+        "leaves nijisanji",
+        "выпуск",
+        "покида",
+        "уходит"
+      ]
+    },
+    {
+      "kind": "deal",
+      "keywords": [
+        "merch",
+        "goods",
+        "ticket",
+        "pre-order",
+        "preorder",
+        "booth",
+        "мерч",
+        "билет",
+        "предзаказ"
+      ]
+    },
+    {
+      "kind": "trailer",
+      "keywords": [
+        "debut stream",
+        "debut trailer",
+        "mv",
+        "original song",
+        "cover song",
+        "3d live",
+        "3d debut",
+        "concert",
+        "trailer",
+        "teaser",
+        "клип",
+        "трейлер",
+        "тизер"
+      ]
+    }
   ],
   "webSearch": {
     "researcherPersona": "Ты аккуратный новостной ресерчер по VTuber-индустрии (Hololive, Nijisanji, VShojo, Phase Connect, Idol Corp, инди-витуберы). Возвращай только проверяемые свежие инфоповоды со ссылками на первоисточники: официальные X-аккаунты, YouTube, сайты агентств, крупные VTuber-медиа.",
@@ -84,27 +285,200 @@
     "videoPrompt": "Сегодня {today}. Найди 5 свежих официальных видео из VTuber-индустрии за последние 24-36 часов: дебют-стримы, оригинальные песни и MV, каверы с заметным охватом, 3D-лайвы, концерты, тизеры новых генов.\nНужны только ролики с официальных каналов талантов или агентств, которые можно показать русскоязычной аудитории Telegram-канала \"{brand}\".\nНе бери клипы фанатов, нарезки, реакции, подборки, старые ролики.\nВ каждом пункте videoUrl обязателен: официальный YouTube watch URL. Если videoUrl не найден, не включай пункт.\n\nВерни только JSON-объект без markdown:\n{itemJson}"
   },
   "publicationTypes": [
-    { "kind": "news", "name": "Новость", "description": "Короткая новость из витуберской индустрии", "priority": 100, "factCheckMode": "medium", "mediaMode": "generatePoster", "systemPrompt": "Сделай короткий Telegram-пост: факт, кто это (талант, агентство, ген), контекст, что дальше. Без шаблонных подзаголовков и без ИИ-клише." },
-    { "kind": "breakingNews", "name": "Срочно", "description": "Graduation, termination, официальные заявления агентств, крупные дебюты", "priority": 120, "factCheckMode": "strict", "rumorPolicy": "alwaysManual", "mediaMode": "generatePoster", "systemPrompt": "Это срочная новость: в первом предложении факт и кто заявил. Дальше только подтверждённые детали: дата, причина (если названа официально), что будет с контентом и мемберством. Без домыслов и без оценок." },
-    { "kind": "rumor", "name": "Слух", "description": "Неподтверждённые сообщения, утечки, инсайды", "priority": 70, "factCheckMode": "medium", "rumorPolicy": "alwaysManual", "mediaMode": "generatePoster", "systemPrompt": "Инфоповод не подтверждён: обозначь это в первом абзаце, назови источник слуха и что известно официально." },
-    { "kind": "meme", "name": "Мем", "description": "Мем из витуберского комьюнити", "priority": 40, "factCheckMode": "soft", "requiresFactCheck": false, "mediaMode": "translateMeme", "maxTextLength": 600, "systemPrompt": "Переведи или адаптируй мем на русский без затягивания, имена талантов латиницей." },
-    { "kind": "digest", "name": "Вечерний дайджест", "description": "Выжимка событий дня по витуберам", "priority": 60, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Собери главные события дня в короткий дайджест: 4-7 пунктов по 1-2 предложения, талант и агентство названы, самое важное сверху." },
-    { "kind": "deal", "name": "Мерч / ивент", "description": "Мерч, билеты, концерты, конвенты, коллаборации с брендами", "priority": 50, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Пиши как полезную находку: что выходит, где купить или как попасть, до какого срока, без рекламного тона." },
-    { "kind": "trailer", "name": "Видео", "description": "Дебют-стрим, MV, оригинальная песня, 3D-лайв, тизер", "priority": 75, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Пиши как короткий пост про видео: кто, что вышло (дебют, MV, 3D-лайв), когда, почему стоит посмотреть." }
+    {
+      "kind": "news",
+      "name": "Новость",
+      "description": "Короткая новость из витуберской индустрии",
+      "priority": 100,
+      "factCheckMode": "medium",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Сделай короткий Telegram-пост: факт, кто это (талант, агентство, ген), контекст, что дальше. Без шаблонных подзаголовков и без ИИ-клише."
+    },
+    {
+      "kind": "breakingNews",
+      "name": "Срочно",
+      "description": "Graduation, termination, официальные заявления агентств, крупные дебюты",
+      "priority": 120,
+      "factCheckMode": "strict",
+      "rumorPolicy": "alwaysManual",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Это срочная новость: в первом предложении факт и кто заявил. Дальше только подтверждённые детали: дата, причина (если названа официально), что будет с контентом и мемберством. Без домыслов и без оценок."
+    },
+    {
+      "kind": "rumor",
+      "name": "Слух",
+      "description": "Неподтверждённые сообщения, утечки, инсайды",
+      "priority": 70,
+      "factCheckMode": "medium",
+      "rumorPolicy": "alwaysManual",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Инфоповод не подтверждён: обозначь это в первом абзаце, назови источник слуха и что известно официально."
+    },
+    {
+      "kind": "meme",
+      "name": "Мем",
+      "description": "Мем из витуберского комьюнити",
+      "priority": 40,
+      "factCheckMode": "soft",
+      "requiresFactCheck": false,
+      "mediaMode": "translateMeme",
+      "maxTextLength": 600,
+      "systemPrompt": "Переведи или адаптируй мем на русский без затягивания, имена талантов латиницей."
+    },
+    {
+      "kind": "digest",
+      "name": "Вечерний дайджест",
+      "description": "Выжимка событий дня по витуберам",
+      "priority": 60,
+      "factCheckMode": "soft",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Собери главные события дня в короткий дайджест: 4-7 пунктов по 1-2 предложения, талант и агентство названы, самое важное сверху."
+    },
+    {
+      "kind": "deal",
+      "name": "Мерч / ивент",
+      "description": "Мерч, билеты, концерты, конвенты, коллаборации с брендами",
+      "priority": 50,
+      "factCheckMode": "soft",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Пиши как полезную находку: что выходит, где купить или как попасть, до какого срока, без рекламного тона."
+    },
+    {
+      "kind": "trailer",
+      "name": "Видео",
+      "description": "Дебют-стрим, MV, оригинальная песня, 3D-лайв, тизер",
+      "priority": 75,
+      "factCheckMode": "soft",
+      "mediaMode": "generatePoster",
+      "systemPrompt": "Пиши как короткий пост про видео: кто, что вышло (дебют, MV, 3D-лайв), когда, почему стоит посмотреть."
+    }
   ],
   "sources": [
-    { "name": "r/VirtualYoutubers", "kind": "reddit", "subreddit": "VirtualYoutubers", "minimumScore": 150, "minimumComments": 15, "checkEveryMinutes": 20, "allowedPublicationKindsCsv": "News,BreakingNews,Rumor,Digest,Trailer,Deal", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my" },
-    { "name": "r/Hololive", "kind": "reddit", "subreddit": "Hololive", "minimumScore": 300, "minimumComments": 20, "checkEveryMinutes": 20, "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip" },
-    { "name": "r/Nijisanji", "kind": "reddit", "subreddit": "Nijisanji", "minimumScore": 150, "minimumComments": 10, "checkEveryMinutes": 20, "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip" },
-    { "name": "r/VShojo", "kind": "reddit", "subreddit": "VShojo", "minimumScore": 100, "minimumComments": 5, "checkEveryMinutes": 30, "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,fan art,fanart,wallpaper" },
-    { "name": "r/Hololive memes", "kind": "reddit", "subreddit": "Hololive", "redditListing": "hot", "minimumScore": 800, "minimumComments": 0, "checkEveryMinutes": 60, "allowedPublicationKindsCsv": "Meme", "whitelistKeywordsCsv": "meme,shitpost", "isEnabled": false },
-    { "name": "Polza Web Search (VTuber news)", "kind": "aiWebSearch", "url": "VTuber news today hololive nijisanji vshojo phase connect debut graduation collab milestone announcement", "checkEveryMinutes": 45, "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Deal", "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list" },
-    { "name": "Polza Video Search (VTuber)", "kind": "aiWebSearch", "url": "VTuber official debut stream original song MV 3D live concert today hololive nijisanji vshojo YouTube", "checkEveryMinutes": 60, "allowedPublicationKindsCsv": "Trailer", "blacklistKeywordsCsv": "clip,compilation,reaction,fan made,fanmade" }
+    {
+      "name": "r/VirtualYoutubers",
+      "kind": "reddit",
+      "subreddit": "VirtualYoutubers",
+      "minimumScore": 150,
+      "minimumComments": 15,
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Rumor,Digest,Trailer,Deal",
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my"
+    },
+    {
+      "name": "r/Hololive",
+      "kind": "reddit",
+      "subreddit": "Hololive",
+      "minimumScore": 300,
+      "minimumComments": 20,
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip"
+    },
+    {
+      "name": "r/Nijisanji",
+      "kind": "reddit",
+      "subreddit": "Nijisanji",
+      "minimumScore": 150,
+      "minimumComments": 10,
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip"
+    },
+    {
+      "name": "r/VShojo",
+      "kind": "reddit",
+      "subreddit": "VShojo",
+      "minimumScore": 100,
+      "minimumComments": 5,
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,fan art,fanart,wallpaper"
+    },
+    {
+      "name": "r/Hololive memes",
+      "kind": "reddit",
+      "subreddit": "Hololive",
+      "redditListing": "hot",
+      "minimumScore": 800,
+      "minimumComments": 0,
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "Meme",
+      "whitelistKeywordsCsv": "meme,shitpost",
+      "isEnabled": false
+    },
+    {
+      "name": "Polza Web Search (VTuber news)",
+      "kind": "aiWebSearch",
+      "url": "VTuber news today hololive nijisanji vshojo phase connect debut graduation collab milestone announcement",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Deal",
+      "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list"
+    },
+    {
+      "name": "Polza Video Search (VTuber)",
+      "kind": "aiWebSearch",
+      "url": "VTuber official debut stream original song MV 3D live concert today hololive nijisanji vshojo YouTube",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "Trailer",
+      "blacklistKeywordsCsv": "clip,compilation,reaction,fan made,fanmade"
+    },
+    {
+      "name": "hololive production (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@hololive",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "hololive English (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@hololiveEnglish",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "NIJISANJI EN (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@NIJISANJI_EN",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "VShojo (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@VShojo",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Phase Connect (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@PhaseConnect",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    }
   ],
   "footerLinks": [],
   "scheduleWindows": [
-    { "start": "10:00", "end": "13:00", "minimumIntervalMinutes": 60 },
-    { "start": "14:00", "end": "18:00", "minimumIntervalMinutes": 60 },
-    { "start": "19:00", "end": "23:00", "minimumIntervalMinutes": 45 }
+    {
+      "start": "10:00",
+      "end": "13:00",
+      "minimumIntervalMinutes": 60
+    },
+    {
+      "start": "14:00",
+      "end": "18:00",
+      "minimumIntervalMinutes": 60
+    },
+    {
+      "start": "19:00",
+      "end": "23:00",
+      "minimumIntervalMinutes": 45
+    }
   ]
 }

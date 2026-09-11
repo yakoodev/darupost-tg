@@ -78,7 +78,7 @@ export interface SourcePayload {
   url?: string; subreddit?: string; redditListing: RedditListingKind
   minimumScore: number; minimumComments: number
   whitelistKeywordsCsv?: string; blacklistKeywordsCsv?: string; allowedPublicationKindsCsv?: string
-  allowNsfw: boolean; allowRumors: boolean
+  allowNsfw: boolean; allowRumors: boolean; requireNewsSignal?: boolean
 }
 
 export interface RunPipelineOptions {

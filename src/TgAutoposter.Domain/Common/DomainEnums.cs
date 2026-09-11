@@ -27,7 +27,9 @@ public enum SourceKind
     Web = 1,
     AiWebSearch = 2,
     Rss = 3,
-    Telegram = 4
+    Telegram = 4,
+    YouTube = 5,
+    Twitter = 6
 }
 
 public enum RedditListingKind

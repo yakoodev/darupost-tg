@@ -1,6 +1,6 @@
 export type ModerationMode = 'Manual' | 'Automatic'
 export type ChannelStatus = 'Draft' | 'Connected' | 'Disabled' | 'Error'
-export type SourceKind = 'Reddit' | 'Web' | 'AiWebSearch' | 'Rss' | 'Telegram'
+export type SourceKind = 'Reddit' | 'Web' | 'AiWebSearch' | 'Rss' | 'Telegram' | 'YouTube' | 'Twitter'
 export type RedditListingKind = 'Hot' | 'New' | 'Rising' | 'Top'
 export type FactCheckMode = 'Soft' | 'Medium' | 'Strict' | 'Custom'
 export type RumorPolicy = 'Deny' | 'AllowWithLabel' | 'WhitelistedOnly' | 'AlwaysManual'
@@ -106,7 +106,14 @@ export interface SourceItem {
   minimumScore: number
   minimumComments: number
   allowedPublicationKindsCsv?: string | null
+  whitelistKeywordsCsv?: string | null
+  blacklistKeywordsCsv?: string | null
+  allowNsfw: boolean
+  allowRumors: boolean
+  requireNewsSignal: boolean
   lastCheckedAtUtc?: string | null
+  lastCollectedCount: number
+  lastError?: string | null
 }
 
 export interface PublicationTypeItem {

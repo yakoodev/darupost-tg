@@ -30,6 +30,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<TelegramOptions>(configuration.GetSection("Telegram"));
         services.Configure<WorkerOptions>(configuration.GetSection("Worker"));
         services.Configure<IngestOptions>(configuration.GetSection("Ingest"));
+        services.Configure<WspanelOptions>(configuration.GetSection("Wspanel"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -54,9 +55,16 @@ public static class InfrastructureDependencyInjection
         services.AddHttpClient<RedditCollector>();
         services.AddHttpClient<FeedCollector>();
         services.AddHttpClient<AiWebSearchCollector>();
+        services.AddHttpClient<YouTubeCollector>();
+        services.AddSingleton<WspanelClient>();
+        services.AddSingleton<TelegramCollector>();
+        services.AddSingleton<TwitterCollector>();
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<RedditCollector>());
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<FeedCollector>());
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<AiWebSearchCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<YouTubeCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<TelegramCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<TwitterCollector>());
         services.AddScoped<IContentCollector, CompositeContentCollector>();
 
         var redisConnection = configuration.GetConnectionString("Redis");

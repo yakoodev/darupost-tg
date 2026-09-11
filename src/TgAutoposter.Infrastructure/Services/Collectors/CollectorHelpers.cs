@@ -53,6 +53,11 @@ internal static class CollectorHelpers
             return false;
         }
 
+        if (!source.RequireNewsSignal)
+        {
+            return true;
+        }
+
         return profile.Markers.NewsSignal.Count == 0 || ContainsAny(haystack, profile.Markers.NewsSignal);
     }
 

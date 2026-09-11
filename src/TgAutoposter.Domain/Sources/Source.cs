@@ -25,6 +25,10 @@ public sealed class Source : Entity
     public string Language { get; set; } = "en";
     public bool AllowNsfw { get; set; }
     public bool AllowRumors { get; set; }
+    /// <summary>Drop items that carry none of the profile's news-signal markers. Off for curated feeds (TG channels, agency YouTube).</summary>
+    public bool RequireNewsSignal { get; set; } = true;
+    /// <summary>Kind-specific settings / caches (e.g. resolved YouTube channel id).</summary>
+    public string? SettingsJson { get; set; }
     public DateTimeOffset? LastCheckedAtUtc { get; set; }
     public DateTimeOffset? LastCollectedAtUtc { get; set; }
     public int LastCollectedCount { get; set; }

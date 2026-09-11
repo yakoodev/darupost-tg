@@ -9,7 +9,7 @@ import { dateTime } from '../lib/format'
 import { Badge, Button, Card, Empty, Field, PageHead, Select, Switch, Textarea, TextInput } from '../components/ui'
 import type { RedditListingKind, SourceItem, SourceKind } from '../lib/types'
 
-const SOURCE_KINDS: SourceKind[] = ['Reddit', 'Web', 'AiWebSearch', 'Rss', 'Telegram']
+const SOURCE_KINDS: SourceKind[] = ['Reddit', 'Rss', 'YouTube', 'Telegram', 'AiWebSearch', 'Web', 'Twitter']
 const REDDIT_LISTINGS: RedditListingKind[] = ['Hot', 'New', 'Rising', 'Top']
 
 const kindLabels: Record<SourceKind, string> = {
@@ -17,7 +17,18 @@ const kindLabels: Record<SourceKind, string> = {
   Web: 'Веб-страница',
   AiWebSearch: 'AI-поиск',
   Rss: 'RSS',
-  Telegram: 'Telegram',
+  Telegram: 'Telegram-канал',
+  YouTube: 'YouTube-канал',
+  Twitter: 'X (Twitter)',
+}
+
+const URL_LABELS: Partial<Record<SourceKind, { label: string; hint?: string }>> = {
+  Rss: { label: 'URL ленты' },
+  Web: { label: 'URL' },
+  AiWebSearch: { label: 'Поисковый запрос', hint: 'Текст запроса для AI-поиска' },
+  YouTube: { label: 'Канал', hint: 'Ссылка на канал, @handle или ID (UC…)' },
+  Telegram: { label: 'Канал', hint: '@username или ссылка t.me/… (только публичные каналы)' },
+  Twitter: { label: 'Аккаунт', hint: '@handle или ссылка x.com/… — читается через wspanel (нужен настроенный WSPANEL_*)' },
 }
 
 function emptyForm(): SourcePayload {
@@ -36,6 +47,7 @@ function emptyForm(): SourcePayload {
     allowedPublicationKindsCsv: '',
     allowNsfw: false,
     allowRumors: false,
+    requireNewsSignal: true,
   }
 }
 
@@ -90,11 +102,12 @@ export default function Sources() {
       redditListing: item.redditListing,
       minimumScore: item.minimumScore,
       minimumComments: item.minimumComments,
-      whitelistKeywordsCsv: '',
-      blacklistKeywordsCsv: '',
+      whitelistKeywordsCsv: item.whitelistKeywordsCsv ?? '',
+      blacklistKeywordsCsv: item.blacklistKeywordsCsv ?? '',
       allowedPublicationKindsCsv: item.allowedPublicationKindsCsv ?? '',
-      allowNsfw: false,
-      allowRumors: false,
+      allowNsfw: item.allowNsfw,
+      allowRumors: item.allowRumors,
+      requireNewsSignal: item.requireNewsSignal,
     })
     setShowForm(true)
   }
@@ -106,7 +119,13 @@ export default function Sources() {
   }
 
   function patch<K extends keyof SourcePayload>(key: K, value: SourcePayload[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      if (key === 'kind' && !editingId) {
+        next.requireNewsSignal = !(value === 'Telegram' || value === 'YouTube')
+      }
+      return next
+    })
   }
 
   async function save() {
@@ -148,7 +167,8 @@ export default function Sources() {
   }
 
   const isReddit = form.kind === 'Reddit'
-  const isUrlKind = form.kind === 'Rss' || form.kind === 'Web' || form.kind === 'AiWebSearch'
+  const isUrlKind = form.kind !== 'Reddit'
+  const urlMeta = URL_LABELS[form.kind] ?? { label: 'URL' }
 
   return (
     <>
@@ -193,7 +213,10 @@ export default function Sources() {
                     <td>{item.minimumScore} / {item.minimumComments}</td>
                     <td>{item.checkEveryMinutes} мин</td>
                     <td>{item.allowedPublicationKindsCsv || '—'}</td>
-                    <td>{dateTime(item.lastCheckedAtUtc)}</td>
+                    <td title={item.lastError ?? undefined}>
+                      {dateTime(item.lastCheckedAtUtc)}
+                      {item.lastError && <Badge tone="red">ошибка</Badge>}
+                    </td>
                     <td>
                       {item.isEnabled
                         ? <Badge tone="green">включён</Badge>
@@ -242,10 +265,7 @@ export default function Sources() {
           )}
 
           {isUrlKind && (
-            <Field
-              label={form.kind === 'AiWebSearch' ? 'Поисковый запрос' : 'URL'}
-              hint={form.kind === 'AiWebSearch' ? 'Текст запроса для AI-поиска' : undefined}
-            >
+            <Field label={urlMeta.label} hint={urlMeta.hint}>
               <TextInput value={form.url ?? ''} onChange={(e) => patch('url', e.target.value)} />
             </Field>
           )}
@@ -271,6 +291,9 @@ export default function Sources() {
           </Field>
           <Field>
             <Switch checked={form.allowRumors} onChange={(v) => patch('allowRumors', v)} label="Разрешить слухи" />
+          </Field>
+          <Field hint="Выключи для кураторских лент (Telegram-каналы, YouTube агентств), чтобы брать все посты">
+            <Switch checked={form.requireNewsSignal ?? true} onChange={(v) => patch('requireNewsSignal', v)} label="Только новостные (фильтр по маркерам тематики)" />
           </Field>
           <Field>
             <Switch checked={form.isEnabled} onChange={(v) => patch('isEnabled', v)} label="Источник включён" />

@@ -111,6 +111,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
         modelBuilder.Entity<Source>(builder =>
         {
+            builder.Property(x => x.RequireNewsSignal).HasDefaultValue(true);
+            builder.Property(x => x.LastError).HasMaxLength(512);
             builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
             builder.Property(x => x.Url).HasMaxLength(1024);
             builder.Property(x => x.Subreddit).HasMaxLength(120);
