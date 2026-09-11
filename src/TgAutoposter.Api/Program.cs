@@ -136,6 +136,7 @@ app
     .MapScheduleEndpoints()
     .MapPostEndpoints()
     .MapPipelineEndpoints()
+    .MapProfileEndpoints()
     .MapIntegrationEndpoints();
 
 await app.UseInfrastructureAsync();

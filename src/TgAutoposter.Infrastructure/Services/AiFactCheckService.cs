@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
@@ -19,6 +20,7 @@ public sealed class AiFactCheckService(
     IAiProvider aiProvider,
     IOptions<PolzaOptions> polzaOptions,
     BasicFactCheckService fallback,
+    INicheProfileProvider profiles,
     ILogger<AiFactCheckService> logger) : IFactCheckService
 {
     public async Task<FactCheckResult> CheckAsync(
@@ -55,18 +57,19 @@ public sealed class AiFactCheckService(
         SourceCandidate candidate,
         CancellationToken cancellationToken)
     {
+        var profile = profiles.Get(channel.ProfileKey);
         var modeRule = publicationType.FactCheckMode switch
         {
-            FactCheckMode.Soft => "Мягкий режим: достаточно одного вменяемого источника. Пропускай обычные игровые новости.",
-            FactCheckMode.Medium => "Средний режим: нужны два независимых источника ИЛИ один официальный/крупный игровой источник. Если уверенности нет — needs_review.",
-            FactCheckMode.Strict => "Строгий режим: пропускай (passed) только официально подтверждённое или из крупных СМИ. Иначе needs_review или failed.",
+            FactCheckMode.Soft => profile.Prompts.FactCheckSoftRule,
+            FactCheckMode.Medium => profile.Prompts.FactCheckMediumRule,
+            FactCheckMode.Strict => profile.Prompts.FactCheckStrictRule,
             _ => publicationType.SystemPrompt is { Length: > 0 } customPrompt
                 ? customPrompt
                 : "Пользовательский режим: оцени достоверность по здравому смыслу."
         };
 
         var system = new StringBuilder()
-            .AppendLine("Ты фактчек-редактор игрового Telegram-канала. Оцени достоверность инфоповода перед публикацией.")
+            .AppendLine(profile.Prompts.FactCheckPersona)
             .AppendLine(modeRule)
             .AppendLine("Учитывай, что неофициальные утечки и слухи (leak, rumor, insider, \"по слухам\") — это isRumor=true.")
             .AppendLine("Ответь СТРОГО одним JSON-объектом без markdown:")

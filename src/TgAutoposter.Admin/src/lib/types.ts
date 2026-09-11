@@ -83,6 +83,7 @@ export interface ChannelDetails {
   status: ChannelStatus
   timeZone: string
   language: string
+  profileKey: string
   positioning: string
   systemPrompt: string
   styleGuide: string
@@ -187,4 +188,17 @@ export interface GenerateDraftPostRequest {
   sourceUrl?: string | null
   summary: string
   scheduledForUtc?: string | null
+}
+
+export interface NicheProfileSummary {
+  key: string
+  displayName: string
+  language: string
+  defaultName: string
+  positioning: string
+  systemPrompt: string
+  styleGuide: string
+  dailyPostLimit: number
+  publicationTypesCount: number
+  sourcesCount: number
 }

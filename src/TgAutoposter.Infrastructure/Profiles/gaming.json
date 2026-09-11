@@ -1,0 +1,110 @@
+{
+  "key": "gaming",
+  "displayName": "Игры",
+  "brandFallbackName": "Только игры",
+  "language": "ru",
+  "channel": {
+    "name": "Только игры",
+    "timeZone": "Europe/Moscow",
+    "positioning": "Игровой Telegram-канал: новости, слухи, мемы, раздачи, релизы и трейлеры. Без неигровой повестки.",
+    "systemPrompt": "Ты редактор Telegram-канала про игры. Пиши как человек, который быстро объясняет новость игрокам: конкретно, спокойно, без пресс-релизного тона, без ИИ-шаблонов и без неигровой повестки.",
+    "styleGuide": "Русский язык, короткие абзацы, конкретика сначала. Без шаблонных секций вроде «Почему это важно», без мемных концовок, без лишнего сленга и драматизации.",
+    "dailyPostLimit": 6,
+    "dailyAiBudgetLimit": 10
+  },
+  "prompts": {
+    "factCheckPersona": "Ты фактчек-редактор игрового Telegram-канала. Оцени достоверность инфоповода перед публикацией.",
+    "factCheckSoftRule": "Мягкий режим: достаточно одного вменяемого источника. Пропускай обычные игровые новости.",
+    "factCheckMediumRule": "Средний режим: нужны два независимых источника ИЛИ один официальный/крупный игровой источник. Если уверенности нет — needs_review.",
+    "factCheckStrictRule": "Строгий режим: пропускай (passed) только официально подтверждённое или из крупных СМИ. Иначе needs_review или failed.",
+    "dedupPersona": "Ты редактор игрового канала. Решаешь, дублирует ли новый инфоповод уже опубликованные.",
+    "textRules": [
+      "коротко и по делу, как живой редактор Telegram-канала, а не пресс-релиз;",
+      "2-4 коротких абзаца без маркированного списка, если список не нужен по смыслу;",
+      "первый абзац сразу сообщает новость, без разгона и без кликбейта;",
+      "объясняй последствия только если они реально следуют из инфоповода;",
+      "не используй шаблонные подзаголовки и обороты: \"Почему это важно\", \"Что это значит\", \"Для игроков\", \"тревожный звоночек\", \"финальный босс\", \"экосистема\", \"бьёт по рынку\", \"стоит следить\";",
+      "без искусственной драматизации, мемных концовок и канцелярита;",
+      "максимум один уместный эмодзи, лучше без эмодзи;",
+      "без неигровой повестки;",
+      "без длинных URL в тексте;"
+    ],
+    "imageStyle": "Создай вертикальный полнокадровый визуал 4:5 для новостной карточки Telegram-канала об играх.\n\nЭто фон на всю карточку (full-bleed): кинематографичный, атмосферный игровой кадр на всю площадь, который заполняет весь кадр без рамок и полей.\nСтиль: тёмный editorial/кинематографичный визуал игрового медиа, реалистичная/полуреалистичная сцена или предметная метафора. Не AI-art-китч, не 3D-render-пластик, не фэнтези-постер, не инфографика, не коллаж.",
+    "imageSubjectHint": "предмет новости «{subject}» в виде безопасной метафоры без официальных логотипов и без узнаваемых скриншотов; если упомянута компания, игра, сервис или событие, показать не логотип, а контекстный объект: силуэт персонажа без сходства, игровое окно без UI-брендинга, витрину магазина, серверную стойку, студийный стол, календарь события или экран обновления.",
+    "memeLocalization": "Локализуй исходный игровой мем для русскоязычного Telegram-канала \"{brand}\".\n\nЭто не новостная карточка и не постер. Используй исходное изображение как главный референс:\n{sourceImage}\n\nЗадача:\n- сохранить узнаваемую композицию, кадрирование и мемный формат исходной картинки;\n- перевести весь видимый английский текст на естественный русский;\n- если дословный перевод слабый, адаптировать шутку под русскоязычных игроков;\n- оставить юмор коротким, разговорным и понятным без поясняющих подписей;\n- не добавлять логотипы, водяные знаки, бренд канала, новостные рамки, UI-панели и инфографику;\n- не превращать мем в AI-art, 3D-render, фэнтези-постер или рекламный баннер;\n- текст должен быть крупным, читаемым и без ошибок.\n\nКонтекст для адаптации:\nЗаголовок Reddit: {title}\nСсылка: {url}\nТекст поста: {text}",
+    "rubrics": {
+      "News": "НОВОСТИ",
+      "BreakingNews": "СРОЧНО",
+      "Rumor": "СЛУХ",
+      "Digest": "ДАЙДЖЕСТ",
+      "Deal": "РАЗДАЧА",
+      "Trailer": "ТРЕЙЛЕР",
+      "Meme": "МЕМ"
+    },
+    "digestInstructions": "Собери главные игровые события дня в короткий дайджест: 4-7 пунктов, каждый 1-2 предложения, самое важное сверху, без воды."
+  },
+  "markers": {
+    "lowValue": [
+      "review", "preview", "hands-on", "roundup", "guide", "walkthrough", "tips", "best ",
+      "what are you playing", "suggestions thread", "lives up to the hype", "if you haven't played",
+      "wordle", "connections", "quiz", "hardware review"
+    ],
+    "newsSignal": [
+      "announc", "reveal", "release", "launch", "trailer", "patch", "update", "delay", "confirm",
+      "lawsuit", "sues", "leak", "rumor", "rumour", "insider", "acquisition", "beta", "dlc", "expansion",
+      "showcase", "coming to", "game pass", "free", "sale",
+      "анонс", "анонсиров", "раскрыл", "трейлер", "дата выхода", "релиз", "выйдет", "вышла", "вышел",
+      "патч", "обновлен", "перенес", "подтверд", "суд", "иск", "слух", "утеч", "бета", "дополнени", "распродаж"
+    ],
+    "dedupStopWords": [
+      "official", "trailer", "teaser", "announcement", "announce", "announced",
+      "launch", "gameplay", "story", "release", "date", "new", "revealed",
+      "вышел", "вышла", "новый", "новая", "трейлер", "анонс", "анонсировали",
+      "сюжетный", "релиз", "дата", "показали"
+    ],
+    "videoSignal": ["trailer", "teaser", "showcase", "reveal", "анонс", "трейлер", "тизер", "показали"],
+    "breakingSignal": ["shut down", "shutting down", "cancelled", "canceled", "layoffs", "закрыва", "отмен", "увольнен"]
+  },
+  "classification": [
+    { "kind": "meme", "keywords": ["meme", "memes", "мем"], "sourceNameHints": ["meme"] },
+    { "kind": "rumor", "keywords": ["leak", "rumor", "rumour", "insider", "слух", "утеч"] },
+    { "kind": "deal", "keywords": ["free", "giveaway", "sale", "discount", "скид", "раздач", "бесплат"] },
+    { "kind": "trailer", "keywords": ["trailer", "showcase", "announce", "reveal", "анонс", "трейлер", "показали"] }
+  ],
+  "webSearch": {
+    "researcherPersona": "Ты аккуратный новостной ресерчер по видеоиграм. Возвращай только проверяемые свежие инфоповоды со ссылками на источники.",
+    "defaultQuery": "fresh video game news today PC console gaming releases trailers updates official announcements",
+    "newsPrompt": "Сегодня {today}. Найди 5 свежих новостей строго про видеоигры за последние 24-36 часов.\nНужны инфоповоды для русскоязычного Telegram-канала \"{brand}\": релизы, патчи, трейлеры, игровые студии, платформы, раздачи, события индустрии.\nНе бери обзоры, превью, рекомендации \"поиграть\", гайды, Wordle, подборки, старые новости и неигровую повестку.\nКаждый пункт должен быть событием: анонс, релиз, трейлер, патч, перенос, суд, покупка студии, дата выхода, DLC, бета или крупное платформенное изменение.\nЕсли пункт про трейлер, в videoUrl верни прямую ссылку на официальный ролик, YouTube watch/embed URL или другой проверяемый URL видео. Если видео найти нельзя, такой пункт не бери как трейлер.\n\nВерни только JSON-объект без markdown:\n{itemJson}",
+    "videoPrompt": "Сегодня {today}. Найди 5 свежих официальных трейлеров или видео-анонсов по видеоиграм за последние 24-36 часов.\nНужны только ролики, которые можно показать русскоязычной аудитории Telegram-канала \"{brand}\": официальный трейлер, gameplay trailer, launch trailer, reveal trailer, showcase, дата выхода с роликом.\nНе бери обзоры, реакции, фанатские трейлеры, подборки, гайды, старые ролики, неигровую повестку и материалы без проверяемого видео.\nНе бери мелкий инфоповод, если это просто очередной ролик без даты выхода, релиза, крупного анонса, известной игры/студии или заметного обновления.\nВ каждом пункте videoUrl обязателен: официальный YouTube watch/embed URL, страница официального трейлера или прямой URL видео. Если videoUrl не найден, не включай пункт.\n\nВерни только JSON-объект без markdown:\n{itemJson}"
+  },
+  "publicationTypes": [
+    { "kind": "news", "name": "Новость", "description": "Короткая игровая новость", "priority": 100, "factCheckMode": "medium", "mediaMode": "generatePoster", "systemPrompt": "Сделай короткий Telegram-пост: факт, контекст, практический вывод. Без шаблонных подзаголовков и без ИИ-клише." },
+    { "kind": "rumor", "name": "Слух / утечка", "description": "Неофициальные игровые слухи и утечки", "priority": 80, "factCheckMode": "medium", "mediaMode": "generatePoster", "systemPrompt": "Если инфоповод неофициальный, ясно обозначай это в первом абзаце." },
+    { "kind": "meme", "name": "Мем", "description": "Игровой мем с Reddit", "priority": 40, "factCheckMode": "soft", "requiresFactCheck": false, "mediaMode": "translateMeme", "maxTextLength": 600, "systemPrompt": "Переведи или адаптируй игровой мем на русский без затягивания." },
+    { "kind": "digest", "name": "Дайджест", "description": "Подборка нескольких инфоповодов", "priority": 60, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Собери несколько инфоповодов в короткий дайджест." },
+    { "kind": "deal", "name": "Раздача / скидка", "description": "Сильная скидка, бесплатная игра или подписочная раздача", "priority": 55, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Пиши как полезную находку: где забрать, что дают, до какого срока, без рекламного тона." },
+    { "kind": "trailer", "name": "Трейлер / анонс", "description": "Трейлер, анонс, дата выхода или показ игры", "priority": 70, "factCheckMode": "soft", "mediaMode": "generatePoster", "systemPrompt": "Пиши как короткий пост про трейлер или анонс: что показали, платформа/дата, почему это стоит внимания." }
+  ],
+  "sources": [
+    { "name": "r/Games", "kind": "reddit", "subreddit": "Games", "minimumScore": 100, "minimumComments": 20, "allowedPublicationKindsCsv": "News,Rumor,Digest", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,tech support,basic questions,what are you playing,game suggestions,request thread,discussion thread,free talk" },
+    { "name": "r/pcgaming", "kind": "reddit", "subreddit": "pcgaming", "minimumScore": 80, "minimumComments": 15, "allowedPublicationKindsCsv": "News,Digest,Deal", "blacklistKeywordsCsv": "weekly,daily,thread,megathread,tech support,basic questions,what are you playing,game suggestions,request thread,discussion thread,free talk" },
+    { "name": "r/GamingLeaksAndRumours", "kind": "reddit", "subreddit": "GamingLeaksAndRumours", "minimumScore": 150, "minimumComments": 25, "allowedPublicationKindsCsv": "Rumor", "blacklistKeywordsCsv": "weekly,daily,thread,megathread" },
+    { "name": "r/gamememes", "kind": "reddit", "subreddit": "gamememes", "minimumScore": 20, "minimumComments": 0, "allowedPublicationKindsCsv": "Meme" },
+    { "name": "Polza Web Search", "kind": "aiWebSearch", "url": "fresh video game news today release patch deal giveaway gaming industry PC console Nintendo PlayStation Xbox Steam", "checkEveryMinutes": 45, "allowedPublicationKindsCsv": "News,Digest,Deal", "blacklistKeywordsCsv": "wordle,connections,guide,walkthrough,hardware,monitor,keyboard,mouse,controller,review roundup" },
+    { "name": "Polza Trailer Search", "kind": "aiWebSearch", "url": "fresh official video game trailer today YouTube official trailer reveal gameplay showcase announcement PC PS5 Xbox Nintendo Steam", "checkEveryMinutes": 45, "allowedPublicationKindsCsv": "Trailer", "blacklistKeywordsCsv": "review,preview,guide,walkthrough,hardware,monitor,keyboard,mouse,controller,fan trailer,concept trailer" },
+    { "name": "PC Gamer", "kind": "rss", "url": "https://www.pcgamer.com/rss/", "checkEveryMinutes": 30, "allowedPublicationKindsCsv": "News,Digest,Trailer", "blacklistKeywordsCsv": "wordle,connections,quiz,guide,walkthrough,best settings,deal alert,hardware review,monitor,keyboard,mouse,controller,board game" },
+    { "name": "Nintendo Life", "kind": "rss", "url": "https://www.nintendolife.com/feeds/latest", "checkEveryMinutes": 30, "allowedPublicationKindsCsv": "News,Digest,Trailer", "blacklistKeywordsCsv": "wordle,connections,quiz,guide,walkthrough,best settings,deal alert,hardware review,monitor,keyboard,mouse,controller,board game" },
+    { "name": "Rock Paper Shotgun", "kind": "rss", "url": "https://www.rockpapershotgun.com/feed", "checkEveryMinutes": 30, "allowedPublicationKindsCsv": "News,Digest", "blacklistKeywordsCsv": "wordle,connections,quiz,guide,walkthrough,best settings,deal alert,hardware review,monitor,keyboard,mouse,controller,board game" },
+    { "name": "The Verge Games", "kind": "rss", "url": "https://www.theverge.com/rss/games/index.xml", "checkEveryMinutes": 30, "allowedPublicationKindsCsv": "News,Digest", "blacklistKeywordsCsv": "wordle,connections,quiz,guide,walkthrough,best settings,deal alert,hardware review,monitor,keyboard,mouse,controller,board game" }
+  ],
+  "footerLinks": [
+    { "label": "🎮 Больше новостей", "url": "https://t.me/darutests", "sortOrder": 10 },
+    { "label": "🤖 Бот канала", "url": "https://t.me/daruautopostbot", "sortOrder": 20 }
+  ],
+  "scheduleWindows": [
+    { "start": "10:00", "end": "12:00", "minimumIntervalMinutes": 60 },
+    { "start": "13:00", "end": "15:00", "minimumIntervalMinutes": 60 },
+    { "start": "16:00", "end": "18:00", "minimumIntervalMinutes": 60 },
+    { "start": "19:00", "end": "22:00", "minimumIntervalMinutes": 60 }
+  ]
+}

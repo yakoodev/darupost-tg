@@ -13,6 +13,8 @@ public sealed class Channel : Entity
     public ChannelStatus Status { get; set; } = ChannelStatus.Draft;
     public string TimeZone { get; set; } = "Europe/Moscow";
     public string Language { get; set; } = "ru";
+    /// <summary>Niche profile key (gaming, vtubing, ...). Drives prompts, markers, classification and default sources.</summary>
+    public string ProfileKey { get; set; } = "gaming";
     public string Positioning { get; set; } = string.Empty;
     public string SystemPrompt { get; set; } = string.Empty;
     public string StyleGuide { get; set; } = string.Empty;

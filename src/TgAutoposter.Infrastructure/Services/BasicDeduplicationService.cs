@@ -1,18 +1,35 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
 using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
 
-public sealed class BasicDeduplicationService(AppDbContext db) : IDeduplicationService
+public sealed class BasicDeduplicationService(AppDbContext db, INicheProfileProvider profiles) : IDeduplicationService
 {
+    private static readonly string[] GenericStopWords =
+    [
+        "the", "a", "an", "and", "of", "for", "to", "in", "on", "with", "new", "official",
+        "новый", "новая", "новое"
+    ];
+
     public async Task<DeduplicationResult> CheckAsync(SourceCandidate candidate, CancellationToken cancellationToken)
     {
+        var profileKey = await db.Channels
+            .Where(channel => channel.Id == candidate.ChannelId)
+            .Select(channel => channel.ProfileKey)
+            .FirstOrDefaultAsync(cancellationToken);
+        var stopWords = new HashSet<string>(GenericStopWords, StringComparer.Ordinal);
+        foreach (var word in profiles.Get(profileKey).Markers.DedupStopWords)
+        {
+            stopWords.Add(word.ToLowerInvariant());
+        }
+
         var normalizedTitle = Normalize(candidate.Title);
-        var normalizedTopic = NormalizeTopic(candidate.Title);
+        var normalizedTopic = NormalizeTopic(candidate.Title, stopWords);
         var normalizedUrl = NormalizeUrl(candidate.CanonicalUrl ?? candidate.Url);
         var normalizedVideoUrl = NormalizeUrl(candidate.VideoUrl);
 
@@ -59,8 +76,8 @@ public sealed class BasicDeduplicationService(AppDbContext db) : IDeduplicationS
                     post.Id);
             }
 
-            var topicSimilarity = JaccardSimilarity(normalizedTopic, NormalizeTopic(post.SourceTitle));
-            if (topicSimilarity >= 0.55 && HasStrongSharedToken(normalizedTopic, NormalizeTopic(post.SourceTitle)))
+            var topicSimilarity = JaccardSimilarity(normalizedTopic, NormalizeTopic(post.SourceTitle, stopWords));
+            if (topicSimilarity >= 0.55 && HasStrongSharedToken(normalizedTopic, NormalizeTopic(post.SourceTitle, stopWords)))
             {
                 return new DeduplicationResult(
                     DeduplicationStatus.Duplicate,
@@ -100,17 +117,8 @@ public sealed class BasicDeduplicationService(AppDbContext db) : IDeduplicationS
         return string.Join(' ', new string(chars).Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
 
-    private static string NormalizeTopic(string? value)
+    private static string NormalizeTopic(string? value, HashSet<string> stopWords)
     {
-        var stopWords = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "the", "a", "an", "and", "of", "for", "to", "in", "on", "with",
-            "official", "trailer", "teaser", "announcement", "announce", "announced",
-            "launch", "gameplay", "story", "release", "date", "new", "revealed",
-            "вышел", "вышла", "новый", "новая", "трейлер", "анонс", "анонсировали",
-            "сюжетный", "релиз", "дата", "показали"
-        };
-
         var tokens = Normalize(value)
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(token => token.Length > 1 && !stopWords.Contains(token))

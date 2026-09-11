@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
@@ -13,7 +14,8 @@ namespace TgAutoposter.Infrastructure.Services;
 public sealed class PolzaImageGenerator(
     HttpClient httpClient,
     IOptions<PolzaOptions> optionsAccessor,
-    IOptions<MediaOptions> mediaOptionsAccessor) : IImageGenerator
+    IOptions<MediaOptions> mediaOptionsAccessor,
+    INicheProfileProvider profiles) : IImageGenerator
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -24,7 +26,8 @@ public sealed class PolzaImageGenerator(
     {
         var options = optionsAccessor.Value;
         var model = options.ImageModel;
-        var prompt = BuildPrompt(channel, post);
+        var profile = profiles.Get(channel.ProfileKey);
+        var prompt = BuildPrompt(channel, profile, post);
         var referenceImages = ResolveReferenceImages(post);
 
         if (!options.Enabled || string.IsNullOrWhiteSpace(options.ApiKey))
@@ -62,7 +65,7 @@ public sealed class PolzaImageGenerator(
             try
             {
                 var generated = await GenerateViaMediaApiAsync(options, channel.Id, model, prompt, aspectRatio, referenceImages, cancellationToken);
-                return await ApplyNewsTemplateAsync(channel, post, generated, cancellationToken);
+                return await ApplyNewsTemplateAsync(channel, profile, post, generated, cancellationToken);
             }
             catch (HttpRequestException ex) when (aspectRatios.Length > 1 && ex.Message.Contains("aspect_ratio", StringComparison.OrdinalIgnoreCase))
             {
@@ -146,7 +149,7 @@ public sealed class PolzaImageGenerator(
         return await PollAsync(options, requestId, prompt, model, raw, cancellationToken);
     }
 
-    private static string BuildPrompt(Channel channel, Post post)
+    private static string BuildPrompt(Channel channel, NicheProfile profile, Post post)
     {
         var text = post.FinalText ?? post.GeneratedText ?? post.OriginalSummary;
         text = text.ReplaceLineEndings(" ").Trim();
@@ -156,39 +159,22 @@ public sealed class PolzaImageGenerator(
         }
 
         var mainThesis = ExtractMainThesis(post, text);
-        var visualSubject = ExtractVisualSubject(post, text);
-        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? "Только игры" : channel.Name.Trim();
+        var visualSubject = ExtractVisualSubject(profile, post, text);
+        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? profile.BrandFallbackName : channel.Name.Trim();
 
         if (post.PublicationKind == PublicationKind.Meme)
         {
             var sourceImage = ResolveReferenceImages(post).FirstOrDefault() ?? post.ImagePath;
-            return $"""
-            Локализуй исходный игровой мем для русскоязычного Telegram-канала "{brandName}".
-
-            Это не новостная карточка и не постер. Используй исходное изображение как главный референс:
-            {sourceImage}
-
-            Задача:
-            - сохранить узнаваемую композицию, кадрирование и мемный формат исходной картинки;
-            - перевести весь видимый английский текст на естественный русский;
-            - если дословный перевод слабый, адаптировать шутку под русскоязычных игроков;
-            - оставить юмор коротким, разговорным и понятным без поясняющих подписей;
-            - не добавлять логотипы, водяные знаки, бренд канала, новостные рамки, UI-панели и инфографику;
-            - не превращать мем в AI-art, 3D-render, фэнтези-постер или рекламный баннер;
-            - текст должен быть крупным, читаемым и без ошибок.
-
-            Контекст для адаптации:
-            Заголовок Reddit: {post.SourceTitle}
-            Ссылка: {post.SourceUrl}
-            Текст поста: {text}
-            """;
+            return profile.Prompts.MemeLocalization
+                .Replace("{brand}", brandName, StringComparison.Ordinal)
+                .Replace("{sourceImage}", sourceImage ?? string.Empty, StringComparison.Ordinal)
+                .Replace("{title}", post.SourceTitle, StringComparison.Ordinal)
+                .Replace("{url}", post.SourceUrl ?? string.Empty, StringComparison.Ordinal)
+                .Replace("{text}", text, StringComparison.Ordinal);
         }
 
         return $"""
-        Создай вертикальный полнокадровый визуал 4:5 для новостной карточки Telegram-канала об играх.
-
-        Это фон на всю карточку (full-bleed): кинематографичный, атмосферный игровой кадр на всю площадь, который заполняет весь кадр без рамок и полей.
-        Стиль: тёмный editorial/кинематографичный визуал игрового медиа, реалистичная/полуреалистичная сцена или предметная метафора. Не AI-art-китч, не 3D-render-пластик, не фэнтези-постер, не инфографика, не коллаж.
+        {profile.Prompts.ImageStyle}
 
         Композиция:
         - один сильный визуальный сюжет на весь кадр: {visualSubject};
@@ -206,6 +192,7 @@ public sealed class PolzaImageGenerator(
 
     private async Task<ImageGenerationResult> ApplyNewsTemplateAsync(
         Channel channel,
+        NicheProfile profile,
         Post post,
         ImageGenerationResult generated,
         CancellationToken cancellationToken)
@@ -228,9 +215,10 @@ public sealed class PolzaImageGenerator(
                 httpClient,
                 mediaOptionsAccessor.Value,
                 channel,
+                profile.BrandFallbackName,
                 post,
                 generated.ImageUrl,
-                ResolveRubric(post),
+                ResolveRubric(profile, post),
                 ExtractMainThesis(post, text),
                 cancellationToken);
 
@@ -284,20 +272,22 @@ public sealed class PolzaImageGenerator(
         return JsonSerializer.Serialize(metadata, JsonOptions);
     }
 
-    private static string ResolveRubric(Post post)
+    private static string ResolveRubric(NicheProfile profile, Post post)
     {
+        if (profile.Prompts.Rubrics.TryGetValue(post.PublicationKind.ToString(), out var rubric) && !string.IsNullOrWhiteSpace(rubric))
+        {
+            return rubric;
+        }
+
         return post.PublicationKind switch
         {
             PublicationKind.BreakingNews => "СРОЧНО",
             PublicationKind.Rumor => "СЛУХ",
             PublicationKind.Digest => "ДАЙДЖЕСТ",
-            PublicationKind.Deal => "РАЗДАЧА",
-            PublicationKind.Trailer => "ТРЕЙЛЕР",
             PublicationKind.Meme => "МЕМ",
             _ => "НОВОСТИ"
         };
     }
-
     private static string ExtractMainThesis(Post post, string text)
     {
         // Prefer a Russian headline from the generated post body (the channel is RU) over the source
@@ -340,17 +330,18 @@ public sealed class PolzaImageGenerator(
         return value.Count(ch => ch is >= 'а' and <= 'я' or >= 'А' and <= 'Я' or 'ё' or 'Ё') >= 4;
     }
 
-    private static string ExtractVisualSubject(Post post, string text)
+    private static string ExtractVisualSubject(NicheProfile profile, Post post, string text)
     {
         var subject = string.IsNullOrWhiteSpace(post.SourceTitle)
             ? text
             : post.SourceTitle;
 
-        return $"""
-        предмет новости «{ClampWords(RemoveMarkdown(subject), 12, 120)}» в виде безопасной метафоры без официальных логотипов и без узнаваемых скриншотов; если упомянута компания, игра, сервис или событие, показать не логотип, а контекстный объект: силуэт персонажа без сходства, игровое окно без UI-брендинга, витрину магазина, серверную стойку, студийный стол, календарь события или экран обновления.
-        """.ReplaceLineEndings(" ").Trim();
+        var clamped = ClampWords(RemoveMarkdown(subject), 12, 120);
+        var hint = string.IsNullOrWhiteSpace(profile.Prompts.ImageSubjectHint)
+            ? "предмет новости «{subject}» в виде безопасной метафоры без логотипов и узнаваемых персонажей."
+            : profile.Prompts.ImageSubjectHint;
+        return hint.Replace("{subject}", clamped, StringComparison.Ordinal).ReplaceLineEndings(" ").Trim();
     }
-
     private static string RemoveMarkdown(string value)
     {
         return value

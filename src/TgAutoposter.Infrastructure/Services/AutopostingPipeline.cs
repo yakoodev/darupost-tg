@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Pipeline;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Ai;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
@@ -26,6 +27,7 @@ public sealed class AutopostingPipeline(
     ITelegramPublisher telegramPublisher,
     IDateTimeProvider clock,
     IRealtimeNotifier realtimeNotifier,
+    INicheProfileProvider profiles,
     ILogger<AutopostingPipeline> logger) : IAutopostingPipeline
 {
     public async Task<PipelineRunResult> RunForChannelAsync(
@@ -40,6 +42,7 @@ public sealed class AutopostingPipeline(
             return new PipelineRunResult(channelId, 0, 0, 0, 0, 0, 0, 0, ["Канал не найден."]);
         }
 
+        var profile = profiles.Get(channel.ProfileKey);
         var initialPublish = await PublishDuePostsAsync(channel, cancellationToken);
 
         var sourcesToCheck = channel.Sources
@@ -70,7 +73,7 @@ public sealed class AutopostingPipeline(
             IReadOnlyCollection<CollectedCandidate> collected;
             try
             {
-                collected = await collector.CollectAsync(source, cancellationToken);
+                collected = await collector.CollectAsync(source, profile, cancellationToken);
                 sourcesChecked++;
                 source.LastCheckedAtUtc = clock.UtcNow;
                 AddCollectorProviderUsageIfPresent(channel, source, collected);
@@ -109,7 +112,7 @@ public sealed class AutopostingPipeline(
                 }
 
                 candidatesCollected++;
-                var publicationType = PickPublicationType(channel, source, candidate, options);
+                var publicationType = PickPublicationType(channel, profile, source, candidate, options);
                 if (publicationType is null)
                 {
                     warnings.Add($"Канал {channel.Name}: не найден включённый тип публикации для кандидата {candidate.Title}.");
@@ -263,7 +266,12 @@ public sealed class AutopostingPipeline(
         return candidate;
     }
 
-    private PublicationTypeSetting? PickPublicationType(Channel channel, Source source, SourceCandidate candidate, PipelineRunOptions options)
+    private static PublicationTypeSetting? PickPublicationType(
+        Channel channel,
+        NicheProfile profile,
+        Source source,
+        SourceCandidate candidate,
+        PipelineRunOptions options)
     {
         var enabled = channel.PublicationTypes
             .Where(type => type.IsEnabled)
@@ -285,40 +293,22 @@ public sealed class AutopostingPipeline(
         }
 
         var text = $"{candidate.Title}\n{candidate.Summary}";
-        if (source.Subreddit?.Contains("meme", StringComparison.OrdinalIgnoreCase) == true ||
-            ContainsAny(text, ["meme", "memes", "мем"]))
-        {
-            var memeType = enabled.FirstOrDefault(type => type.Kind == PublicationKind.Meme);
-            if (memeType is not null && SourceAllowsKind(source, memeType.Kind))
-            {
-                return memeType;
-            }
-        }
+        var sourceLabel = $"{source.Name} {source.Subreddit}";
 
-        if (ContainsAny(text, ["leak", "rumor", "rumour", "insider", "слух", "утеч"]))
+        // Profile-driven classification: first matching rule wins (rules are ordered in the profile).
+        foreach (var rule in profile.Classification)
         {
-            var rumorType = enabled.FirstOrDefault(type => type.Kind == PublicationKind.Rumor);
-            if (rumorType is not null && SourceAllowsKind(source, rumorType.Kind))
+            var matches = ContainsAny(text, rule.Keywords) ||
+                          (rule.SourceNameHints.Count > 0 && ContainsAny(sourceLabel, rule.SourceNameHints));
+            if (!matches)
             {
-                return rumorType;
+                continue;
             }
-        }
 
-        if (ContainsAny(text, ["free", "giveaway", "sale", "discount", "скид", "раздач", "бесплат"]))
-        {
-            var dealType = enabled.FirstOrDefault(type => type.Kind == PublicationKind.Deal);
-            if (dealType is not null && SourceAllowsKind(source, dealType.Kind))
+            var type = enabled.FirstOrDefault(item => item.Kind == rule.Kind);
+            if (type is not null && SourceAllowsKind(source, type.Kind))
             {
-                return dealType;
-            }
-        }
-
-        if (ContainsAny(text, ["trailer", "showcase", "announce", "reveal", "анонс", "трейлер", "показали"]))
-        {
-            var trailerType = enabled.FirstOrDefault(type => type.Kind == PublicationKind.Trailer);
-            if (trailerType is not null && SourceAllowsKind(source, trailerType.Kind))
-            {
-                return trailerType;
+                return type;
             }
         }
 

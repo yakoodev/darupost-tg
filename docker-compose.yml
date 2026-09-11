@@ -45,6 +45,8 @@ services:
       Telegram__Proxy__Username: ${TELEGRAM_PROXY_USERNAME:-}
       Telegram__Proxy__Password: ${TELEGRAM_PROXY_PASSWORD:-}
       Media__RootPath: /app/media
+      Seed__DefaultProfile: ${SEED_DEFAULT_PROFILE:-gaming}
+      Profiles__Path: /app/profiles
       Worker__Enabled: ${WORKER_ENABLED:-false}
       Worker__IntervalMinutes: ${WORKER_INTERVAL_MINUTES:-15}
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
@@ -52,6 +54,7 @@ services:
       - "${API_HOST_PORT:-5000}:8080"
     volumes:
       - api-media:/app/media
+      - ./profiles:/app/profiles:ro
     depends_on:
       - postgres
       - redis

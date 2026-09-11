@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
@@ -7,7 +8,7 @@ using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
 
-public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider) : IPostTextGenerator
+public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, INicheProfileProvider profiles) : IPostTextGenerator
 {
     public async Task<PostTextResult> GenerateAsync(
         Channel channel,
@@ -20,7 +21,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider) :
             : publicationType.HeaderTemplate.Trim();
 
         var footer = await BuildFooterAsync(channel.Id, publicationType, cancellationToken);
-        var prompt = BuildPrompt(channel, publicationType, candidate);
+        var prompt = BuildPrompt(channel, profiles.Get(channel.ProfileKey), publicationType, candidate);
 
         if (publicationType.Kind == PublicationKind.Meme)
         {
@@ -89,8 +90,16 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider) :
             new[] { template, linkLine }.Where(part => !string.IsNullOrWhiteSpace(part)));
     }
 
-    private static string BuildPrompt(Channel channel, PublicationTypeSetting publicationType, SourceCandidate candidate)
+    private static string BuildPrompt(Channel channel, NicheProfile profile, PublicationTypeSetting publicationType, SourceCandidate candidate)
     {
+        var rules = new List<string> { "- русский язык;" };
+        rules.AddRange(profile.Prompts.TextRules
+            .Select(rule => rule.TrimStart('-', ' ').Trim())
+            .Where(rule => rule.Length > 0)
+            .Select(rule => $"- {rule}"));
+        rules.Add($"- максимум {publicationType.MaxTextLength} символов;");
+        rules.Add("- если это слух, явно пометь это в начале.");
+
         return $"""
         Сформируй Telegram-пост для канала "{channel.Name}".
 
@@ -113,18 +122,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider) :
         Резюме: {candidate.Summary}
 
         Требования:
-        - русский язык;
-        - коротко и по делу, как живой редактор Telegram-канала, а не пресс-релиз;
-        - 2-4 коротких абзаца без маркированного списка, если список не нужен по смыслу;
-        - первый абзац сразу сообщает новость, без разгона и без кликбейта;
-        - объясняй последствия только если они реально следуют из инфоповода;
-        - не используй шаблонные подзаголовки и обороты: "Почему это важно", "Что это значит", "Для игроков", "тревожный звоночек", "финальный босс", "экосистема", "бьёт по рынку", "стоит следить";
-        - без искусственной драматизации, мемных концовок и канцелярита;
-        - максимум один уместный эмодзи, лучше без эмодзи;
-        - без неигровой повестки;
-        - без длинных URL в тексте;
-        - максимум {publicationType.MaxTextLength} символов;
-        - если это слух, явно пометь это в начале.
+        {string.Join(Environment.NewLine, rules)}
         """;
     }
 

@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Api.Auth;
 using TgAutoposter.Api.Contracts;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Infrastructure.Persistence;
+using TgAutoposter.Infrastructure.Profiles;
 
 namespace TgAutoposter.Api.Endpoints;
 
@@ -60,6 +62,7 @@ public static class ChannelEndpoints
                     channel.Status,
                     channel.TimeZone,
                     channel.Language,
+                    channel.ProfileKey,
                     channel.Positioning,
                     channel.SystemPrompt,
                     channel.StyleGuide,
@@ -75,11 +78,15 @@ public static class ChannelEndpoints
         group.MapPost("/", async (
             UpsertChannelRequest request,
             AppDbContext db,
+            INicheProfileProvider profiles,
             IRealtimeNotifier realtimeNotifier,
             CancellationToken cancellationToken) =>
         {
             var channel = new Channel();
             Apply(channel, request);
+            // A new channel gets the whole profile kit: prompts (where left empty), publication types,
+            // starter sources, footer and schedule windows.
+            ChannelProvisioner.ProvisionNewChannel(channel, profiles.Get(channel.ProfileKey));
             channel.Status = string.IsNullOrWhiteSpace(request.TelegramUsername) && string.IsNullOrWhiteSpace(request.TelegramChatId)
                 ? ChannelStatus.Draft
                 : ChannelStatus.Connected;
@@ -167,6 +174,7 @@ public static class ChannelEndpoints
                 channel.Status,
                 channel.TimeZone,
                 channel.Language,
+                channel.ProfileKey,
                 channel.Positioning,
                 channel.SystemPrompt,
                 channel.StyleGuide,
@@ -374,6 +382,11 @@ public static class ChannelEndpoints
         channel.TelegramChatId = NormalizeOptional(request.TelegramChatId);
         channel.TimeZone = string.IsNullOrWhiteSpace(request.TimeZone) ? "Europe/Moscow" : request.TimeZone.Trim();
         channel.Language = string.IsNullOrWhiteSpace(request.Language) ? "ru" : request.Language.Trim();
+        if (!string.IsNullOrWhiteSpace(request.ProfileKey))
+        {
+            channel.ProfileKey = request.ProfileKey.Trim().ToLowerInvariant();
+        }
+
         channel.Positioning = request.Positioning.Trim();
         channel.SystemPrompt = request.SystemPrompt.Trim();
         channel.StyleGuide = request.StyleGuide.Trim();

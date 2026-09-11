@@ -16,6 +16,7 @@ public static class NewsCardRenderer
         HttpClient httpClient,
         MediaOptions mediaOptions,
         Channel channel,
+        string brandFallbackName,
         Post post,
         string sourceImageUrl,
         string rubric,
@@ -41,7 +42,7 @@ public static class NewsCardRenderer
         }
 
         var canvas = surface.Canvas;
-        DrawCard(canvas, visualBitmap, channel, post, rubric, mainThesis);
+        DrawCard(canvas, visualBitmap, channel, brandFallbackName, post, rubric, mainThesis);
 
         using var image = surface.Snapshot();
         using var encoded = image.Encode(SKEncodedImageFormat.Png, 96);
@@ -90,6 +91,7 @@ public static class NewsCardRenderer
         SKCanvas canvas,
         SKBitmap visual,
         Channel channel,
+        string brandFallbackName,
         Post post,
         string rubric,
         string mainThesis)
@@ -97,7 +99,7 @@ public static class NewsCardRenderer
         canvas.Clear(new SKColor(8, 8, 12));
         DrawFullBleedVisual(canvas, visual);
         DrawRubricChip(canvas, post, rubric);
-        DrawHeadline(canvas, channel, mainThesis);
+        DrawHeadline(canvas, channel, brandFallbackName, mainThesis);
     }
 
     private static void DrawFullBleedVisual(SKCanvas canvas, SKBitmap visual)
@@ -157,9 +159,9 @@ public static class NewsCardRenderer
         canvas.DrawText(meta, Width - Margin - metaPaint.MeasureText(meta), chip.MidY + 8, metaPaint);
     }
 
-    private static void DrawHeadline(SKCanvas canvas, Channel channel, string mainThesis)
+    private static void DrawHeadline(SKCanvas canvas, Channel channel, string brandFallbackName, string mainThesis)
     {
-        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? "Только игры" : channel.Name.Trim();
+        var brandName = string.IsNullOrWhiteSpace(channel.Name) ? brandFallbackName : channel.Name.Trim();
         var title = CleanDisplayText(mainThesis);
 
         var maxWidth = Width - Margin * 2f;

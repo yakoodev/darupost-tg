@@ -45,6 +45,7 @@ export default function Prompts() {
         telegramChatId: channel.telegramChatId ?? null,
         timeZone: channel.timeZone,
         language: channel.language,
+        profileKey: channel.profileKey,
         positioning: channel.positioning,
         systemPrompt: channel.systemPrompt,
         styleGuide: channel.styleGuide,

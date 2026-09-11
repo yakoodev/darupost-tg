@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
 using TgAutoposter.Infrastructure.Options;
@@ -25,6 +26,7 @@ public sealed class AiDeduplicationService(
     IEmbeddingProvider embeddingProvider,
     IAiProvider aiProvider,
     IOptions<PolzaOptions> polzaOptions,
+    INicheProfileProvider profiles,
     ILogger<AiDeduplicationService> logger) : IDeduplicationService
 {
     private const int LookbackDays = 5;
@@ -111,8 +113,13 @@ public sealed class AiDeduplicationService(
         double topScore,
         CancellationToken cancellationToken)
     {
+        var profileKey = await db.Channels
+            .Where(channel => channel.Id == candidate.ChannelId)
+            .Select(channel => channel.ProfileKey)
+            .FirstOrDefaultAsync(cancellationToken);
+        var profile = profiles.Get(profileKey);
         var system = new StringBuilder()
-            .AppendLine("Ты редактор игрового канала. Решаешь, дублирует ли новый инфоповод уже опубликованные.")
+            .AppendLine(profile.Prompts.DedupPersona)
             .AppendLine("duplicate — то же событие (даже другой источник/слова/язык). continuation — новые детали по уже освещённому событию. unique — другое.")
             .AppendLine("Ответь СТРОГО одним JSON без markdown: {\"match\":<номер или -1>,\"relation\":\"duplicate|continuation|unique\"}")
             .ToString();

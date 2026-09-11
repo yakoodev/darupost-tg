@@ -1,5 +1,5 @@
 import type {
-  AiAccountStatus, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard,
+  AiAccountStatus, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, NicheProfileSummary,
   FooterLinkItem, GenerateDraftPostRequest, LoginResponse, PipelineRunResult, PostItem, PostStatus,
   PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, UserListItem,
   WorkerStatus,
@@ -95,6 +95,9 @@ export const api = {
   // dashboard
   dashboard: (channelId?: string) =>
     request<Dashboard>(`/api/dashboard${channelId ? `?channelId=${channelId}` : ''}`),
+
+  // niche profiles
+  profiles: () => request<NicheProfileSummary[]>('/api/profiles'),
 
   // channels
   channels: () => request<ChannelListItem[]>('/api/channels'),

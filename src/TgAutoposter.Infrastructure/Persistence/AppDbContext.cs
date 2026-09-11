@@ -52,6 +52,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.TelegramChatId).HasMaxLength(128);
             builder.Property(x => x.TimeZone).HasMaxLength(64);
             builder.Property(x => x.Language).HasMaxLength(16);
+            builder.Property(x => x.ProfileKey).HasMaxLength(64).IsRequired().HasDefaultValue("gaming");
             builder.HasIndex(x => x.TelegramUsername);
         });
 

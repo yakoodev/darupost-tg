@@ -6,8 +6,11 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Infrastructure.Options;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Infrastructure.Persistence;
+using TgAutoposter.Infrastructure.Profiles;
 using TgAutoposter.Infrastructure.Services;
+using TgAutoposter.Infrastructure.Services.Collectors;
 
 namespace TgAutoposter.Infrastructure;
 
@@ -29,6 +32,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddSingleton<INicheProfileProvider, NicheProfileProvider>();
         services.AddScoped<BasicDeduplicationService>();
         services.AddScoped<IDeduplicationService, AiDeduplicationService>();
         services.AddScoped<BasicFactCheckService>();
@@ -44,7 +48,14 @@ public static class InfrastructureDependencyInjection
         services.AddHttpClient<IEmbeddingProvider, PolzaEmbeddingClient>();
         services.AddHttpClient<IImageGenerator, PolzaImageGenerator>();
         services.AddHttpClient<IAiAccountStatusClient, PolzaAccountStatusClient>();
-        services.AddHttpClient<IContentCollector, RedditCollector>();
+        services.AddHttpClient<VideoEnricher>();
+        services.AddHttpClient<RedditCollector>();
+        services.AddHttpClient<FeedCollector>();
+        services.AddHttpClient<AiWebSearchCollector>();
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<RedditCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<FeedCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<AiWebSearchCollector>());
+        services.AddScoped<IContentCollector, CompositeContentCollector>();
 
         var redisConnection = configuration.GetConnectionString("Redis");
         if (!string.IsNullOrWhiteSpace(redisConnection))

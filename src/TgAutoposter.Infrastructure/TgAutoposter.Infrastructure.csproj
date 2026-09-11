@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\TgAutoposter.Domain\TgAutoposter.Domain.csproj" />
@@ -21,6 +21,10 @@
     <PackageReference Include="StackExchange.Redis" Version="2.*" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.*" />
     <PackageReference Include="Telegram.Bot" Version="22.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Profiles\*.json" />
   </ItemGroup>
 
   <PropertyGroup>

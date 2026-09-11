@@ -5,17 +5,18 @@ import { useAppData } from '../lib/appData'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../lib/toast'
 import { Badge, Button, Card, Empty, Field, PageHead, Select, Switch, TextInput } from '../components/ui'
-import type { ChannelDetails, FooterLinkItem, ModerationMode } from '../lib/types'
+import type { ChannelDetails, FooterLinkItem, ModerationMode, NicheProfileSummary } from '../lib/types'
 
 interface CreateForm {
   name: string
   telegramUsername: string
   timeZone: string
   language: string
+  profileKey: string
   dailyPostLimit: number
 }
 
-const emptyCreate: CreateForm = { name: '', telegramUsername: '', timeZone: 'Europe/Moscow', language: 'ru', dailyPostLimit: 6 }
+const emptyCreate: CreateForm = { name: '', telegramUsername: '', timeZone: 'Europe/Moscow', language: 'ru', profileKey: 'vtubing', dailyPostLimit: 6 }
 
 export default function Channels() {
   const { selectedChannelId, refresh } = useAppData()
@@ -29,6 +30,11 @@ export default function Channels() {
 
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate)
+  const [profiles, setProfiles] = useState<NicheProfileSummary[]>([])
+
+  useEffect(() => {
+    api.profiles().then(setProfiles).catch(() => setProfiles([]))
+  }, [])
 
   useEffect(() => {
     if (!selectedChannelId) {
@@ -61,6 +67,7 @@ export default function Channels() {
         telegramChatId: form.telegramChatId,
         timeZone: form.timeZone,
         language: form.language,
+        profileKey: form.profileKey,
         positioning: form.positioning,
         systemPrompt: form.systemPrompt,
         styleGuide: form.styleGuide,
@@ -100,6 +107,7 @@ export default function Channels() {
         telegramChatId: null,
         timeZone: createForm.timeZone,
         language: createForm.language,
+        profileKey: createForm.profileKey,
         positioning: '',
         systemPrompt: '',
         styleGuide: '',
@@ -159,6 +167,13 @@ export default function Channels() {
             <Field label="Лимит постов в день">
               <TextInput type="number" value={createForm.dailyPostLimit} onChange={(e) => setCreateForm({ ...createForm, dailyPostLimit: Number(e.target.value) })} />
             </Field>
+            <Field label="Тематика (профиль)" hint="Задаёт промпты, фильтры, типы публикаций и стартовые источники">
+              <Select value={createForm.profileKey} onChange={(e) => setCreateForm({ ...createForm, profileKey: e.target.value })}>
+                {profiles.map((p) => (
+                  <option key={p.key} value={p.key}>{p.displayName} ({p.sourcesCount} источников, {p.publicationTypesCount} типов)</option>
+                ))}
+              </Select>
+            </Field>
           </div>
           <div className="row" style={{ marginTop: 12 }}>
             <Button variant="primary" loading={saving === 'create'} disabled={!createForm.name} onClick={create}>
@@ -200,6 +215,14 @@ export default function Channels() {
               </Field>
               <Field label="Язык">
                 <TextInput value={form.language} disabled={!canEdit} onChange={(e) => patch('language', e.target.value)} />
+              </Field>
+              <Field label="Тематика (профиль)" hint="Промпты фактчека/дедупа/картинок и фильтры источников">
+                <Select value={form.profileKey} disabled={!canEdit} onChange={(e) => patch('profileKey', e.target.value)}>
+                  {profiles.map((p) => (
+                    <option key={p.key} value={p.key}>{p.displayName}</option>
+                  ))}
+                  {!profiles.some((p) => p.key === form.profileKey) && <option value={form.profileKey}>{form.profileKey}</option>}
+                </Select>
               </Field>
               <Field label="Режим модерации">
                 <Select value={form.defaultModerationMode} disabled={!canEdit} onChange={(e) => patch('defaultModerationMode', e.target.value as ModerationMode)}>
