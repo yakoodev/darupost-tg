@@ -40,6 +40,7 @@ export default function Prompts() {
     setSavingChannel(true)
     try {
       await api.saveChannel(channel.id, {
+        ...channel,
         name: channel.name,
         telegramUsername: channel.telegramUsername ?? null,
         telegramChatId: channel.telegramChatId ?? null,

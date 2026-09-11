@@ -119,3 +119,11 @@ public enum MediaGenerationMode
     GeneratePoster = 2,
     TranslateMeme = 3
 }
+
+public enum StoryStatus
+{
+    Open = 0,
+    Drafted = 1,
+    InDigest = 2,
+    Dismissed = 3
+}

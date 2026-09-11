@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Download, EyeOff, RotateCcw, Sparkles, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, EyeOff, Layers, RotateCcw, Sparkles, ExternalLink, Sunset } from 'lucide-react'
 import { api } from '../lib/api'
 import { useAppData } from '../lib/appData'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../lib/toast'
 import { dateTime, kindLabels } from '../lib/format'
 import { Badge, Button, Card, Empty, PageHead, Select, Stat, Switch } from '../components/ui'
-import type { CandidateItem, CandidateList, PublicationKind } from '../lib/types'
+import type { CandidateItem, CandidateList, DigestStatus, PublicationKind, StoryItem } from '../lib/types'
 
 const KINDS: PublicationKind[] = ['News', 'BreakingNews', 'Rumor', 'Trailer', 'Deal', 'Meme']
 const REASON_LABELS: Record<string, string> = {
@@ -16,6 +16,12 @@ const REASON_LABELS: Record<string, string> = {
   dismissed: 'скрыт',
   expired: 'устарел',
   orphan: 'источник удалён',
+}
+const STORY_STATUS: Record<string, { label: string; tone: string }> = {
+  Open: { label: 'открыт', tone: 'green' },
+  Drafted: { label: 'черновик создан', tone: 'blue' },
+  InDigest: { label: 'в дайджесте', tone: 'amber' },
+  Dismissed: { label: 'скрыт', tone: '' },
 }
 
 function relTime(iso: string) {
@@ -36,10 +42,14 @@ export default function Today() {
   const isAdmin = canOn(selectedChannelId, 'ChannelAdmin')
 
   const [data, setData] = useState<CandidateList | null>(null)
+  const [stories, setStories] = useState<StoryItem[]>([])
+  const [digest, setDigest] = useState<DigestStatus | null>(null)
   const [hours, setHours] = useState(24)
   const [includeConsumed, setIncludeConsumed] = useState(false)
+  const [includeClosed, setIncludeClosed] = useState(false)
   const [sourceId, setSourceId] = useState('')
   const [kind, setKind] = useState<PublicationKind | ''>('')
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -47,21 +57,28 @@ export default function Today() {
     if (!selectedChannelId) return
     setLoading(true)
     try {
-      setData(await api.candidates(selectedChannelId, { hours, includeConsumed, sourceId: sourceId || undefined }))
+      const [candidates, storyList, digestStatus] = await Promise.all([
+        api.candidates(selectedChannelId, { hours, includeConsumed, sourceId: sourceId || undefined }),
+        api.stories(selectedChannelId, { hours, includeClosed }),
+        api.digestStatus(selectedChannelId),
+      ])
+      setData(candidates)
+      setStories(storyList)
+      setDigest(digestStatus)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Ошибка загрузки')
     } finally {
       setLoading(false)
     }
-  }, [selectedChannelId, hours, includeConsumed, sourceId, toast])
+  }, [selectedChannelId, hours, includeConsumed, includeClosed, sourceId, toast])
 
   useEffect(() => { load() }, [load, live])
 
-  async function act(name: string, fn: () => Promise<unknown>, okMsg: string) {
+  async function act(name: string, fn: () => Promise<unknown>, okMsg?: string) {
     setBusy(name)
     try {
       await fn()
-      toast.success(okMsg)
+      if (okMsg) toast.success(okMsg)
       await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Ошибка')
@@ -77,16 +94,42 @@ export default function Today() {
       const fresh = r.reduce((s, x) => s + x.newCandidates, 0)
       const errors = r.filter((x) => x.error).length
       toast.success(`Собрано: ${fresh} новых${errors ? `, ошибок: ${errors}` : ''}`)
-    }, 'Сбор завершён')
+      await api.clusterStories(selectedChannelId)
+    })
   }
 
-  async function generate(c: CandidateItem) {
+  async function clusterNow() {
+    if (!selectedChannelId) return
+    await act('cluster', async () => {
+      const r = await api.clusterStories(selectedChannelId)
+      toast.success(`Сюжеты обновлены: распределено ${r.assigned}`)
+    })
+  }
+
+  async function runDigest() {
+    if (!selectedChannelId) return
+    await act('digest', async () => {
+      const r = await api.runDigest(selectedChannelId)
+      toast.success(`Дайджест: ${r.digestPostId ? 'пост создан' : 'пост не создан'}, пунктов ${r.digestItems}, черновиков ${r.draftsCreated}`)
+      r.warnings.forEach((w) => toast.error(w))
+    })
+  }
+
+  async function generateFromCandidate(c: CandidateItem) {
     if (!selectedChannelId) return
     await act(`gen:${c.id}`, async () => {
       const r = await api.generateFromCandidate(selectedChannelId, c.id, kind || undefined)
       if (r.postsCreated > 0) return
-      const why = r.duplicatesSkipped ? 'дубль' : r.factCheckFailed ? 'не прошёл фактчек' : r.warnings[0] ?? 'пост не создан'
-      throw new Error(why)
+      throw new Error(r.duplicatesSkipped ? 'дубль' : r.factCheckFailed ? 'не прошёл фактчек' : r.warnings[0] ?? 'пост не создан')
+    }, 'Черновик создан, смотри «Очередь»')
+  }
+
+  async function generateFromStory(s: StoryItem) {
+    if (!selectedChannelId) return
+    await act(`sgen:${s.id}`, async () => {
+      const r = await api.generateFromStory(selectedChannelId, s.id, kind || undefined)
+      if (r.postsCreated > 0) return
+      throw new Error(r.duplicatesSkipped ? 'дубль' : r.factCheckFailed ? 'не прошёл фактчек' : r.warnings[0] ?? 'пост не создан')
     }, 'Черновик создан, смотри «Очередь»')
   }
 
@@ -96,7 +139,7 @@ export default function Today() {
     <>
       <PageHead
         title="Сегодня"
-        subtitle="Что собрали парсеры за день. Отсюда можно сделать пост вручную; вечером из этого же собирается дайджест"
+        subtitle="Что собрали парсеры за день, сгруппированное в сюжеты. Вечером из открытых сюжетов собирается дайджест и черновики"
         actions={
           <div className="row" style={{ gap: 8 }}>
             <Select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
@@ -121,12 +164,99 @@ export default function Today() {
         <>
           <div className="grid cols-4">
             <Stat label="Собрано" value={data?.total ?? '—'} />
-            <Stat label="Ожидают решения" value={data?.pending ?? '—'} accent />
-            <Stat label="Источников" value={data ? `${data.sources.filter((s) => s.isEnabled).length} / ${data.sources.length}` : '—'} />
-            <Stat label="С ошибкой" value={errorSources.length} />
+            <Stat label="Открытых сюжетов" value={digest?.openStories ?? stories.filter((s) => s.status === 'Open').length} accent />
+            <Stat label="Ожидают решения" value={data?.pending ?? '—'} />
+            <Stat
+              label="Дайджест"
+              value={digest ? (digest.digestEnabled ? `в ${digest.digestTimeLocal}` : 'выключен') : '—'}
+            />
           </div>
 
-          <Card title="Источники" subtitle="Клик по источнику фильтрует список">
+          <Card
+            title="Сюжеты"
+            subtitle={digest?.lastDigestAtUtc ? `Последний дайджест: ${relTime(digest.lastDigestAtUtc)}` : 'Дайджест ещё не собирался'}
+            actions={
+              <div className="row" style={{ gap: 8 }}>
+                <Switch checked={includeClosed} onChange={setIncludeClosed} label="Показывать закрытые" />
+                {canModerate && (
+                  <Button variant="ghost" size="sm" loading={busy === 'cluster'} onClick={clusterNow}>
+                    <Layers size={14} /> Пересобрать сюжеты
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button variant="primary" size="sm" loading={busy === 'digest'} onClick={runDigest}>
+                    <Sunset size={14} /> Дайджест сейчас
+                  </Button>
+                )}
+              </div>
+            }
+          >
+            {stories.length === 0 && <Empty>{loading ? 'Загрузка…' : 'Сюжетов пока нет: нажми «Собрать сейчас» или «Пересобрать сюжеты».'}</Empty>}
+            <div className="grid" style={{ gap: 10 }}>
+              {stories.map((s) => {
+                const st = STORY_STATUS[s.status] ?? { label: s.status, tone: '' }
+                const open = expanded[s.id]
+                return (
+                  <div key={s.id} className="queue-item" style={{ opacity: s.status === 'Dismissed' ? 0.6 : 1 }}>
+                    <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setExpanded((cur) => ({ ...cur, [s.id]: !cur[s.id] }))}
+                        style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0, display: 'inline-flex', color: 'inherit' }}
+                        aria-label="Развернуть"
+                      >
+                        {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </button>
+                      {s.isBreaking && <Badge tone="red">срочно</Badge>}
+                      <Badge tone={st.tone}>{st.label}</Badge>
+                      {s.kindHint && <Badge>{kindLabels[s.kindHint] ?? s.kindHint}</Badge>}
+                      <span className="faint" style={{ fontSize: 12 }}>★ {s.score}</span>
+                      <span className="faint" style={{ fontSize: 12 }}>{s.sourcesCount} ист. · {s.candidatesCount} упом.</span>
+                      <span className="faint" style={{ fontSize: 11.5, marginLeft: 'auto' }} title={dateTime(s.lastSeenAtUtc)}>{relTime(s.lastSeenAtUtc)}</span>
+                    </div>
+                    <div style={{ fontWeight: 600, marginTop: 6 }}>{s.title}</div>
+                    {s.summary && s.summary !== s.title && (
+                      <div className="faint" style={{ fontSize: 13, marginTop: 4 }}>{s.summary.length > 280 ? `${s.summary.slice(0, 280)}…` : s.summary}</div>
+                    )}
+                    {open && (
+                      <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid rgba(128,128,128,0.3)' }}>
+                        {s.candidates.map((c) => (
+                          <div key={c.id} className="row" style={{ gap: 6, alignItems: 'center', fontSize: 13, marginBottom: 4, flexWrap: 'wrap' }}>
+                            <Badge tone="blue">{c.sourceName}</Badge>
+                            {c.id === s.leadCandidateId && <Badge tone="green">лид</Badge>}
+                            {c.url ? (
+                              <a href={c.url} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
+                                {c.title} <ExternalLink size={11} style={{ verticalAlign: 'middle', opacity: 0.6 }} />
+                              </a>
+                            ) : c.title}
+                            {c.score != null && <span className="faint">▲ {c.score}</span>}
+                            <span className="faint" style={{ marginLeft: 'auto' }}>{relTime(c.foundAtUtc)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {canModerate && (
+                      <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                        <Button size="sm" variant="primary" loading={busy === `sgen:${s.id}`} onClick={() => generateFromStory(s)}>
+                          <Sparkles size={14} /> Сделать пост
+                        </Button>
+                        {s.status !== 'Dismissed' ? (
+                          <Button size="sm" variant="ghost" loading={busy === `sdis:${s.id}`} onClick={() => act(`sdis:${s.id}`, () => api.dismissStory(selectedChannelId, s.id), 'Сюжет скрыт')}>
+                            <EyeOff size={14} /> Скрыть
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="ghost" loading={busy === `sre:${s.id}`} onClick={() => act(`sre:${s.id}`, () => api.reopenStory(selectedChannelId, s.id), 'Сюжет открыт')}>
+                            <RotateCcw size={14} /> Вернуть
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+
+          <Card title="Источники" subtitle="Клик по источнику фильтрует список инфоповодов ниже">
             <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
               <Button size="sm" variant={sourceId === '' ? 'primary' : 'ghost'} onClick={() => setSourceId('')}>Все</Button>
               {(data?.sources ?? []).map((s) => (
@@ -192,7 +322,7 @@ export default function Today() {
                   )}
                   {canModerate && (
                     <div className="row" style={{ gap: 8, marginTop: 8 }}>
-                      <Button size="sm" variant="primary" loading={busy === `gen:${c.id}`} onClick={() => generate(c)}>
+                      <Button size="sm" variant="primary" loading={busy === `gen:${c.id}`} onClick={() => generateFromCandidate(c)}>
                         <Sparkles size={14} /> Сделать пост
                       </Button>
                       {!c.isConsumed ? (

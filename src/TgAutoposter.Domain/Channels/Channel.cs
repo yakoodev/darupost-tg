@@ -23,6 +23,13 @@ public sealed class Channel : Entity
     public decimal? DailyAiBudgetLimit { get; set; }
     public bool IsEnabled { get; set; } = true;
 
+    /// <summary>Evening digest: once per local day at DigestTimeLocal, a digest post + up to DigestMaxDrafts standalone drafts.</summary>
+    public bool DigestEnabled { get; set; } = true;
+    public TimeOnly DigestTimeLocal { get; set; } = new(20, 0);
+    public int DigestMaxStories { get; set; } = 12;
+    public int DigestMaxDrafts { get; set; } = 3;
+    public DateTimeOffset? LastDigestAtUtc { get; set; }
+
     public List<Source> Sources { get; set; } = [];
     public List<PublicationTypeSetting> PublicationTypes { get; set; } = [];
     public List<FooterLink> FooterLinks { get; set; } = [];

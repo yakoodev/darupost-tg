@@ -81,6 +81,7 @@ public sealed class IngestWorker(
         var ingest = scope.ServiceProvider.GetRequiredService<CandidateIngestService>();
         var clock = scope.ServiceProvider.GetRequiredService<IDateTimeProvider>();
         var realtime = scope.ServiceProvider.GetRequiredService<IRealtimeNotifier>();
+        var clustering = scope.ServiceProvider.GetRequiredService<StoryClusteringService>();
 
         var channels = await db.Channels
             .Include(channel => channel.Sources)
@@ -119,6 +120,15 @@ public sealed class IngestWorker(
 
             if (newTotal > 0)
             {
+                try
+                {
+                    await clustering.ClusterPendingAsync(channel, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogWarning(ex, "Story clustering failed for channel {Channel}.", channel.Name);
+                }
+
                 await realtime.StateChangedAsync("ingest", channel.Id, null, cancellationToken);
             }
         }

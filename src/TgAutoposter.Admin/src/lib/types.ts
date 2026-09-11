@@ -91,6 +91,11 @@ export interface ChannelDetails {
   dailyPostLimit: number
   dailyAiBudgetLimit?: number | null
   isEnabled: boolean
+  digestEnabled: boolean
+  digestTimeLocal: string
+  digestMaxStories: number
+  digestMaxDrafts: number
+  lastDigestAtUtc?: string | null
 }
 
 export interface SourceItem {
@@ -255,4 +260,53 @@ export interface IngestResultItem {
   collected: number
   newCandidates: number
   error?: string | null
+}
+
+export type StoryStatus = 'Open' | 'Drafted' | 'InDigest' | 'Dismissed'
+
+export interface StoryCandidate {
+  id: string
+  sourceName: string
+  sourceKind: SourceKind
+  title: string
+  url?: string | null
+  score?: number | null
+  foundAtUtc: string
+  author?: string | null
+}
+
+export interface StoryItem {
+  id: string
+  title: string
+  summary: string
+  firstSeenAtUtc: string
+  lastSeenAtUtc: string
+  candidatesCount: number
+  sourcesCount: number
+  score: number
+  isBreaking: boolean
+  kindHint?: PublicationKind | null
+  status: StoryStatus
+  leadCandidateId?: string | null
+  postId?: string | null
+  digestPostId?: string | null
+  candidates: StoryCandidate[]
+}
+
+export interface DigestStatus {
+  digestEnabled: boolean
+  digestTimeLocal: string
+  digestMaxStories: number
+  digestMaxDrafts: number
+  lastDigestAtUtc?: string | null
+  openStories: number
+}
+
+export interface DigestRunResult {
+  channelId: string
+  digestPostId?: string | null
+  storiesConsidered: number
+  digestItems: number
+  draftsCreated: number
+  warnings: string[]
 }

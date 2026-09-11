@@ -6,6 +6,7 @@ using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
 using TgAutoposter.Domain.Sources;
+using TgAutoposter.Domain.Stories;
 
 namespace TgAutoposter.Infrastructure.Persistence;
 
@@ -19,6 +20,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ScheduleWindow> ScheduleWindows => Set<ScheduleWindow>();
     public DbSet<Source> Sources => Set<Source>();
     public DbSet<SourceCandidate> SourceCandidates => Set<SourceCandidate>();
+    public DbSet<Story> Stories => Set<Story>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PostVersion> PostVersions => Set<PostVersion>();
     public DbSet<ModerationMessage> ModerationMessages => Set<ModerationMessage>();
@@ -40,6 +42,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         configurationBuilder.Properties<FactCheckStatus>().HaveConversion<string>();
         configurationBuilder.Properties<AiTaskType>().HaveConversion<string>();
         configurationBuilder.Properties<MediaGenerationMode>().HaveConversion<string>();
+        configurationBuilder.Properties<StoryStatus>().HaveConversion<string>();
         configurationBuilder.Properties<decimal>().HavePrecision(18, 6);
     }
 
@@ -53,6 +56,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.TimeZone).HasMaxLength(64);
             builder.Property(x => x.Language).HasMaxLength(16);
             builder.Property(x => x.ProfileKey).HasMaxLength(64).IsRequired().HasDefaultValue("gaming");
+            builder.Property(x => x.DigestEnabled).HasDefaultValue(true);
+            builder.Property(x => x.DigestTimeLocal).HasDefaultValue(new TimeOnly(20, 0));
+            builder.Property(x => x.DigestMaxStories).HasDefaultValue(12);
+            builder.Property(x => x.DigestMaxDrafts).HasDefaultValue(3);
             builder.HasIndex(x => x.TelegramUsername);
         });
 
@@ -135,6 +142,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.Author).HasMaxLength(256);
             builder.Property(x => x.ConsumedReason).HasMaxLength(32);
             builder.HasIndex(x => new { x.ChannelId, x.IsConsumed, x.FoundAtUtc });
+            builder.HasOne(x => x.Story)
+                .WithMany(x => x.Candidates)
+                .HasForeignKey(x => x.StoryId)
+                .OnDelete(DeleteBehavior.SetNull);
             builder.HasOne(x => x.Source)
                 .WithMany()
                 .HasForeignKey(x => x.SourceId)
@@ -144,6 +155,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .HasForeignKey(x => x.ChannelId)
                 .OnDelete(DeleteBehavior.Cascade);
             builder.HasIndex(x => new { x.ChannelId, x.NormalizedHash }).IsUnique();
+        });
+
+        modelBuilder.Entity<Story>(builder =>
+        {
+            builder.Property(x => x.Title).HasMaxLength(512).IsRequired();
+            builder.Property(x => x.Summary).HasMaxLength(4000);
+            builder.HasIndex(x => new { x.ChannelId, x.Status, x.LastSeenAtUtc });
+            builder.HasOne(x => x.Channel)
+                .WithMany()
+                .HasForeignKey(x => x.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Post>(builder =>

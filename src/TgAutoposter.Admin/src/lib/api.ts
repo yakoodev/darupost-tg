@@ -1,7 +1,7 @@
 import type {
-  AiAccountStatus, CandidateList, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, IngestResultItem, NicheProfileSummary,
+  AiAccountStatus, CandidateList, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, DigestRunResult, DigestStatus, IngestResultItem, NicheProfileSummary,
   FooterLinkItem, GenerateDraftPostRequest, LoginResponse, PipelineRunResult, PostItem, PostStatus,
-  PublicationKind, PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, UserListItem,
+  PublicationKind, PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, StoryItem, UserListItem,
   WorkerStatus,
 } from './types'
 
@@ -115,6 +115,27 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ publicationKind: publicationKind ?? null, publishImmediately }),
     }),
+  // stories + digest
+  stories: (channelId: string, opts?: { hours?: number; includeClosed?: boolean }) => {
+    const p = new URLSearchParams()
+    if (opts?.hours) p.set('hours', String(opts.hours))
+    if (opts?.includeClosed) p.set('includeClosed', 'true')
+    const q = p.toString()
+    return request<StoryItem[]>(`/api/channels/${channelId}/stories${q ? `?${q}` : ''}`)
+  },
+  clusterStories: (channelId: string) =>
+    request<{ assigned: number }>(`/api/channels/${channelId}/stories/cluster`, { method: 'POST' }),
+  generateFromStory: (channelId: string, storyId: string, publicationKind?: PublicationKind) =>
+    request<PipelineRunResult>(`/api/channels/${channelId}/stories/${storyId}/generate`, {
+      method: 'POST',
+      body: JSON.stringify({ publicationKind: publicationKind ?? null }),
+    }),
+  dismissStory: (channelId: string, storyId: string) =>
+    request<void>(`/api/channels/${channelId}/stories/${storyId}/dismiss`, { method: 'POST' }),
+  reopenStory: (channelId: string, storyId: string) =>
+    request<void>(`/api/channels/${channelId}/stories/${storyId}/reopen`, { method: 'POST' }),
+  digestStatus: (channelId: string) => request<DigestStatus>(`/api/channels/${channelId}/digest/status`),
+  runDigest: (channelId: string) => request<DigestRunResult>(`/api/channels/${channelId}/digest/run`, { method: 'POST' }),
   dismissCandidate: (channelId: string, candidateId: string) =>
     request<void>(`/api/channels/${channelId}/candidates/${candidateId}/dismiss`, { method: 'POST' }),
   restoreCandidate: (channelId: string, candidateId: string) =>

@@ -28,6 +28,10 @@ public sealed class SourceCandidate : Entity
     public string? ExternalId { get; set; }
     /// <summary>Author / account handle when known.</summary>
     public string? Author { get; set; }
+    public Guid? StoryId { get; set; }
+    public TgAutoposter.Domain.Stories.Story? Story { get; set; }
+    /// <summary>Embedding of title+summary (JSON float array) for story clustering.</summary>
+    public string? EmbeddingJson { get; set; }
     public bool IsConsumed { get; set; }
     /// <summary>Why the candidate left the pending pool: post, duplicate, factcheck, dismissed, expired.</summary>
     public string? ConsumedReason { get; set; }

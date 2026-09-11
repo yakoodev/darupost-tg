@@ -75,6 +75,10 @@ export default function Channels() {
         dailyPostLimit: form.dailyPostLimit,
         dailyAiBudgetLimit: form.dailyAiBudgetLimit,
         isEnabled: form.isEnabled,
+        digestEnabled: form.digestEnabled,
+        digestTimeLocal: form.digestTimeLocal,
+        digestMaxStories: form.digestMaxStories,
+        digestMaxDrafts: form.digestMaxDrafts,
       })
       toast.success('Канал сохранён')
       refresh()
@@ -115,6 +119,10 @@ export default function Channels() {
         dailyPostLimit: createForm.dailyPostLimit,
         dailyAiBudgetLimit: null,
         isEnabled: true,
+        digestEnabled: true,
+        digestTimeLocal: '20:00',
+        digestMaxStories: 12,
+        digestMaxDrafts: 3,
       })
       toast.success('Канал создан')
       setShowCreate(false)
@@ -244,6 +252,25 @@ export default function Channels() {
             </div>
             <div className="divider" />
             <Switch checked={form.isEnabled} onChange={(v) => canEdit && patch('isEnabled', v)} label="Канал включён" />
+          </Card>
+
+          <Card className="pad-lg" title="Вечерний дайджест" subtitle="Раз в день: выжимка сюжетов + черновики самых сильных инфоповодов в очередь">
+            <div className="grid cols-2">
+              <Field label="Время (по часовому поясу канала)">
+                <TextInput type="time" value={form.digestTimeLocal} disabled={!canEdit} onChange={(e) => patch('digestTimeLocal', e.target.value)} />
+              </Field>
+              <Field label="Сюжетов на рассмотрение" hint="3–30">
+                <TextInput type="number" value={form.digestMaxStories} disabled={!canEdit} onChange={(e) => patch('digestMaxStories', Number(e.target.value))} />
+              </Field>
+              <Field label="Черновиков постов" hint="0–10, из самых сильных сюжетов">
+                <TextInput type="number" value={form.digestMaxDrafts} disabled={!canEdit} onChange={(e) => patch('digestMaxDrafts', Number(e.target.value))} />
+              </Field>
+              <Field label="Последний запуск">
+                <TextInput value={form.lastDigestAtUtc ? new Date(form.lastDigestAtUtc).toLocaleString('ru-RU') : '—'} disabled />
+              </Field>
+            </div>
+            <div className="divider" />
+            <Switch checked={form.digestEnabled} onChange={(v) => canEdit && patch('digestEnabled', v)} label="Дайджест включён" />
           </Card>
 
           <Card

@@ -69,7 +69,12 @@ public static class ChannelEndpoints
                     channel.DefaultModerationMode,
                     channel.DailyPostLimit,
                     channel.DailyAiBudgetLimit,
-                    channel.IsEnabled))
+                    channel.IsEnabled,
+                    channel.DigestEnabled,
+                    channel.DigestTimeLocal.ToString("HH:mm"),
+                    channel.DigestMaxStories,
+                    channel.DigestMaxDrafts,
+                    channel.LastDigestAtUtc))
                 .FirstOrDefaultAsync(cancellationToken);
 
             return channel is null ? Results.NotFound() : Results.Ok(channel);
@@ -181,7 +186,12 @@ public static class ChannelEndpoints
                 channel.DefaultModerationMode,
                 channel.DailyPostLimit,
                 channel.DailyAiBudgetLimit,
-                channel.IsEnabled));
+                channel.IsEnabled,
+                channel.DigestEnabled,
+                channel.DigestTimeLocal.ToString("HH:mm"),
+                channel.DigestMaxStories,
+                channel.DigestMaxDrafts,
+                channel.LastDigestAtUtc));
         }).RequireChannelRole(ChannelRoleType.ChannelAdmin, "id");
 
         group.MapPut("/{id:guid}/mode", async (
@@ -394,6 +404,25 @@ public static class ChannelEndpoints
         channel.DailyPostLimit = Math.Max(1, request.DailyPostLimit);
         channel.DailyAiBudgetLimit = request.DailyAiBudgetLimit;
         channel.IsEnabled = request.IsEnabled;
+        if (request.DigestEnabled is not null)
+        {
+            channel.DigestEnabled = request.DigestEnabled.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.DigestTimeLocal) && TimeOnly.TryParse(request.DigestTimeLocal, out var digestTime))
+        {
+            channel.DigestTimeLocal = digestTime;
+        }
+
+        if (request.DigestMaxStories is not null)
+        {
+            channel.DigestMaxStories = Math.Clamp(request.DigestMaxStories.Value, 3, 30);
+        }
+
+        if (request.DigestMaxDrafts is not null)
+        {
+            channel.DigestMaxDrafts = Math.Clamp(request.DigestMaxDrafts.Value, 0, 10);
+        }
     }
 
     private static string? NormalizeOptional(string? value)

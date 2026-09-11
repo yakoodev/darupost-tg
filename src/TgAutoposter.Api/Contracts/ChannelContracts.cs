@@ -28,7 +28,12 @@ public sealed record ChannelDetailsResponse(
     ModerationMode DefaultModerationMode,
     int DailyPostLimit,
     decimal? DailyAiBudgetLimit,
-    bool IsEnabled);
+    bool IsEnabled,
+    bool DigestEnabled,
+    string DigestTimeLocal,
+    int DigestMaxStories,
+    int DigestMaxDrafts,
+    DateTimeOffset? LastDigestAtUtc);
 
 public sealed record UpsertChannelRequest(
     string Name,
@@ -43,7 +48,11 @@ public sealed record UpsertChannelRequest(
     ModerationMode DefaultModerationMode,
     int DailyPostLimit,
     decimal? DailyAiBudgetLimit,
-    bool IsEnabled);
+    bool IsEnabled,
+    bool? DigestEnabled = null,
+    string? DigestTimeLocal = null,
+    int? DigestMaxStories = null,
+    int? DigestMaxDrafts = null);
 
 public sealed record SetAutopilotRequest(bool Enabled);
 

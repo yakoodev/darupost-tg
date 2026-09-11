@@ -31,6 +31,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<WorkerOptions>(configuration.GetSection("Worker"));
         services.Configure<IngestOptions>(configuration.GetSection("Ingest"));
         services.Configure<WspanelOptions>(configuration.GetSection("Wspanel"));
+        services.Configure<DigestOptions>(configuration.GetSection("Digest"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -44,6 +45,8 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<ITelegramPublisher, TelegramPublisher>();
         services.AddSingleton<TelegramHttpClientFactory>();
         services.AddScoped<CandidateIngestService>();
+        services.AddScoped<StoryClusteringService>();
+        services.AddScoped<DigestService>();
         services.AddScoped<IAutopostingPipeline, AutopostingPipeline>();
         services.AddScoped<DbSeeder>();
 
@@ -74,6 +77,7 @@ public static class InfrastructureDependencyInjection
         }
 
         services.AddHostedService<IngestWorker>();
+        services.AddHostedService<DigestWorker>();
         services.AddHostedService<AutopostingWorker>();
         services.AddHostedService<TelegramModerationWorker>();
 

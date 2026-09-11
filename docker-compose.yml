@@ -52,6 +52,8 @@ services:
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
       Ingest__Enabled: ${INGEST_ENABLED:-true}
       Ingest__IntervalMinutes: ${INGEST_INTERVAL_MINUTES:-10}
+      Digest__Enabled: ${DIGEST_ENABLED:-true}
+      Digest__CheckIntervalMinutes: ${DIGEST_CHECK_INTERVAL_MINUTES:-5}
       Wspanel__Enabled: ${WSPANEL_ENABLED:-false}
       Wspanel__BaseUrl: ${WSPANEL_BASE_URL:-}
       Wspanel__ApiKey: ${WSPANEL_API_KEY:-}
