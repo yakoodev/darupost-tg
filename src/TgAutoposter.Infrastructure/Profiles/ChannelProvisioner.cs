@@ -2,6 +2,7 @@ using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
+using TgAutoposter.Domain.Talents;
 
 namespace TgAutoposter.Infrastructure.Profiles;
 
@@ -131,6 +132,20 @@ public static class ChannelProvisioner
                 IsEnabled = true
             }));
         }
+
+        channel.Talents.AddRange(profile.Talents
+            .Where(template => !string.IsNullOrWhiteSpace(template.Name))
+            .Select(template => new Talent
+            {
+                Name = template.Name.Trim(),
+                Agency = template.Agency,
+                Group = template.Group,
+                AliasesCsv = template.Aliases,
+                Priority = Math.Clamp(template.Priority, 1, 3),
+                YouTube = template.YouTube,
+                Twitter = template.Twitter,
+                IsActive = true
+            }));
 
         if (channel.ScheduleWindows.Count == 0)
         {

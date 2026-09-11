@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  Bot, LayoutDashboard, Inbox, Radio, Rss, ListChecks, CalendarClock, Newspaper,
+  Bot, LayoutDashboard, Inbox, Radio, Rss, ListChecks, CalendarClock, Newspaper, Star,
   MessageSquareText, Users, History, Wallet, Plug, LogOut, Menu, Power,
 } from 'lucide-react'
 import { useAppData } from '../lib/appData'
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/queue', label: 'Очередь', icon: Inbox, badge: 'queue' },
   { to: '/channels', label: 'Каналы', icon: Radio },
   { to: '/sources', label: 'Источники', icon: Rss },
+  { to: '/talents', label: 'Таланты', icon: Star },
   { to: '/types', label: 'Типы публикаций', icon: ListChecks },
   { to: '/prompts', label: 'Промпты', icon: MessageSquareText },
   { to: '/schedule', label: 'Расписание', icon: CalendarClock },

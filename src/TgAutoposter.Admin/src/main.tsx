@@ -9,6 +9,7 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Today from './pages/Today'
+import Talents from './pages/Talents'
 import Queue from './pages/Queue'
 import Channels from './pages/Channels'
 import Sources from './pages/Sources'
@@ -38,6 +39,7 @@ function Root() {
             <Route path="queue" element={<Queue />} />
             <Route path="channels" element={<Channels />} />
             <Route path="sources" element={<Sources />} />
+            <Route path="talents" element={<Talents />} />
             <Route path="types" element={<PublicationTypes />} />
             <Route path="prompts" element={<Prompts />} />
             <Route path="schedule" element={<Schedule />} />

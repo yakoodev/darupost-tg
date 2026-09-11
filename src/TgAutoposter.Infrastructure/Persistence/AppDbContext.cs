@@ -7,6 +7,7 @@ using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
 using TgAutoposter.Domain.Sources;
 using TgAutoposter.Domain.Stories;
+using TgAutoposter.Domain.Talents;
 
 namespace TgAutoposter.Infrastructure.Persistence;
 
@@ -21,6 +22,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Source> Sources => Set<Source>();
     public DbSet<SourceCandidate> SourceCandidates => Set<SourceCandidate>();
     public DbSet<Story> Stories => Set<Story>();
+    public DbSet<Talent> Talents => Set<Talent>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PostVersion> PostVersions => Set<PostVersion>();
     public DbSet<ModerationMessage> ModerationMessages => Set<ModerationMessage>();
@@ -157,10 +159,27 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.HasIndex(x => new { x.ChannelId, x.NormalizedHash }).IsUnique();
         });
 
+        modelBuilder.Entity<Talent>(builder =>
+        {
+            builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            builder.Property(x => x.Agency).HasMaxLength(200);
+            builder.Property(x => x.Group).HasMaxLength(200);
+            builder.Property(x => x.AliasesCsv).HasMaxLength(2000);
+            builder.Property(x => x.YouTube).HasMaxLength(512);
+            builder.Property(x => x.Twitter).HasMaxLength(128);
+            builder.Property(x => x.Telegram).HasMaxLength(128);
+            builder.HasIndex(x => new { x.ChannelId, x.Name });
+            builder.HasOne(x => x.Channel)
+                .WithMany()
+                .HasForeignKey(x => x.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<Story>(builder =>
         {
             builder.Property(x => x.Title).HasMaxLength(512).IsRequired();
             builder.Property(x => x.Summary).HasMaxLength(4000);
+            builder.Property(x => x.TalentsCsv).HasMaxLength(1000);
             builder.HasIndex(x => new { x.ChannelId, x.Status, x.LastSeenAtUtc });
             builder.HasOne(x => x.Channel)
                 .WithMany()

@@ -22,6 +22,8 @@ public sealed class Story : Entity
     /// <summary>Importance: distinct sources, engagement, breaking markers, recency.</summary>
     public double Score { get; set; }
     public bool IsBreaking { get; set; }
+    /// <summary>Registry talents mentioned in the story (canonical names, comma-separated).</summary>
+    public string? TalentsCsv { get; set; }
     public PublicationKind? KindHint { get; set; }
     /// <summary>Centroid embedding (JSON float array) of the attached candidates.</summary>
     public string? EmbeddingJson { get; set; }

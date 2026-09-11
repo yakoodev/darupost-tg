@@ -1,7 +1,7 @@
 import type {
   AiAccountStatus, CandidateList, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, DigestRunResult, DigestStatus, IngestResultItem, NicheProfileSummary,
   FooterLinkItem, GenerateDraftPostRequest, LoginResponse, PipelineRunResult, PostItem, PostStatus,
-  PublicationKind, PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, StoryItem, UserListItem,
+  PublicationKind, PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, StoryItem, TalentItem, UserListItem,
   WorkerStatus,
 } from './types'
 
@@ -81,6 +81,12 @@ export interface SourcePayload {
   allowNsfw: boolean; allowRumors: boolean; requireNewsSignal?: boolean
 }
 
+export interface TalentPayload {
+  name: string; agency?: string; group?: string; aliasesCsv?: string; priority: number
+  youTube?: string; twitter?: string; telegram?: string
+  trackYouTube: boolean; trackTwitter: boolean; isActive: boolean; notes?: string
+}
+
 export interface RunPipelineOptions {
   publishNewPostsImmediately?: boolean; maxPostsToCreate?: number
   ignoreSourceSchedule?: boolean; bypassDailyLimit?: boolean; publicationKind?: string
@@ -134,6 +140,18 @@ export const api = {
     request<void>(`/api/channels/${channelId}/stories/${storyId}/dismiss`, { method: 'POST' }),
   reopenStory: (channelId: string, storyId: string) =>
     request<void>(`/api/channels/${channelId}/stories/${storyId}/reopen`, { method: 'POST' }),
+  // talents
+  talents: (channelId: string) => request<TalentItem[]>(`/api/channels/${channelId}/talents`),
+  createTalent: (channelId: string, payload: TalentPayload) =>
+    request<TalentItem>(`/api/channels/${channelId}/talents`, { method: 'POST', body: JSON.stringify(payload) }),
+  updateTalent: (channelId: string, talentId: string, payload: TalentPayload) =>
+    request<void>(`/api/channels/${channelId}/talents/${talentId}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteTalent: (channelId: string, talentId: string) =>
+    request<void>(`/api/channels/${channelId}/talents/${talentId}`, { method: 'DELETE' }),
+  importTalents: (channelId: string, text: string) =>
+    request<{ created: number; updated: number }>(`/api/channels/${channelId}/talents/import`, { method: 'POST', body: JSON.stringify({ text }) }),
+  syncTalentSources: (channelId: string) =>
+    request<{ created: number; disabled: number; names: string[] }>(`/api/channels/${channelId}/talents/sync-sources`, { method: 'POST' }),
   digestStatus: (channelId: string) => request<DigestStatus>(`/api/channels/${channelId}/digest/status`),
   runDigest: (channelId: string) => request<DigestRunResult>(`/api/channels/${channelId}/digest/run`, { method: 'POST' }),
   dismissCandidate: (channelId: string, candidateId: string) =>

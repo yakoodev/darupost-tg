@@ -203,7 +203,7 @@ public sealed class DigestService(
         {
             user.AppendLine();
             user.AppendLine($"[{view.Index}] {view.Story.Title}");
-            user.AppendLine($"    источников: {view.Story.SourcesCount}, упоминаний: {view.Story.CandidatesCount}, важность: {view.Story.Score:0.0}{(view.Story.IsBreaking ? ", СРОЧНОЕ" : string.Empty)}");
+            user.AppendLine($"    источников: {view.Story.SourcesCount}, упоминаний: {view.Story.CandidatesCount}, важность: {view.Story.Score:0.0}{(view.Story.IsBreaking ? ", СРОЧНОЕ" : string.Empty)}{(string.IsNullOrWhiteSpace(view.Story.TalentsCsv) ? string.Empty : $", таланты: {view.Story.TalentsCsv}")}");
             foreach (var item in view.Items)
             {
                 user.AppendLine($"    - ({item.Source}) {item.Title}: {item.Summary}");

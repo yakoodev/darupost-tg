@@ -24,6 +24,8 @@ public sealed class NicheProfile
     public List<NicheSource> Sources { get; init; } = [];
     public List<NicheFooterLink> FooterLinks { get; init; } = [];
     public List<NicheScheduleWindow> ScheduleWindows { get; init; } = [];
+    /// <summary>Starter talent registry (names, agencies, aliases, official accounts). Sources are created only when tracking is enabled.</summary>
+    public List<NicheTalent> Talents { get; init; } = [];
 }
 
 public sealed class NicheChannelDefaults
@@ -137,6 +139,17 @@ public sealed class NicheFooterLink
     public string Label { get; init; } = string.Empty;
     public string Url { get; init; } = string.Empty;
     public int SortOrder { get; init; }
+}
+
+public sealed class NicheTalent
+{
+    public string Name { get; init; } = string.Empty;
+    public string? Agency { get; init; }
+    public string? Group { get; init; }
+    public string? Aliases { get; init; }
+    public int Priority { get; init; } = 2;
+    public string? YouTube { get; init; }
+    public string? Twitter { get; init; }
 }
 
 public sealed class NicheScheduleWindow

@@ -209,6 +209,7 @@ export default function Today() {
                       {s.isBreaking && <Badge tone="red">срочно</Badge>}
                       <Badge tone={st.tone}>{st.label}</Badge>
                       {s.kindHint && <Badge>{kindLabels[s.kindHint] ?? s.kindHint}</Badge>}
+                      {s.talentsCsv && <Badge tone="green">{s.talentsCsv}</Badge>}
                       <span className="faint" style={{ fontSize: 12 }}>★ {s.score}</span>
                       <span className="faint" style={{ fontSize: 12 }}>{s.sourcesCount} ист. · {s.candidatesCount} упом.</span>
                       <span className="faint" style={{ fontSize: 11.5, marginLeft: 'auto' }} title={dateTime(s.lastSeenAtUtc)}>{relTime(s.lastSeenAtUtc)}</span>

@@ -480,5 +480,286 @@
       "end": "23:00",
       "minimumIntervalMinutes": 45
     }
+  ],
+  "talents": [
+    {
+      "name": "Gawr Gura",
+      "agency": "hololive",
+      "group": "EN Myth",
+      "aliases": "Gura, Same-chan, がうる・ぐら, Гура",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@GawrGura",
+      "twitter": "gawrgura"
+    },
+    {
+      "name": "Mori Calliope",
+      "agency": "hololive",
+      "group": "EN Myth",
+      "aliases": "Calli, Callie, 森カリオペ, Калли",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@MoriCalliope",
+      "twitter": "moricalliope"
+    },
+    {
+      "name": "Takanashi Kiara",
+      "agency": "hololive",
+      "group": "EN Myth",
+      "aliases": "Kiara, 小鳥遊キアラ, Киара",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@TakanashiKiara",
+      "twitter": "takanashikiara"
+    },
+    {
+      "name": "Ninomae Ina'nis",
+      "agency": "hololive",
+      "group": "EN Myth",
+      "aliases": "Ina, Inanis, 一伊那尓栖, Ина",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@NinomaeInanis",
+      "twitter": "ninomaeinanis"
+    },
+    {
+      "name": "IRyS",
+      "agency": "hololive",
+      "group": "EN Promise",
+      "aliases": "アイリス, Айрис",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@IRyS",
+      "twitter": "irys_en"
+    },
+    {
+      "name": "Hakos Baelz",
+      "agency": "hololive",
+      "group": "EN Promise",
+      "aliases": "Bae, Baelz, ハコス・ベールズ",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@HakosBaelz",
+      "twitter": "hakosbaelz"
+    },
+    {
+      "name": "Ouro Kronii",
+      "agency": "hololive",
+      "group": "EN Promise",
+      "aliases": "Kronii, オーロ・クロニー",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@OuroKronii",
+      "twitter": "ourokronii"
+    },
+    {
+      "name": "Shiori Novella",
+      "agency": "hololive",
+      "group": "EN Advent",
+      "aliases": "Shiori, シオリ・ノヴェラ",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@ShioriNovella",
+      "twitter": "shiorinovella"
+    },
+    {
+      "name": "Koseki Bijou",
+      "agency": "hololive",
+      "group": "EN Advent",
+      "aliases": "Bijou, Biboo, 古石ビジュー",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@KosekiBijou",
+      "twitter": "kosekibijou"
+    },
+    {
+      "name": "Nerissa Ravencroft",
+      "agency": "hololive",
+      "group": "EN Advent",
+      "aliases": "Nerissa, ネリッサ・レイヴンクロフト",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@NerissaRavencroft",
+      "twitter": "nerissa_en"
+    },
+    {
+      "name": "FUWAMOCO",
+      "agency": "hololive",
+      "group": "EN Advent",
+      "aliases": "Fuwawa, Mococo, FuwaMoco, フワモコ",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@FUWAMOCOch",
+      "twitter": "fuwamoco_en"
+    },
+    {
+      "name": "Usada Pekora",
+      "agency": "hololive",
+      "group": "JP 3rd gen",
+      "aliases": "Pekora, Peko, 兎田ぺこら, Пекора",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@usadapekora",
+      "twitter": "usadapekora"
+    },
+    {
+      "name": "Hoshimachi Suisei",
+      "agency": "hololive",
+      "group": "JP 0th gen",
+      "aliases": "Suisei, Sui-chan, 星街すいせい, Суйсей",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@HoshimachiSuisei",
+      "twitter": "suisei_hosimati"
+    },
+    {
+      "name": "Sakura Miko",
+      "agency": "hololive",
+      "group": "JP 0th gen",
+      "aliases": "Miko, Mikochi, さくらみこ, Мико",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@SakuraMiko",
+      "twitter": "sakuramiko35"
+    },
+    {
+      "name": "Shirakami Fubuki",
+      "agency": "hololive",
+      "group": "JP 1st gen",
+      "aliases": "Fubuki, FBK, 白上フブキ",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@ShirakamiFubuki",
+      "twitter": "shirakamifubuki"
+    },
+    {
+      "name": "Houshou Marine",
+      "agency": "hololive",
+      "group": "JP 3rd gen",
+      "aliases": "Marine, Senchou, 宝鐘マリン, Марин",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@HoushouMarine",
+      "twitter": "houshoumarine"
+    },
+    {
+      "name": "Inugami Korone",
+      "agency": "hololive",
+      "group": "JP Gamers",
+      "aliases": "Korone, 戌神ころね",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@InugamiKorone",
+      "twitter": "inugamikorone"
+    },
+    {
+      "name": "Nekomata Okayu",
+      "agency": "hololive",
+      "group": "JP Gamers",
+      "aliases": "Okayu, 猫又おかゆ",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@NekomataOkayu",
+      "twitter": "nekomataokayu"
+    },
+    {
+      "name": "Tokino Sora",
+      "agency": "hololive",
+      "group": "JP 0th gen",
+      "aliases": "Sora, ときのそら",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@TokinoSora",
+      "twitter": "tokino_sora"
+    },
+    {
+      "name": "Kureiji Ollie",
+      "agency": "hololive",
+      "group": "ID 2nd gen",
+      "aliases": "Ollie, クレイジー・オリー",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@KureijiOllie",
+      "twitter": "kureijiollie"
+    },
+    {
+      "name": "Vox Akuma",
+      "agency": "NIJISANJI",
+      "group": "EN Luxiem",
+      "aliases": "Vox, ヴォックス・アクマ",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@VoxAkuma",
+      "twitter": "vox_akuma"
+    },
+    {
+      "name": "Luca Kaneshiro",
+      "agency": "NIJISANJI",
+      "group": "EN Luxiem",
+      "aliases": "Luca, ルカ・カネシロ",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@LucaKaneshiro",
+      "twitter": "luca_kaneshiro"
+    },
+    {
+      "name": "Ike Eveland",
+      "agency": "NIJISANJI",
+      "group": "EN Luxiem",
+      "aliases": "Ike, アイク・イーヴランド",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@IkeEveland",
+      "twitter": "ike_eveland"
+    },
+    {
+      "name": "Kuzuha",
+      "agency": "NIJISANJI",
+      "group": "JP",
+      "aliases": "葛葉, Кузуха",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@Kuzuha",
+      "twitter": "Vamp_Kuzu"
+    },
+    {
+      "name": "Kanae",
+      "agency": "NIJISANJI",
+      "group": "JP",
+      "aliases": "叶",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@Kanae",
+      "twitter": "Kanae_2434"
+    },
+    {
+      "name": "Ironmouse",
+      "agency": "VShojo",
+      "group": "",
+      "aliases": "Mouse, Mousey, Айронмаус",
+      "priority": 1,
+      "youTube": "https://www.youtube.com/@ironmouse",
+      "twitter": "ironmouse"
+    },
+    {
+      "name": "Zentreya",
+      "agency": "VShojo",
+      "group": "",
+      "aliases": "Zen",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@Zentreya",
+      "twitter": "zentreya"
+    },
+    {
+      "name": "Kson",
+      "agency": "VShojo",
+      "group": "",
+      "aliases": "ksonONAIR, 桐生ココ, Kiryu Coco",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@ksonONAIR",
+      "twitter": "ksonONAIR"
+    },
+    {
+      "name": "Filian",
+      "agency": "indie",
+      "group": "",
+      "aliases": "fillian, Филиан",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@filian",
+      "twitter": "filian"
+    },
+    {
+      "name": "Dokibird",
+      "agency": "indie",
+      "group": "",
+      "aliases": "Doki, Dokibird, Selen Tatsuki",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@Dokibird",
+      "twitter": "dokibird"
+    },
+    {
+      "name": "Mint Fantôme",
+      "agency": "indie",
+      "group": "",
+      "aliases": "Mint, Mint Fantome, Pomu Rainpuff",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@MintFantome",
+      "twitter": "mintfantome"
+    }
   ]
 }

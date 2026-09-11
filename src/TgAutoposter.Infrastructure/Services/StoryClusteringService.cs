@@ -21,6 +21,7 @@ public sealed class StoryClusteringService(
     IEmbeddingProvider embeddingProvider,
     INicheProfileProvider profiles,
     IDateTimeProvider clock,
+    TalentMatcher talents,
     ILogger<StoryClusteringService> logger)
 {
     public const int LookbackHours = 48;
@@ -86,20 +87,27 @@ public sealed class StoryClusteringService(
             }
 
             var candidateTokens = TopicTokens(candidate.Title, stopWords);
+            var candidateTalents = await talents.MatchAsync(channel.Id, $"{candidate.Title}\n{candidate.Summary}", cancellationToken);
+            var candidateTalentNames = candidateTalents.Select(talent => talent.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
             Story? match = null;
             var bestScore = 0.0;
 
             foreach (var story in stories)
             {
                 double score;
+                var sharesTalent = candidateTalentNames.Count > 0 &&
+                                   !string.IsNullOrWhiteSpace(story.TalentsCsv) &&
+                                   story.TalentsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(candidateTalentNames.Contains);
                 if (vector.Length > 0 && vectors[story.Id].Length == vector.Length)
                 {
                     score = CosineSimilarity(vector, vectors[story.Id]);
                     if (score < EmbeddingThreshold)
                     {
-                        // Embeddings disagree strongly — don't let a loose title match override that.
-                        score = score >= 0.75 ? Jaccard(candidateTokens, tokens[story.Id]) : 0;
-                        if (score < JaccardThreshold)
+                        // Embeddings disagree strongly — don't let a loose title match override that,
+                        // unless the same talent is involved and the titles still overlap.
+                        var jaccard = Jaccard(candidateTokens, tokens[story.Id]);
+                        score = score >= 0.75 ? jaccard : sharesTalent && score >= 0.6 && jaccard >= 0.3 ? jaccard : 0;
+                        if (score < (sharesTalent ? 0.3 : JaccardThreshold))
                         {
                             continue;
                         }
@@ -108,7 +116,8 @@ public sealed class StoryClusteringService(
                 else
                 {
                     score = Jaccard(candidateTokens, tokens[story.Id]);
-                    if (score < JaccardThreshold || !HasStrongSharedToken(candidateTokens, tokens[story.Id]))
+                    var threshold = sharesTalent ? 0.3 : JaccardThreshold;
+                    if (score < threshold || (!sharesTalent && !HasStrongSharedToken(candidateTokens, tokens[story.Id])))
                     {
                         continue;
                     }
@@ -133,6 +142,7 @@ public sealed class StoryClusteringService(
                     IsBreaking = ContainsAny($"{candidate.Title}\n{candidate.Summary}", profile.Markers.BreakingSignal),
                     KindHint = GuessKind(profile, candidate),
                     EmbeddingJson = vector.Length > 0 ? JsonSerializer.Serialize(vector) : null,
+                    TalentsCsv = candidateTalentNames.Count == 0 ? null : string.Join(", ", candidateTalentNames),
                     LeadCandidateId = candidate.Id
                 };
                 db.Stories.Add(match);
@@ -154,6 +164,14 @@ public sealed class StoryClusteringService(
                 }
 
                 match.IsBreaking |= ContainsAny($"{candidate.Title}\n{candidate.Summary}", profile.Markers.BreakingSignal);
+                if (candidateTalentNames.Count > 0)
+                {
+                    var merged = (match.TalentsCsv ?? string.Empty)
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Union(candidateTalentNames, StringComparer.OrdinalIgnoreCase)
+                        .Take(12);
+                    match.TalentsCsv = string.Join(", ", merged);
+                }
                 if (candidate.FoundAtUtc > match.LastSeenAtUtc)
                 {
                     match.LastSeenAtUtc = candidate.FoundAtUtc;
@@ -225,13 +243,16 @@ public sealed class StoryClusteringService(
             var hoursSinceLast = Math.Max(0, (now - story.LastSeenAtUtc).TotalHours);
             var recency = hoursSinceLast < 6 ? 3 : hoursSinceLast < 12 ? 2 : hoursSinceLast < 24 ? 1 : 0;
             var kindBonus = own.Count(candidate => kinds.TryGetValue(candidate.SourceId, out var kind) && kind is SourceKind.YouTube or SourceKind.Twitter) > 0 ? 2 : 0;
+            var talentMatches = await talents.MatchAsync(channelId, $"{story.Title}\n{story.Summary}", cancellationToken);
+            var talentBonus = talentMatches.Count == 0 ? 0 : talentMatches.Min(talent => talent.Priority) switch { 1 => 5, 2 => 2, _ => 1 };
 
             story.Score = story.SourcesCount * 3
                           + Math.Min(story.CandidatesCount, 10)
                           + Math.Log10(1 + Math.Max(0, engagement)) * 2
                           + (story.IsBreaking ? 10 : 0)
                           + recency
-                          + kindBonus;
+                          + kindBonus
+                          + talentBonus;
         }
 
         await db.SaveChangesAsync(cancellationToken);

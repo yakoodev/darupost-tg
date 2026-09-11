@@ -36,4 +36,5 @@ public sealed class Channel : Entity
     public List<ScheduleWindow> ScheduleWindows { get; set; } = [];
     public List<ChannelRole> Roles { get; set; } = [];
     public List<Post> Posts { get; set; } = [];
+    public List<TgAutoposter.Domain.Talents.Talent> Talents { get; set; } = [];
 }

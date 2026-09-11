@@ -285,6 +285,7 @@ export interface StoryItem {
   sourcesCount: number
   score: number
   isBreaking: boolean
+  talentsCsv?: string | null
   kindHint?: PublicationKind | null
   status: StoryStatus
   leadCandidateId?: string | null
@@ -309,4 +310,20 @@ export interface DigestRunResult {
   digestItems: number
   draftsCreated: number
   warnings: string[]
+}
+
+export interface TalentItem {
+  id: string
+  name: string
+  agency?: string | null
+  group?: string | null
+  aliasesCsv?: string | null
+  priority: number
+  youTube?: string | null
+  twitter?: string | null
+  telegram?: string | null
+  trackYouTube: boolean
+  trackTwitter: boolean
+  isActive: boolean
+  notes?: string | null
 }

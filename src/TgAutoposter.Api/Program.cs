@@ -139,6 +139,7 @@ app
     .MapProfileEndpoints()
     .MapCandidateEndpoints()
     .MapStoryEndpoints()
+    .MapTalentEndpoints()
     .MapIntegrationEndpoints();
 
 await app.UseInfrastructureAsync();

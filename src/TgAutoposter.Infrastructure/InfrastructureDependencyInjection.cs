@@ -46,6 +46,7 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<ITelegramPublisher, TelegramPublisher>();
         services.AddSingleton<TelegramHttpClientFactory>();
         services.AddScoped<CandidateIngestService>();
+        services.AddScoped<TalentMatcher>();
         services.AddScoped<StoryClusteringService>();
         services.AddScoped<DigestService>();
         services.AddScoped<IAutopostingPipeline, AutopostingPipeline>();
