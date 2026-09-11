@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,7 +15,7 @@ namespace TgAutoposter.Infrastructure.Services;
 
 public sealed class AutopostingPipeline(
     AppDbContext db,
-    IContentCollector collector,
+    CandidateIngestService candidateIngest,
     IDeduplicationService deduplicationService,
     IFactCheckService factCheckService,
     IPostTextGenerator postTextGenerator,
@@ -45,145 +43,140 @@ public sealed class AutopostingPipeline(
         var profile = profiles.Get(channel.ProfileKey);
         var initialPublish = await PublishDuePostsAsync(channel, cancellationToken);
 
-        var sourcesToCheck = channel.Sources
-            .Where(source => source.IsEnabled && (options.IgnoreSourceSchedule || IsDue(source)))
-            .Where(source => options.PublicationKind is null || SourceAllowsKind(source, options.PublicationKind.Value))
-            .OrderBy(source => options.PublicationKind.HasValue ? SourcePriority(source.Kind, options.PublicationKind.Value) : 0)
-            .ThenBy(source => source.LastCheckedAtUtc ?? DateTimeOffset.MinValue)
-            .ThenBy(source => SourcePriority(source.Kind, null))
-            .ThenBy(source => source.Name)
-            .ToList();
-
+        // Phase 1 — ingest: cheap collection into SourceCandidates (also done all day by IngestWorker).
         var sourcesChecked = 0;
         var candidatesCollected = 0;
+        if (options.CollectSources && options.CandidateId is null)
+        {
+            var sourcesToCheck = channel.Sources
+                .Where(source => source.IsEnabled && (options.IgnoreSourceSchedule || IsDue(source)))
+                .Where(source => options.PublicationKind is null || SourceAllowsKind(source, options.PublicationKind.Value))
+                .OrderBy(source => options.PublicationKind.HasValue ? SourcePriority(source.Kind, options.PublicationKind.Value) : 0)
+                .ThenBy(source => source.LastCheckedAtUtc ?? DateTimeOffset.MinValue)
+                .ThenBy(source => SourcePriority(source.Kind, null))
+                .ThenBy(source => source.Name)
+                .ToList();
+
+            foreach (var source in sourcesToCheck)
+            {
+                var ingest = await candidateIngest.IngestSourceAsync(channel, profile, source, cancellationToken);
+                sourcesChecked++;
+                candidatesCollected += ingest.NewCandidates;
+                if (ingest.Error is not null)
+                {
+                    warnings.Add($"Источник {source.Name}: ошибка сбора ({ingest.Error}).");
+                }
+            }
+        }
+
+        // Phase 2 — generation: take pending candidates from the pool (newest first) and turn them into posts.
         var postsCreated = 0;
         var duplicatesSkipped = 0;
         var factCheckFailed = 0;
         var publishedThisRun = initialPublish.Published;
         var publishFailed = initialPublish.Failed;
-        var dailyLimitReached = false;
 
-        foreach (var source in sourcesToCheck)
+        var pending = await LoadPendingCandidatesAsync(channel, options, cancellationToken);
+        foreach (var candidate in pending)
         {
-            if (HasCreatedEnough(options, postsCreated) || dailyLimitReached)
+            if (HasCreatedEnough(options, postsCreated))
             {
                 break;
             }
 
-            IReadOnlyCollection<CollectedCandidate> collected;
-            try
+            if (!options.BypassDailyLimit && await IsDailyLimitReachedAsync(channel.Id, channel.DailyPostLimit, cancellationToken))
             {
-                collected = await collector.CollectAsync(source, profile, cancellationToken);
-                sourcesChecked++;
-                source.LastCheckedAtUtc = clock.UtcNow;
-                AddCollectorProviderUsageIfPresent(channel, source, collected);
+                warnings.Add($"Канал {channel.Name}: дневной лимит {channel.DailyPostLimit} постов достигнут.");
+                break;
             }
-            catch (Exception ex)
+
+            var source = channel.Sources.FirstOrDefault(item => item.Id == candidate.SourceId);
+            if (source is null)
             {
-                logger.LogWarning(ex, "Source {SourceId} collection failed.", source.Id);
-                warnings.Add($"Источник {source.Name}: ошибка сбора ({ex.Message}).");
+                candidate.IsConsumed = true;
+                candidate.ConsumedReason = "orphan";
                 continue;
             }
 
-            foreach (var item in collected)
+            if (options.PublicationKind is not null && !SourceAllowsKind(source, options.PublicationKind.Value))
             {
-                if (HasCreatedEnough(options, postsCreated))
-                {
-                    break;
-                }
+                continue;
+            }
 
-                if (IsStale(item))
-                {
-                    warnings.Add($"Пропущен старый инфоповод: {item.Title}.");
-                    continue;
-                }
+            var publicationType = PickPublicationType(channel, profile, source, candidate, options);
+            if (publicationType is null)
+            {
+                warnings.Add($"Канал {channel.Name}: не найден включённый тип публикации для кандидата {candidate.Title}.");
+                continue;
+            }
 
-                if (!options.BypassDailyLimit && await IsDailyLimitReachedAsync(channel.Id, channel.DailyPostLimit, cancellationToken))
-                {
-                    warnings.Add($"Канал {channel.Name}: дневной лимит {channel.DailyPostLimit} постов достигнут.");
-                    dailyLimitReached = true;
-                    break;
-                }
-
-                var candidate = await UpsertCandidateAsync(channel.Id, source.Id, item, cancellationToken);
-                if (candidate is null)
-                {
-                    continue;
-                }
-
-                candidatesCollected++;
-                var publicationType = PickPublicationType(channel, profile, source, candidate, options);
-                if (publicationType is null)
-                {
-                    warnings.Add($"Канал {channel.Name}: не найден включённый тип публикации для кандидата {candidate.Title}.");
-                    continue;
-                }
-
-                var deduplication = await deduplicationService.CheckAsync(candidate, cancellationToken);
-                if (deduplication.Status == DeduplicationStatus.Duplicate)
-                {
-                    duplicatesSkipped++;
-                    await CreateDuplicatePostAsync(channel, source, candidate, publicationType, deduplication, cancellationToken);
-                    candidate.IsConsumed = true;
-                    continue;
-                }
-
-                var factCheck = await factCheckService.CheckAsync(channel, publicationType, candidate, cancellationToken);
-                // Only a hard "Failed" is dropped. "NeedsManualReview" must go to moderation, not the bin —
-                // otherwise autopilot silently publishes nothing whenever the fact check is unsure.
-                if (factCheck.Status == FactCheckStatus.Failed)
-                {
-                    factCheckFailed++;
-                    await CreateFactCheckFailedPostAsync(channel, source, candidate, publicationType, factCheck, deduplication, cancellationToken);
-                    candidate.IsConsumed = true;
-                    continue;
-                }
-
-                var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken);
-                var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
-                post.EmbeddingJson = await ComputeEmbeddingJsonAsync(channel.Id, post, cancellationToken);
-
-                if (ShouldGenerateImage(channel, publicationType, post))
-                {
-                    await GenerateImageAsync(channel, publicationType, post, warnings, cancellationToken);
-                }
-
-                db.Posts.Add(post);
-                db.PostVersions.Add(new PostVersion
-                {
-                    Post = post,
-                    VersionNumber = 1,
-                    Text = generated.Text,
-                    Prompt = generated.Prompt,
-                    Model = generated.Model,
-                    Reason = "initial-generation"
-                });
-
-                db.AiUsageRecords.Add(new AiUsageRecord
-                {
-                    ChannelId = channel.Id,
-                    Post = post,
-                    Provider = generated.Provider,
-                    Model = generated.Model,
-                    TaskType = AiTaskType.PostGeneration,
-                    PromptTokens = generated.PromptTokens,
-                    CompletionTokens = generated.CompletionTokens,
-                    TotalTokens = generated.TotalTokens,
-                    CostAmount = null,
-                    CostCurrency = generated.CostCurrency,
-                    ProviderCostAmount = generated.CostAmount,
-                    ProviderCostCurrency = generated.CostCurrency,
-                    RequestMetadataJson = generated.UsageMetadataJson
-                });
-
+            var deduplication = await deduplicationService.CheckAsync(candidate, cancellationToken);
+            if (deduplication.Status == DeduplicationStatus.Duplicate)
+            {
+                duplicatesSkipped++;
+                await CreateDuplicatePostAsync(channel, source, candidate, publicationType, deduplication, cancellationToken);
                 candidate.IsConsumed = true;
-                await db.SaveChangesAsync(cancellationToken);
-                postsCreated++;
+                candidate.ConsumedReason = "duplicate";
+                continue;
+            }
 
-                if (post.Status == PostStatus.WaitingModeration)
-                {
-                    await moderationNotifier.NotifyAsync(channel, post, cancellationToken);
-                }
+            var factCheck = await factCheckService.CheckAsync(channel, publicationType, candidate, cancellationToken);
+            // Only a hard "Failed" is dropped. "NeedsManualReview" must go to moderation, not the bin —
+            // otherwise autopilot silently publishes nothing whenever the fact check is unsure.
+            if (factCheck.Status == FactCheckStatus.Failed)
+            {
+                factCheckFailed++;
+                await CreateFactCheckFailedPostAsync(channel, source, candidate, publicationType, factCheck, deduplication, cancellationToken);
+                candidate.IsConsumed = true;
+                candidate.ConsumedReason = "factcheck";
+                continue;
+            }
+
+            var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken);
+            var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
+            post.EmbeddingJson = await ComputeEmbeddingJsonAsync(channel.Id, post, cancellationToken);
+
+            if (ShouldGenerateImage(channel, publicationType, post))
+            {
+                await GenerateImageAsync(channel, publicationType, post, warnings, cancellationToken);
+            }
+
+            db.Posts.Add(post);
+            db.PostVersions.Add(new PostVersion
+            {
+                Post = post,
+                VersionNumber = 1,
+                Text = generated.Text,
+                Prompt = generated.Prompt,
+                Model = generated.Model,
+                Reason = "initial-generation"
+            });
+
+            db.AiUsageRecords.Add(new AiUsageRecord
+            {
+                ChannelId = channel.Id,
+                Post = post,
+                Provider = generated.Provider,
+                Model = generated.Model,
+                TaskType = AiTaskType.PostGeneration,
+                PromptTokens = generated.PromptTokens,
+                CompletionTokens = generated.CompletionTokens,
+                TotalTokens = generated.TotalTokens,
+                CostAmount = null,
+                CostCurrency = generated.CostCurrency,
+                ProviderCostAmount = generated.CostAmount,
+                ProviderCostCurrency = generated.CostCurrency,
+                RequestMetadataJson = generated.UsageMetadataJson
+            });
+
+            candidate.IsConsumed = true;
+            candidate.ConsumedReason = "post";
+            await db.SaveChangesAsync(cancellationToken);
+            postsCreated++;
+
+            if (post.Status == PostStatus.WaitingModeration)
+            {
+                await moderationNotifier.NotifyAsync(channel, post, cancellationToken);
             }
         }
 
@@ -207,6 +200,36 @@ public sealed class AutopostingPipeline(
             warnings);
     }
 
+    /// <summary>
+    /// Pending pool: unconsumed candidates newer than the stale window, newest first. Older ones are expired in place.
+    /// With <see cref="PipelineRunOptions.CandidateId"/> the specific candidate is returned regardless of its state.
+    /// </summary>
+    private async Task<List<SourceCandidate>> LoadPendingCandidatesAsync(Channel channel, PipelineRunOptions options, CancellationToken cancellationToken)
+    {
+        if (options.CandidateId is Guid candidateId)
+        {
+            var one = await db.SourceCandidates.FirstOrDefaultAsync(
+                candidate => candidate.Id == candidateId && candidate.ChannelId == channel.Id,
+                cancellationToken);
+            return one is null ? [] : [one];
+        }
+
+        var staleSince = clock.UtcNow.AddHours(-CandidateIngestService.StaleHours);
+        await db.SourceCandidates
+            .Where(candidate => candidate.ChannelId == channel.Id && !candidate.IsConsumed && candidate.FoundAtUtc < staleSince)
+            .ExecuteUpdateAsync(updates => updates
+                .SetProperty(candidate => candidate.IsConsumed, true)
+                .SetProperty(candidate => candidate.ConsumedReason, "expired"),
+                cancellationToken);
+
+        var take = Math.Max(20, (options.MaxPostsToCreate ?? 5) * 10);
+        return await db.SourceCandidates
+            .Where(candidate => candidate.ChannelId == channel.Id && !candidate.IsConsumed && candidate.FoundAtUtc >= staleSince)
+            .OrderByDescending(candidate => candidate.FoundAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
     private async Task<Channel?> LoadChannelAsync(Guid channelId, CancellationToken cancellationToken)
     {
         return await db.Channels
@@ -225,45 +248,6 @@ public sealed class AutopostingPipeline(
         }
 
         return source.LastCheckedAtUtc.Value.AddMinutes(Math.Max(1, source.CheckEveryMinutes)) <= clock.UtcNow;
-    }
-
-    private async Task<SourceCandidate?> UpsertCandidateAsync(
-        Guid channelId,
-        Guid sourceId,
-        CollectedCandidate item,
-        CancellationToken cancellationToken)
-    {
-        var hash = ComputeHash($"{item.Url}|{item.Title}|{item.Summary}");
-        var existing = await db.SourceCandidates
-            .FirstOrDefaultAsync(candidate => candidate.ChannelId == channelId && candidate.NormalizedHash == hash, cancellationToken);
-
-        if (existing is not null)
-        {
-            return existing.IsConsumed ? null : existing;
-        }
-
-        var candidate = new SourceCandidate
-        {
-            ChannelId = channelId,
-            SourceId = sourceId,
-            Title = TextSanitizer.Clean(item.Title),
-            Url = item.Url,
-            CanonicalUrl = item.Url,
-            Summary = TextSanitizer.Clean(item.Summary),
-            RawText = TextSanitizer.Clean(item.RawText),
-            ImageUrl = item.ImageUrl,
-            MediaUrlsJson = SerializeMediaUrls(item.MediaUrls),
-            VideoUrl = item.VideoUrl,
-            Score = item.Score,
-            CommentsCount = item.CommentsCount,
-            FoundAtUtc = item.FoundAtUtc.ToUniversalTime(),
-            NormalizedHash = hash,
-            MetadataJson = item.MetadataJson
-        };
-
-        db.SourceCandidates.Add(candidate);
-        await db.SaveChangesAsync(cancellationToken);
-        return candidate;
     }
 
     private static PublicationTypeSetting? PickPublicationType(
@@ -529,31 +513,6 @@ public sealed class AutopostingPipeline(
                publicationType.Kind is PublicationKind.News or PublicationKind.BreakingNews or PublicationKind.Digest or PublicationKind.Deal or PublicationKind.Trailer;
     }
 
-    private void AddCollectorProviderUsageIfPresent(
-        Channel channel,
-        Source source,
-        IReadOnlyCollection<CollectedCandidate> collected)
-    {
-        var usageCandidate = collected.FirstOrDefault(candidate => candidate.ProviderCostAmount is not null);
-        if (usageCandidate is null)
-        {
-            return;
-        }
-
-        db.AiUsageRecords.Add(new AiUsageRecord
-        {
-            ChannelId = channel.Id,
-            Provider = "polza",
-            Model = source.Name,
-            TaskType = AiTaskType.StructuredOutput,
-            CostAmount = null,
-            CostCurrency = AiCostDefaults.Currency,
-            ProviderCostAmount = usageCandidate.ProviderCostAmount,
-            ProviderCostCurrency = usageCandidate.ProviderCostCurrency,
-            RequestMetadataJson = usageCandidate.ProviderUsageMetadataJson
-        });
-    }
-
     private DateTimeOffset FindNextSlot(Channel channel)
     {
         if (channel.ScheduleWindows.Count == 0)
@@ -688,34 +647,6 @@ public sealed class AutopostingPipeline(
             SourceKind.Reddit => 3,
             _ => 9
         };
-    }
-
-    private bool IsStale(CollectedCandidate item)
-    {
-        return item.FoundAtUtc < clock.UtcNow.AddHours(-48);
-    }
-
-    private static string ComputeHash(string value)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value.ToLowerInvariant().Trim()));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private static string? SerializeMediaUrls(IReadOnlyCollection<string>? mediaUrls)
-    {
-        if (mediaUrls is null || mediaUrls.Count == 0)
-        {
-            return null;
-        }
-
-        var normalized = mediaUrls
-            .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Select(url => url.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(10)
-            .ToArray();
-
-        return normalized.Length == 0 ? null : JsonSerializer.Serialize(normalized);
     }
 
     private sealed record PublishSweepResult(int Published, int Failed);

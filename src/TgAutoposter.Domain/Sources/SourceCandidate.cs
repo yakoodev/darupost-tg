@@ -24,5 +24,11 @@ public sealed class SourceCandidate : Entity
     public DateTimeOffset FoundAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public string NormalizedHash { get; set; } = string.Empty;
     public string? MetadataJson { get; set; }
+    /// <summary>Stable id inside the source (reddit id, tweet id, video id, tg message id).</summary>
+    public string? ExternalId { get; set; }
+    /// <summary>Author / account handle when known.</summary>
+    public string? Author { get; set; }
     public bool IsConsumed { get; set; }
+    /// <summary>Why the candidate left the pending pool: post, duplicate, factcheck, dismissed, expired.</summary>
+    public string? ConsumedReason { get; set; }
 }

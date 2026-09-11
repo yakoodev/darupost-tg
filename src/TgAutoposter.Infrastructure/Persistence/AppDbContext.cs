@@ -129,6 +129,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.VideoUrl).HasMaxLength(2048);
             builder.Property(x => x.MediaUrlsJson);
             builder.Property(x => x.NormalizedHash).HasMaxLength(128).IsRequired();
+            builder.Property(x => x.ExternalId).HasMaxLength(256);
+            builder.Property(x => x.Author).HasMaxLength(256);
+            builder.Property(x => x.ConsumedReason).HasMaxLength(32);
+            builder.HasIndex(x => new { x.ChannelId, x.IsConsumed, x.FoundAtUtc });
             builder.HasOne(x => x.Source)
                 .WithMany()
                 .HasForeignKey(x => x.SourceId)

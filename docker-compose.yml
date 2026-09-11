@@ -50,6 +50,8 @@ services:
       Worker__Enabled: ${WORKER_ENABLED:-false}
       Worker__IntervalMinutes: ${WORKER_INTERVAL_MINUTES:-15}
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
+      Ingest__Enabled: ${INGEST_ENABLED:-true}
+      Ingest__IntervalMinutes: ${INGEST_INTERVAL_MINUTES:-10}
     ports:
       - "${API_HOST_PORT:-5000}:8080"
     volumes:

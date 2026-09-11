@@ -18,4 +18,8 @@ public sealed record PipelineRunOptions(
     int? MaxPostsToCreate = null,
     bool IgnoreSourceSchedule = false,
     bool BypassDailyLimit = false,
-    PublicationKind? PublicationKind = null);
+    PublicationKind? PublicationKind = null,
+    /// <summary>Run the ingest phase for due sources before generating. False = only consume what is already collected.</summary>
+    bool CollectSources = true,
+    /// <summary>Generate from this specific candidate only (manual "make a post" from the Today screen).</summary>
+    Guid? CandidateId = null);

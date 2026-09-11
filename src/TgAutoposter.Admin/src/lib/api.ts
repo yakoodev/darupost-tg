@@ -1,7 +1,7 @@
 import type {
-  AiAccountStatus, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, NicheProfileSummary,
+  AiAccountStatus, CandidateList, ChannelDetails, ChannelListItem, ChannelMode, ChannelRoleType, CurrentUser, Dashboard, IngestResultItem, NicheProfileSummary,
   FooterLinkItem, GenerateDraftPostRequest, LoginResponse, PipelineRunResult, PostItem, PostStatus,
-  PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, UserListItem,
+  PublicationKind, PublicationTypeItem, RedditListingKind, ScheduleWindowItem, SourceItem, SourceKind, UserListItem,
   WorkerStatus,
 } from './types'
 
@@ -98,6 +98,27 @@ export const api = {
 
   // niche profiles
   profiles: () => request<NicheProfileSummary[]>('/api/profiles'),
+
+  // candidates ("Сегодня")
+  candidates: (channelId: string, opts?: { hours?: number; includeConsumed?: boolean; sourceId?: string }) => {
+    const p = new URLSearchParams()
+    if (opts?.hours) p.set('hours', String(opts.hours))
+    if (opts?.includeConsumed) p.set('includeConsumed', 'true')
+    if (opts?.sourceId) p.set('sourceId', opts.sourceId)
+    const q = p.toString()
+    return request<CandidateList>(`/api/channels/${channelId}/candidates${q ? `?${q}` : ''}`)
+  },
+  ingestNow: (channelId: string) =>
+    request<IngestResultItem[]>(`/api/channels/${channelId}/candidates/ingest`, { method: 'POST' }),
+  generateFromCandidate: (channelId: string, candidateId: string, publicationKind?: PublicationKind, publishImmediately = false) =>
+    request<PipelineRunResult>(`/api/channels/${channelId}/candidates/${candidateId}/generate`, {
+      method: 'POST',
+      body: JSON.stringify({ publicationKind: publicationKind ?? null, publishImmediately }),
+    }),
+  dismissCandidate: (channelId: string, candidateId: string) =>
+    request<void>(`/api/channels/${channelId}/candidates/${candidateId}/dismiss`, { method: 'POST' }),
+  restoreCandidate: (channelId: string, candidateId: string) =>
+    request<void>(`/api/channels/${channelId}/candidates/${candidateId}/restore`, { method: 'POST' }),
 
   // channels
   channels: () => request<ChannelListItem[]>('/api/channels'),

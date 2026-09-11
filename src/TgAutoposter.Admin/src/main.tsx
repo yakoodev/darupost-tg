@@ -8,6 +8,7 @@ import { ToastProvider } from './lib/toast'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Today from './pages/Today'
 import Queue from './pages/Queue'
 import Channels from './pages/Channels'
 import Sources from './pages/Sources'
@@ -33,6 +34,7 @@ function Root() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="today" element={<Today />} />
             <Route path="queue" element={<Queue />} />
             <Route path="channels" element={<Channels />} />
             <Route path="sources" element={<Sources />} />

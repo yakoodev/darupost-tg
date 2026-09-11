@@ -202,3 +202,50 @@ export interface NicheProfileSummary {
   publicationTypesCount: number
   sourcesCount: number
 }
+
+export interface CandidateItem {
+  id: string
+  sourceId: string
+  sourceName: string
+  sourceKind: SourceKind
+  title: string
+  url?: string | null
+  summary: string
+  imageUrl?: string | null
+  videoUrl?: string | null
+  author?: string | null
+  score?: number | null
+  commentsCount?: number | null
+  foundAtUtc: string
+  createdAtUtc: string
+  isConsumed: boolean
+  consumedReason?: string | null
+}
+
+export interface CandidateSourceSummary {
+  sourceId: string
+  name: string
+  kind: SourceKind
+  isEnabled: boolean
+  total: number
+  pending: number
+  lastCheckedAtUtc?: string | null
+  lastCollectedCount: number
+  lastError?: string | null
+}
+
+export interface CandidateList {
+  hours: number
+  total: number
+  pending: number
+  sources: CandidateSourceSummary[]
+  items: CandidateItem[]
+}
+
+export interface IngestResultItem {
+  sourceId: string
+  sourceName: string
+  collected: number
+  newCandidates: number
+  error?: string | null
+}

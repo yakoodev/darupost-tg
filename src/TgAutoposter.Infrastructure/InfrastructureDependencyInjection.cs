@@ -29,6 +29,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<PolzaOptions>(configuration.GetSection("Ai:Polza"));
         services.Configure<TelegramOptions>(configuration.GetSection("Telegram"));
         services.Configure<WorkerOptions>(configuration.GetSection("Worker"));
+        services.Configure<IngestOptions>(configuration.GetSection("Ingest"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -41,6 +42,7 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<IModerationNotifier, TelegramModerationNotifier>();
         services.AddScoped<ITelegramPublisher, TelegramPublisher>();
         services.AddSingleton<TelegramHttpClientFactory>();
+        services.AddScoped<CandidateIngestService>();
         services.AddScoped<IAutopostingPipeline, AutopostingPipeline>();
         services.AddScoped<DbSeeder>();
 
@@ -63,6 +65,7 @@ public static class InfrastructureDependencyInjection
             services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
         }
 
+        services.AddHostedService<IngestWorker>();
         services.AddHostedService<AutopostingWorker>();
         services.AddHostedService<TelegramModerationWorker>();
 

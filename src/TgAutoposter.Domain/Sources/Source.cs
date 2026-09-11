@@ -26,4 +26,7 @@ public sealed class Source : Entity
     public bool AllowNsfw { get; set; }
     public bool AllowRumors { get; set; }
     public DateTimeOffset? LastCheckedAtUtc { get; set; }
+    public DateTimeOffset? LastCollectedAtUtc { get; set; }
+    public int LastCollectedCount { get; set; }
+    public string? LastError { get; set; }
 }
