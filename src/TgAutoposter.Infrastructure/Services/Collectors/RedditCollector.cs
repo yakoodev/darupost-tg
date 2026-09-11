@@ -12,6 +12,37 @@ namespace TgAutoposter.Infrastructure.Services.Collectors;
 public sealed class RedditCollector(HttpClient httpClient, VideoEnricher videoEnricher) : ISourceCollector
 {
     private static readonly XNamespace Atom = "http://www.w3.org/2005/Atom";
+    private static readonly SemaphoreSlim Gate = new(1, 1);
+    private static DateTimeOffset _lastRequestAt = DateTimeOffset.MinValue;
+    private static readonly TimeSpan MinGap = TimeSpan.FromSeconds(2.5);
+
+    /// <summary>Reddit rate-limits unauthenticated bursts hard (429); space requests out process-wide.</summary>
+    private static async Task ThrottleAsync(CancellationToken cancellationToken)
+    {
+        await Gate.WaitAsync(cancellationToken);
+        try
+        {
+            var wait = _lastRequestAt + MinGap - DateTimeOffset.UtcNow;
+            if (wait > TimeSpan.Zero)
+            {
+                await Task.Delay(wait, cancellationToken);
+            }
+
+            _lastRequestAt = DateTimeOffset.UtcNow;
+        }
+        finally
+        {
+            Gate.Release();
+        }
+    }
+
+    private static void ApplyRedditHeaders(HttpRequestMessage request)
+    {
+        request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) tg-autoposter/0.2 (news aggregator; contact: admin)");
+        request.Headers.Accept.ParseAdd("application/json");
+        request.Headers.Accept.ParseAdd("application/atom+xml");
+        request.Headers.Accept.ParseAdd("text/xml");
+    }
 
     public IReadOnlyCollection<SourceKind> SupportedKinds { get; } = [SourceKind.Reddit];
 
@@ -34,8 +65,9 @@ public sealed class RedditCollector(HttpClient httpClient, VideoEnricher videoEn
 
     private async Task<IReadOnlyCollection<CollectedCandidate>> CollectJsonAsync(Source source, NicheProfile profile, CancellationToken cancellationToken)
     {
+        await ThrottleAsync(cancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildJsonUrl(source));
-        ApplyHeaders(request);
+        ApplyRedditHeaders(request);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -124,8 +156,9 @@ public sealed class RedditCollector(HttpClient httpClient, VideoEnricher videoEn
 
     private async Task<IReadOnlyCollection<CollectedCandidate>> CollectRssAsync(Source source, NicheProfile profile, CancellationToken cancellationToken)
     {
+        await ThrottleAsync(cancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildRssUrl(source));
-        ApplyHeaders(request);
+        ApplyRedditHeaders(request);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();

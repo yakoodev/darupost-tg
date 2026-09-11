@@ -296,17 +296,25 @@ public sealed class AutopostingPipeline(
             }
         }
 
+        // Nothing classified: plain News when the source allows it; otherwise the best allowed kind,
+        // but never Breaking/Rumor/Digest by default — those are only ever picked explicitly or by a rule.
         var allowed = SplitCsv(source.AllowedPublicationKindsCsv);
-        if (allowed.Count > 0)
+        var allowsKind = (PublicationKind kind) => allowed.Count == 0 || allowed.Contains(kind.ToString(), StringComparer.OrdinalIgnoreCase);
+        var news = enabled.FirstOrDefault(type => type.Kind == PublicationKind.News);
+        if (news is not null && allowsKind(PublicationKind.News))
         {
-            var firstAllowed = enabled.FirstOrDefault(type => allowed.Contains(type.Kind.ToString(), StringComparer.OrdinalIgnoreCase));
-            if (firstAllowed is not null)
-            {
-                return firstAllowed;
-            }
+            return news;
         }
 
-        return enabled.FirstOrDefault(type => type.Kind == PublicationKind.News) ?? enabled[0];
+        var neutral = enabled.FirstOrDefault(type =>
+            allowsKind(type.Kind) &&
+            type.Kind is not (PublicationKind.BreakingNews or PublicationKind.Rumor or PublicationKind.Digest or PublicationKind.Meme));
+        if (neutral is not null)
+        {
+            return neutral;
+        }
+
+        return enabled.FirstOrDefault(type => allowsKind(type.Kind)) ?? news ?? enabled[0];
     }
 
     private async Task<bool> IsDailyLimitReachedAsync(Guid channelId, int dailyLimit, CancellationToken cancellationToken)
