@@ -52,6 +52,9 @@ services:
       Worker__MaxPostsPerRun: ${WORKER_MAX_POSTS_PER_RUN:-1}
       Ingest__Enabled: ${INGEST_ENABLED:-true}
       Ingest__IntervalMinutes: ${INGEST_INTERVAL_MINUTES:-10}
+      Reddit__ClientId: ${REDDIT_CLIENT_ID:-}
+      Reddit__ClientSecret: ${REDDIT_CLIENT_SECRET:-}
+      Reddit__UserAgent: ${REDDIT_USER_AGENT:-linux:tg-autoposter:v0.2 (news aggregator)}
       Digest__Enabled: ${DIGEST_ENABLED:-true}
       Digest__CheckIntervalMinutes: ${DIGEST_CHECK_INTERVAL_MINUTES:-5}
       Wspanel__Enabled: ${WSPANEL_ENABLED:-false}

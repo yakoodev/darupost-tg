@@ -32,6 +32,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<IngestOptions>(configuration.GetSection("Ingest"));
         services.Configure<WspanelOptions>(configuration.GetSection("Wspanel"));
         services.Configure<DigestOptions>(configuration.GetSection("Digest"));
+        services.Configure<RedditOptions>(configuration.GetSection("Reddit"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
