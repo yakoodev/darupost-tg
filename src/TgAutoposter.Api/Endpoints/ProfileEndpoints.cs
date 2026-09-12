@@ -69,7 +69,8 @@ public static class ProfileEndpoints
             db.PublicationTypes.AddRange(result.NewTypes);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("profile-synced", channelId, null, cancellationToken);
-            return Results.Ok(result);
+            // Counts only: the entity lists carry navigation cycles and must not be serialized.
+            return Results.Ok(new { result.SourcesAdded, result.TalentsAdded, result.TypesAdded });
         }).WithTags("Profiles").RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         return app;
