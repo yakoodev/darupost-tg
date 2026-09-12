@@ -64,6 +64,9 @@ public static class ProfileEndpoints
             }
 
             var result = ChannelProvisioner.SyncFromProfile(channel, profiles.Get(channel.ProfileKey));
+            db.Sources.AddRange(result.NewSources);
+            db.Talents.AddRange(result.NewTalents);
+            db.PublicationTypes.AddRange(result.NewTypes);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("profile-synced", channelId, null, cancellationToken);
             return Results.Ok(result);

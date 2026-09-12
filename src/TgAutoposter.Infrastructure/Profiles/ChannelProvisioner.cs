@@ -105,7 +105,13 @@ public static class ChannelProvisioner
 
     public static string SourceKey(Source source) => source.Url ?? $"{source.Kind}:{source.Subreddit ?? source.Name}";
 
-    public sealed record SyncResult(int SourcesAdded, int TalentsAdded, int TypesAdded);
+    public sealed record SyncResult(
+        int SourcesAdded,
+        int TalentsAdded,
+        int TypesAdded,
+        IReadOnlyList<Source> NewSources,
+        IReadOnlyList<Talent> NewTalents,
+        IReadOnlyList<PublicationTypeSetting> NewTypes);
 
     /// <summary>
     /// Brings an existing channel up to date with its profile: adds sources / talents / publication types
@@ -114,22 +120,25 @@ public static class ChannelProvisioner
     public static SyncResult SyncFromProfile(Channel channel, NicheProfile profile)
     {
         var types = MissingPublicationTypes(channel.PublicationTypes.Select(type => type.Kind), profile);
-        channel.PublicationTypes.AddRange(types);
+        foreach (var type in types)
+        {
+            type.ChannelId = channel.Id;
+        }
 
         var existingKeys = channel.Sources.Select(SourceKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var sourcesAdded = 0;
+        var newSources = new List<Source>();
         foreach (var template in profile.Sources)
         {
             var source = CreateSource(template);
             if (existingKeys.Add(SourceKey(source)))
             {
-                channel.Sources.Add(source);
-                sourcesAdded++;
+                source.ChannelId = channel.Id;
+                newSources.Add(source);
             }
         }
 
         var existingNames = channel.Talents.Select(talent => talent.Name.ToLowerInvariant()).ToHashSet();
-        var talentsAdded = 0;
+        var newTalents = new List<Talent>();
         foreach (var template in profile.Talents.Where(template => !string.IsNullOrWhiteSpace(template.Name)))
         {
             if (!existingNames.Add(template.Name.Trim().ToLowerInvariant()))
@@ -137,8 +146,9 @@ public static class ChannelProvisioner
                 continue;
             }
 
-            channel.Talents.Add(new Talent
+            newTalents.Add(new Talent
             {
+                ChannelId = channel.Id,
                 Name = template.Name.Trim(),
                 Agency = template.Agency,
                 Group = template.Group,
@@ -149,10 +159,9 @@ public static class ChannelProvisioner
                 Telegram = template.Telegram,
                 IsActive = true
             });
-            talentsAdded++;
         }
 
-        return new SyncResult(sourcesAdded, talentsAdded, types.Count);
+        return new SyncResult(newSources.Count, newTalents.Count, types.Count, newSources, newTalents, types);
     }
 
     /// <summary>Populates a brand-new channel with everything the profile ships with.</summary>

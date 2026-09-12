@@ -293,7 +293,11 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
 
     private static string FirstLine(string text, int max)
     {
-        var line = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? text;
+        var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        // Skip decorative openers ("📢 News 📢", "／") and take the first line with real words.
+        var line = lines.FirstOrDefault(candidate => candidate.Count(char.IsLetterOrDigit) >= 12)
+                   ?? lines.FirstOrDefault()
+                   ?? text;
         return line.Length <= max ? line : $"{line[..(max - 3)]}...";
     }
 
