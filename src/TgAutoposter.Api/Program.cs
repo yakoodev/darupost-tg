@@ -56,16 +56,24 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Admin origins: localhost defaults + Cors:AllowedOrigins (comma-separated; e.g. http://1.2.3.4:5173,https://admin.example.com).
+var allowedOrigins = new List<string>
+{
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081"
+};
+allowedOrigins.AddRange((builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Select(origin => origin.TrimEnd('/')));
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("admin", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://localhost:8081",
-                "http://127.0.0.1:8081")
+            .WithOrigins(allowedOrigins.Distinct(StringComparer.OrdinalIgnoreCase).ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

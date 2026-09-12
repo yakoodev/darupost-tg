@@ -45,6 +45,8 @@ services:
       Telegram__Proxy__Username: ${TELEGRAM_PROXY_USERNAME:-}
       Telegram__Proxy__Password: ${TELEGRAM_PROXY_PASSWORD:-}
       Media__RootPath: /app/media
+      Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
+      Logging__LogLevel__Microsoft.EntityFrameworkCore: ${EF_LOG_LEVEL:-Warning}
       Seed__DefaultProfile: ${SEED_DEFAULT_PROFILE:-gaming}
       Profiles__Path: /app/profiles
       Worker__Enabled: ${WORKER_ENABLED:-false}
