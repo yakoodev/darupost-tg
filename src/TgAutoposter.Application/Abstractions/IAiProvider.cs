@@ -13,7 +13,9 @@ public sealed record AiRequest(
     string SystemPrompt,
     string UserPrompt,
     string? Model = null,
-    bool RequireJson = false);
+    bool RequireJson = false,
+    /// <summary>Override the provider's default completion budget (long structured outputs like the digest plan).</summary>
+    int? MaxTokens = null);
 
 public sealed record AiResponse(
     string Text,

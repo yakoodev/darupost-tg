@@ -37,7 +37,7 @@ public sealed class PolzaAiProvider(HttpClient httpClient, IOptions<PolzaOptions
                 new { role = "user", content = request.UserPrompt }
             },
             temperature = options.Temperature,
-            max_tokens = options.MaxTokens,
+            max_tokens = request.MaxTokens ?? options.MaxTokens,
             response_format = request.RequireJson ? new { type = "json_object" } : null,
             user = request.ChannelId.ToString("N")
         };

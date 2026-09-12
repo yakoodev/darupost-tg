@@ -304,7 +304,7 @@
       "name": "Новость",
       "description": "Короткая новость из витуберской индустрии",
       "priority": 100,
-      "factCheckMode": "medium",
+      "factCheckMode": "soft",
       "mediaMode": "generatePoster",
       "systemPrompt": "Сделай короткий Telegram-пост: факт, кто это (талант, агентство, ген), контекст, что дальше. Без шаблонных подзаголовков и без ИИ-клише."
     },
@@ -313,7 +313,7 @@
       "name": "Срочно",
       "description": "Graduation, termination, официальные заявления агентств, крупные дебюты",
       "priority": 120,
-      "factCheckMode": "strict",
+      "factCheckMode": "medium",
       "rumorPolicy": "alwaysManual",
       "mediaMode": "generatePoster",
       "systemPrompt": "Это срочная новость: в первом предложении факт и кто заявил. Дальше только подтверждённые детали: дата, причина (если названа официально), что будет с контентом и мемберством. Без домыслов и без оценок."

@@ -213,7 +213,7 @@ public sealed class DigestService(
         try
         {
             var response = await aiProvider.CompleteAsync(
-                new AiRequest(channel.Id, AiTaskType.StructuredOutput, system, user.ToString(), RequireJson: true),
+                new AiRequest(channel.Id, AiTaskType.StructuredOutput, system, user.ToString(), RequireJson: true, MaxTokens: 3000),
                 cancellationToken);
 
             db.AiUsageRecords.Add(new AiUsageRecord
