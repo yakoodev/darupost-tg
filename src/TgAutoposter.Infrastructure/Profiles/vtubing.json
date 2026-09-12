@@ -144,7 +144,21 @@
       "новая модель",
       "новый костюм",
       "заявлен",
-      "контракт"
+      "контракт",
+      "релиз",
+      "кавер",
+      "оригинальная песня",
+      "ушла",
+      "прощ",
+      "перерыв",
+      "хиатус",
+      "бан",
+      "разбан",
+      "ребрендинг",
+      "новый канал",
+      "3d",
+      "лайв2д",
+      "live2d"
     ],
     "dedupStopWords": [
       "official",
@@ -461,6 +475,198 @@
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false
+    },
+    {
+      "name": "Planya (TG)",
+      "kind": "telegram",
+      "url": "@planyach",
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Kaibutsu (TG)",
+      "kind": "telegram",
+      "url": "@kaibutsuvtp",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Sati Akura (TG)",
+      "kind": "telegram",
+      "url": "@sati_akura",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Severina Soda (TG)",
+      "kind": "telegram",
+      "url": "@SeverinaSodaVtuber",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "xKamysh (TG)",
+      "kind": "telegram",
+      "url": "@kamyshovnik",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Trixie Vox (TG)",
+      "kind": "telegram",
+      "url": "@trixie_vox",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Rera Tapaten (TG)",
+      "kind": "telegram",
+      "url": "@rera_seal_vtuber",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "YuiSlime (TG)",
+      "kind": "telegram",
+      "url": "@yuislime",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Снежа (TG)",
+      "kind": "telegram",
+      "url": "@snezha_mrr",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "nyamuras (TG)",
+      "kind": "telegram",
+      "url": "@nyamuras",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Mana Renewal (TG)",
+      "kind": "telegram",
+      "url": "@manarenewal",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Higanbanban (TG)",
+      "kind": "telegram",
+      "url": "@higanbanban",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "BanshaMeow (TG)",
+      "kind": "telegram",
+      "url": "@banshamw",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Орк-подкастер (YouTube)",
+      "kind": "youTube",
+      "url": "UCedqnsVXjFlao53mKg7mnkQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Planyach (YouTube)",
+      "kind": "youTube",
+      "url": "UCQaGj_l3dqmGWJLEbEmwgFQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Милшу (YouTube)",
+      "kind": "youTube",
+      "url": "UC-aAG_0NYUetd6gIKYd1S5g",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Sati Akura (YouTube)",
+      "kind": "youTube",
+      "url": "UCFj0cD6Bk53XQzAIydxdO_w",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "KyOresu (YouTube)",
+      "kind": "youTube",
+      "url": "UCsFgdazMeQtf8lHvISB1DLQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Severina Soda (YouTube)",
+      "kind": "youTube",
+      "url": "UCyu3y1sc7SshB7VI1MoKinw",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Mana Renewal (YouTube)",
+      "kind": "youTube",
+      "url": "UC3czs41x7HD5-nk_cZ-Eo3g",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Higanbanban (YouTube)",
+      "kind": "youTube",
+      "url": "UC8ojNuWa4Zi3iWFWtGTJU6w",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Trixie Vox (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@trixie_vox",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "xKamysh (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@kamyshnya",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Снежа (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@snezha_39",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
     }
   ],
   "footerLinks": [],
@@ -760,6 +966,194 @@
       "priority": 2,
       "youTube": "https://www.youtube.com/@MintFantome",
       "twitter": "mintfantome"
+    },
+    {
+      "name": "Орк-подкастер",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Орк подкастер, Orc Podcaster, Орк, orkpod",
+      "priority": 1,
+      "youTube": "UCedqnsVXjFlao53mKg7mnkQ"
+    },
+    {
+      "name": "Planyach",
+      "agency": "89 SQUAD",
+      "group": "RU",
+      "aliases": "Планя, Planya, Планяч, Planya Ch",
+      "priority": 1,
+      "youTube": "UCQaGj_l3dqmGWJLEbEmwgFQ",
+      "telegram": "@planyach"
+    },
+    {
+      "name": "Милшу",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Milshu, Milshoo, Мильшу",
+      "priority": 1,
+      "youTube": "UC-aAG_0NYUetd6gIKYd1S5g"
+    },
+    {
+      "name": "Sati Akura",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Сати Акура, Сати, sati_akura",
+      "priority": 1,
+      "youTube": "UCFj0cD6Bk53XQzAIydxdO_w",
+      "telegram": "@sati_akura"
+    },
+    {
+      "name": "KyOresu",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Кёресу, Kyoresu",
+      "priority": 2,
+      "youTube": "UCsFgdazMeQtf8lHvISB1DLQ"
+    },
+    {
+      "name": "Severina Soda",
+      "agency": "Kaibutsu",
+      "group": "RU",
+      "aliases": "Северина Сода, Северина, severinasoda",
+      "priority": 1,
+      "youTube": "UCyu3y1sc7SshB7VI1MoKinw",
+      "telegram": "@SeverinaSodaVtuber"
+    },
+    {
+      "name": "Trixie Vox",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Трикси Вокс, Трикси, Кристина Шерман",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@trixie_vox",
+      "telegram": "@trixie_vox"
+    },
+    {
+      "name": "xKamysh",
+      "agency": "Pitomnik",
+      "group": "RU",
+      "aliases": "Камыш, Камышовник, Kamysh, kamyshnya",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@kamyshnya",
+      "telegram": "@kamyshovnik"
+    },
+    {
+      "name": "Снежа",
+      "agency": "Тридевятое",
+      "group": "RU",
+      "aliases": "Snezha, Снежик, Баюша",
+      "priority": 2,
+      "youTube": "https://www.youtube.com/@snezha_39",
+      "telegram": "@snezha_mrr"
+    },
+    {
+      "name": "Mana Renewal",
+      "agency": "WePlanet",
+      "group": "RU",
+      "aliases": "Мана Реньюал, Мана, manarenewal",
+      "priority": 2,
+      "youTube": "UC3czs41x7HD5-nk_cZ-Eo3g",
+      "telegram": "@manarenewal"
+    },
+    {
+      "name": "Higanbanban",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Хиган, Хиганбанбан, Higan",
+      "priority": 2,
+      "youTube": "UC8ojNuWa4Zi3iWFWtGTJU6w",
+      "telegram": "@higanbanban"
+    },
+    {
+      "name": "Rera Tapaten",
+      "agency": "Pitomnik",
+      "group": "RU",
+      "aliases": "Рера, Rera, rera_seal, Рера Тапатен",
+      "priority": 2,
+      "telegram": "@rera_seal_vtuber"
+    },
+    {
+      "name": "nyamuras",
+      "agency": "Scam",
+      "group": "RU",
+      "aliases": "Няма, Нямура, Nyamura",
+      "priority": 2,
+      "telegram": "@nyamuras"
+    },
+    {
+      "name": "BanshaMeow",
+      "agency": "Pitomnik",
+      "group": "RU",
+      "aliases": "Банша, Bansha, кошкожена",
+      "priority": 2,
+      "telegram": "@banshamw"
+    },
+    {
+      "name": "YuiSlime",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Юи Слайм, Юичница, Yui Slime",
+      "priority": 2,
+      "telegram": "@yuislime"
+    },
+    {
+      "name": "PWGood",
+      "agency": "MineShield",
+      "group": "RU",
+      "aliases": "Пвгуд, Pwgood",
+      "priority": 2,
+      "youTube": "UCXqrXalDkM7i44u1RY68nUA"
+    },
+    {
+      "name": "DMITRY_BALE",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Dmitry Bale, Дмитрий Бейл, Бейл",
+      "priority": 2,
+      "youTube": "UCcAQJDkK-Xf-YGCGAdAY3Ig"
+    },
+    {
+      "name": "nikitasudar",
+      "agency": "Pitomnik",
+      "group": "RU",
+      "aliases": "Никита Судар, Судар",
+      "priority": 2
+    },
+    {
+      "name": "SieDuck",
+      "agency": "Pitomnik",
+      "group": "RU",
+      "aliases": "СиДак, Сидак",
+      "priority": 3,
+      "youTube": "UCVPEcfXMNFkE20mkXxWoAaw"
+    },
+    {
+      "name": "Kaibutsu",
+      "agency": "Kaibutsu",
+      "group": "RU agency",
+      "aliases": "Кайбуцу, Kaibutsu Vtuber Project",
+      "priority": 2,
+      "telegram": "@kaibutsuvtp"
+    },
+    {
+      "name": "Идея",
+      "agency": "Идея",
+      "group": "RU agency",
+      "aliases": "агентство Идея, Ideya",
+      "priority": 3
+    },
+    {
+      "name": "Pitomnik",
+      "agency": "Pitomnik",
+      "group": "RU agency",
+      "aliases": "Питомник",
+      "priority": 3
+    },
+    {
+      "name": "89 SQUAD",
+      "agency": "89 SQUAD",
+      "group": "RU agency",
+      "aliases": "89 сквад",
+      "priority": 3
     }
   ]
 }

@@ -150,6 +150,7 @@ public sealed class NicheTalent
     public int Priority { get; init; } = 2;
     public string? YouTube { get; init; }
     public string? Twitter { get; init; }
+    public string? Telegram { get; init; }
 }
 
 public sealed class NicheScheduleWindow

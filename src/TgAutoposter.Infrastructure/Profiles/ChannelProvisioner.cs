@@ -105,6 +105,56 @@ public static class ChannelProvisioner
 
     public static string SourceKey(Source source) => source.Url ?? $"{source.Kind}:{source.Subreddit ?? source.Name}";
 
+    public sealed record SyncResult(int SourcesAdded, int TalentsAdded, int TypesAdded);
+
+    /// <summary>
+    /// Brings an existing channel up to date with its profile: adds sources / talents / publication types
+    /// that the channel does not have yet. Never touches or re-enables what the operator already changed.
+    /// </summary>
+    public static SyncResult SyncFromProfile(Channel channel, NicheProfile profile)
+    {
+        var types = MissingPublicationTypes(channel.PublicationTypes.Select(type => type.Kind), profile);
+        channel.PublicationTypes.AddRange(types);
+
+        var existingKeys = channel.Sources.Select(SourceKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourcesAdded = 0;
+        foreach (var template in profile.Sources)
+        {
+            var source = CreateSource(template);
+            if (existingKeys.Add(SourceKey(source)))
+            {
+                channel.Sources.Add(source);
+                sourcesAdded++;
+            }
+        }
+
+        var existingNames = channel.Talents.Select(talent => talent.Name.ToLowerInvariant()).ToHashSet();
+        var talentsAdded = 0;
+        foreach (var template in profile.Talents.Where(template => !string.IsNullOrWhiteSpace(template.Name)))
+        {
+            if (!existingNames.Add(template.Name.Trim().ToLowerInvariant()))
+            {
+                continue;
+            }
+
+            channel.Talents.Add(new Talent
+            {
+                Name = template.Name.Trim(),
+                Agency = template.Agency,
+                Group = template.Group,
+                AliasesCsv = template.Aliases,
+                Priority = Math.Clamp(template.Priority, 1, 3),
+                YouTube = template.YouTube,
+                Twitter = template.Twitter,
+                Telegram = template.Telegram,
+                IsActive = true
+            });
+            talentsAdded++;
+        }
+
+        return new SyncResult(sourcesAdded, talentsAdded, types.Count);
+    }
+
     /// <summary>Populates a brand-new channel with everything the profile ships with.</summary>
     public static void ProvisionNewChannel(Channel channel, NicheProfile profile)
     {
@@ -144,6 +194,7 @@ public static class ChannelProvisioner
                 Priority = Math.Clamp(template.Priority, 1, 3),
                 YouTube = template.YouTube,
                 Twitter = template.Twitter,
+                Telegram = template.Telegram,
                 IsActive = true
             }));
 

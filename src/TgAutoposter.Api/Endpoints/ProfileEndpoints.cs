@@ -1,4 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using TgAutoposter.Api.Auth;
+using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Profiles;
+using TgAutoposter.Domain.Common;
+using TgAutoposter.Infrastructure.Persistence;
+using TgAutoposter.Infrastructure.Profiles;
 
 namespace TgAutoposter.Api.Endpoints;
 
@@ -38,6 +44,30 @@ public static class ProfileEndpoints
 
             return Results.Ok(items);
         });
+
+        // Bring an existing channel up to date with its profile (new sources / talents / types shipped in the JSON).
+        app.MapPost("/api/channels/{channelId:guid}/profile/sync", async (
+            Guid channelId,
+            AppDbContext db,
+            INicheProfileProvider profiles,
+            IRealtimeNotifier realtimeNotifier,
+            CancellationToken cancellationToken) =>
+        {
+            var channel = await db.Channels
+                .Include(channel => channel.Sources)
+                .Include(channel => channel.PublicationTypes)
+                .Include(channel => channel.Talents)
+                .FirstOrDefaultAsync(channel => channel.Id == channelId, cancellationToken);
+            if (channel is null)
+            {
+                return Results.NotFound();
+            }
+
+            var result = ChannelProvisioner.SyncFromProfile(channel, profiles.Get(channel.ProfileKey));
+            await db.SaveChangesAsync(cancellationToken);
+            await realtimeNotifier.StateChangedAsync("profile-synced", channelId, null, cancellationToken);
+            return Results.Ok(result);
+        }).WithTags("Profiles").RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
         return app;
     }
