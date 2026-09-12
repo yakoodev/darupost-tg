@@ -115,12 +115,14 @@ public sealed partial class YouTubeCollector(HttpClient httpClient) : ISourceCol
                 : $"https://www.youtube.com/@{input}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, pageUrl);
-        ApplyHeaders(request);
+        request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36");
         request.Headers.AcceptLanguage.ParseAdd("en-US,en;q=0.8");
+        // EU/datacenter IPs are bounced to consent.youtube.com; these cookies pre-accept the consent screen.
+        request.Headers.TryAddWithoutValidation("Cookie", "CONSENT=YES+cb; SOCS=CAI");
         using var response = await httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            throw new InvalidOperationException($"YouTube вернул {(int)response.StatusCode} для {pageUrl}{(response.Headers.Location is null ? string.Empty : $" → {response.Headers.Location}")}.");
         }
 
         var html = await response.Content.ReadAsStringAsync(cancellationToken);

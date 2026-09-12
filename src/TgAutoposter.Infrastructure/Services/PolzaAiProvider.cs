@@ -26,7 +26,7 @@ public sealed class PolzaAiProvider(HttpClient httpClient, IOptions<PolzaOptions
                 RawResponse: "Polza provider is disabled or API key is missing.");
         }
 
-        httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds));
+        SetTimeoutOnce(httpClient, TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds)));
 
         var payload = new
         {
@@ -82,4 +82,19 @@ public sealed class PolzaAiProvider(HttpClient httpClient, IOptions<PolzaOptions
         return body.Length <= 900 ? body : body[..900];
     }
 
+
+    private static void SetTimeoutOnce(HttpClient client, TimeSpan timeout)
+    {
+        try
+        {
+            if (client.Timeout != timeout)
+            {
+                client.Timeout = timeout;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Already used for a request in this scope — keep the existing timeout.
+        }
+    }
 }

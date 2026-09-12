@@ -27,7 +27,7 @@ public sealed class PolzaAccountStatusClient(HttpClient httpClient, IOptions<Pol
 
         try
         {
-            httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds));
+            SetTimeoutOnce(httpClient, TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds)));
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{BuildApiRoot(options)}/api/v1/balance");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
 
@@ -82,5 +82,20 @@ public sealed class PolzaAccountStatusClient(HttpClient httpClient, IOptions<Pol
         return baseUrl.EndsWith("/api/v1", StringComparison.OrdinalIgnoreCase)
             ? baseUrl[..^"/api/v1".Length]
             : baseUrl;
+    }
+
+    private static void SetTimeoutOnce(HttpClient client, TimeSpan timeout)
+    {
+        try
+        {
+            if (client.Timeout != timeout)
+            {
+                client.Timeout = timeout;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Already used for a request in this scope — keep the existing timeout.
+        }
     }
 }

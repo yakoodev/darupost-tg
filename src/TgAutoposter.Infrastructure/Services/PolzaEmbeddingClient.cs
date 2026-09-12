@@ -24,7 +24,7 @@ public sealed class PolzaEmbeddingClient(
             return null;
         }
 
-        httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds));
+        SetTimeoutOnce(httpClient, TimeSpan.FromSeconds(Math.Max(10, options.TimeoutSeconds)));
 
         var payload = new
         {
@@ -71,6 +71,21 @@ public sealed class PolzaEmbeddingClient(
         {
             logger.LogWarning(ex, "Polza embeddings call failed for channel {ChannelId}.", channelId);
             return null;
+        }
+    }
+
+    private static void SetTimeoutOnce(HttpClient client, TimeSpan timeout)
+    {
+        try
+        {
+            if (client.Timeout != timeout)
+            {
+                client.Timeout = timeout;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Already used for a request in this scope — keep the existing timeout.
         }
     }
 }

@@ -41,7 +41,7 @@ public sealed class PolzaImageGenerator(
                 RawResponse: "Polza provider is disabled or API key is missing.");
         }
 
-        httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(120, options.TimeoutSeconds));
+        SetTimeoutOnce(httpClient, TimeSpan.FromSeconds(Math.Max(120, options.TimeoutSeconds)));
 
         if (referenceImages.Count > 0)
         {
@@ -572,5 +572,20 @@ public sealed class PolzaImageGenerator(
         return baseUrl.EndsWith("/api/v1", StringComparison.OrdinalIgnoreCase)
             ? baseUrl[..^"/api/v1".Length]
             : baseUrl;
+    }
+
+    private static void SetTimeoutOnce(HttpClient client, TimeSpan timeout)
+    {
+        try
+        {
+            if (client.Timeout != timeout)
+            {
+                client.Timeout = timeout;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Already used for a request in this scope — keep the existing timeout.
+        }
     }
 }

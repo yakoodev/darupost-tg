@@ -79,7 +79,16 @@ public sealed class StoryClusteringService(
             var vector = Deserialize(candidate.EmbeddingJson);
             if (vector.Length == 0)
             {
-                vector = await embeddingProvider.EmbedAsync(channel.Id, AiDeduplicationService.EmbeddingText(candidate.Title, candidate.Summary), cancellationToken) ?? [];
+                try
+                {
+                    vector = await embeddingProvider.EmbedAsync(channel.Id, AiDeduplicationService.EmbeddingText(candidate.Title, candidate.Summary), cancellationToken) ?? [];
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogWarning(ex, "Embedding failed for candidate {CandidateId}; falling back to title heuristics.", candidate.Id);
+                    vector = [];
+                }
+
                 if (vector.Length > 0)
                 {
                     candidate.EmbeddingJson = JsonSerializer.Serialize(vector);

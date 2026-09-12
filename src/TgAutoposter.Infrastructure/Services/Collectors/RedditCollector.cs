@@ -109,7 +109,7 @@ public sealed class RedditCollector(
         await ThrottleAsync(cancellationToken);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildJsonUrl(source, "https://oauth.reddit.com", withJsonSuffix: false));
-        request.Headers.UserAgent.ParseAdd(options.UserAgent);
+        request.Headers.TryAddWithoutValidation("User-Agent", options.UserAgent);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Accept.ParseAdd("application/json");
 
@@ -131,7 +131,7 @@ public sealed class RedditCollector(
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://www.reddit.com/api/v1/access_token");
-        request.Headers.UserAgent.ParseAdd(options.UserAgent);
+        request.Headers.TryAddWithoutValidation("User-Agent", options.UserAgent);
         request.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic",
             Convert.ToBase64String(Encoding.ASCII.GetBytes($"{options.ClientId}:{options.ClientSecret}")));
@@ -161,7 +161,7 @@ public sealed class RedditCollector(
     {
         await ThrottleAsync(cancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildJsonUrl(source));
-        request.Headers.UserAgent.ParseAdd(options.UserAgent);
+        request.Headers.TryAddWithoutValidation("User-Agent", options.UserAgent);
         request.Headers.Accept.ParseAdd("application/json");
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
@@ -282,7 +282,7 @@ public sealed class RedditCollector(
     {
         await ThrottleAsync(cancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildRssUrl(source));
-        request.Headers.UserAgent.ParseAdd(optionsAccessor.Value.UserAgent);
+        request.Headers.TryAddWithoutValidation("User-Agent", optionsAccessor.Value.UserAgent);
         request.Headers.Accept.ParseAdd("application/atom+xml");
         request.Headers.Accept.ParseAdd("text/xml");
 
