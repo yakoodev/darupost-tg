@@ -170,7 +170,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.Telegram).HasMaxLength(128);
             builder.HasIndex(x => new { x.ChannelId, x.Name });
             builder.HasOne(x => x.Channel)
-                .WithMany()
+                .WithMany(x => x.Talents)
                 .HasForeignKey(x => x.ChannelId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

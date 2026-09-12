@@ -36,7 +36,6 @@ namespace TgAutoposter.Infrastructure.Persistence.Migrations
                     TrackTwitter = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: true),
-                    ChannelId1 = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
@@ -49,22 +48,12 @@ namespace TgAutoposter.Infrastructure.Persistence.Migrations
                         principalTable: "Channels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Talents_Channels_ChannelId1",
-                        column: x => x.ChannelId1,
-                        principalTable: "Channels",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Talents_ChannelId_Name",
                 table: "Talents",
                 columns: new[] { "ChannelId", "Name" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Talents_ChannelId1",
-                table: "Talents",
-                column: "ChannelId1");
         }
 
         /// <inheritdoc />

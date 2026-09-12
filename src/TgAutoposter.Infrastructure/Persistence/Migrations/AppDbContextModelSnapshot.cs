@@ -1007,9 +1007,6 @@ namespace TgAutoposter.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ChannelId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ChannelId1")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1053,8 +1050,6 @@ namespace TgAutoposter.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(512)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ChannelId1");
 
                     b.HasIndex("ChannelId", "Name");
 
@@ -1267,14 +1262,10 @@ namespace TgAutoposter.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TgAutoposter.Domain.Talents.Talent", b =>
                 {
                     b.HasOne("TgAutoposter.Domain.Channels.Channel", "Channel")
-                        .WithMany()
+                        .WithMany("Talents")
                         .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("TgAutoposter.Domain.Channels.Channel", null)
-                        .WithMany("Talents")
-                        .HasForeignKey("ChannelId1");
 
                     b.Navigation("Channel");
                 });
