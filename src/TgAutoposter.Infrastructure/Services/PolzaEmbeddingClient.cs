@@ -4,7 +4,10 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
+using TgAutoposter.Domain.Ai;
+using TgAutoposter.Domain.Common;
 using TgAutoposter.Infrastructure.Options;
+using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
 
@@ -12,6 +15,7 @@ namespace TgAutoposter.Infrastructure.Services;
 public sealed class PolzaEmbeddingClient(
     HttpClient httpClient,
     IOptions<PolzaOptions> optionsAccessor,
+    AppDbContext db,
     ILogger<PolzaEmbeddingClient> logger) : IEmbeddingProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -49,6 +53,26 @@ public sealed class PolzaEmbeddingClient(
             }
 
             using var document = JsonDocument.Parse(raw);
+            var usage = PolzaResponseParser.ExtractUsage(document.RootElement, options.EmbeddingModel);
+            if (channelId != Guid.Empty)
+            {
+                db.AiUsageRecords.Add(new AiUsageRecord
+                {
+                    ChannelId = channelId,
+                    Provider = "polza",
+                    Model = options.EmbeddingModel,
+                    TaskType = AiTaskType.Deduplication,
+                    PromptTokens = usage.PromptTokens,
+                    CompletionTokens = usage.CompletionTokens,
+                    TotalTokens = usage.TotalTokens,
+                    CostAmount = usage.CostRub,
+                    CostCurrency = "RUB",
+                    ProviderCostAmount = usage.CostRub,
+                    ProviderCostCurrency = "RUB",
+                    RequestMetadataJson = usage.MetadataJson
+                });
+            }
+
             if (!document.RootElement.TryGetProperty("data", out var data) ||
                 data.ValueKind != JsonValueKind.Array ||
                 data.GetArrayLength() == 0 ||

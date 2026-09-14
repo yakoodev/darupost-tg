@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Profiles;
+using TgAutoposter.Domain.Ai;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
 using TgAutoposter.Infrastructure.Options;
@@ -137,6 +138,21 @@ public sealed class AiDeduplicationService(
         var response = await aiProvider.CompleteAsync(
             new AiRequest(candidate.ChannelId, AiTaskType.Deduplication, system, user.ToString(), RequireJson: true),
             cancellationToken);
+        db.AiUsageRecords.Add(new AiUsageRecord
+        {
+            ChannelId = candidate.ChannelId,
+            Provider = response.Provider,
+            Model = response.Model,
+            TaskType = AiTaskType.Deduplication,
+            PromptTokens = response.PromptTokens,
+            CompletionTokens = response.CompletionTokens,
+            TotalTokens = response.TotalTokens,
+            CostAmount = response.CostAmount,
+            CostCurrency = "RUB",
+            ProviderCostAmount = response.CostAmount,
+            ProviderCostCurrency = "RUB",
+            RequestMetadataJson = response.UsageMetadataJson
+        });
 
         var json = ExtractJsonObject(response.Text);
         if (json is null)

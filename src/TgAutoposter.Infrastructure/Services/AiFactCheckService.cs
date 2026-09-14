@@ -7,7 +7,9 @@ using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Sources;
+using TgAutoposter.Domain.Ai;
 using TgAutoposter.Infrastructure.Options;
+using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
 
@@ -18,6 +20,7 @@ namespace TgAutoposter.Infrastructure.Services;
 /// </summary>
 public sealed class AiFactCheckService(
     IAiProvider aiProvider,
+    AppDbContext db,
     IOptions<PolzaOptions> polzaOptions,
     BasicFactCheckService fallback,
     INicheProfileProvider profiles,
@@ -86,6 +89,21 @@ public sealed class AiFactCheckService(
         var response = await aiProvider.CompleteAsync(
             new AiRequest(channel.Id, AiTaskType.FactCheck, system, user, RequireJson: true),
             cancellationToken);
+        db.AiUsageRecords.Add(new AiUsageRecord
+        {
+            ChannelId = channel.Id,
+            Provider = response.Provider,
+            Model = response.Model,
+            TaskType = AiTaskType.FactCheck,
+            PromptTokens = response.PromptTokens,
+            CompletionTokens = response.CompletionTokens,
+            TotalTokens = response.TotalTokens,
+            CostAmount = response.CostAmount,
+            CostCurrency = "RUB",
+            ProviderCostAmount = response.CostAmount,
+            ProviderCostCurrency = "RUB",
+            RequestMetadataJson = response.UsageMetadataJson
+        });
 
         return ParseVerdict(response.Text);
     }
