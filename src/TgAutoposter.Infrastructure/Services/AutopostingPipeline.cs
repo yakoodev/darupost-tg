@@ -539,12 +539,18 @@ public sealed class AutopostingPipeline(
 
     private static bool ShouldGenerateImage(Channel channel, PublicationTypeSetting publicationType, Post post)
     {
+        // Branded cards are built from the source image (YouTube thumbnail for trailers), so they apply to every kind.
+        if (publicationType.MediaMode == MediaGenerationMode.BrandCard)
+        {
+            return true;
+        }
+
         if (post.PublicationKind == PublicationKind.Trailer && !string.IsNullOrWhiteSpace(post.VideoUrl))
         {
             return false;
         }
 
-        if (publicationType.MediaMode is MediaGenerationMode.GeneratePoster or MediaGenerationMode.BrandCard)
+        if (publicationType.MediaMode == MediaGenerationMode.GeneratePoster)
         {
             return true;
         }

@@ -40,6 +40,17 @@ public sealed class TelegramPublisher(
         var photoUrls = ResolvePhotoUrls(post);
         var videoUrl = NormalizeTelegramVideoUrl(post.VideoUrl);
 
+        // A branded card beats re-uploading a YouTube video: post the card and keep the video as a link.
+        if (!string.IsNullOrWhiteSpace(videoUrl) &&
+            !LooksLikeDirectVideo(videoUrl) &&
+            photoUrls.Count > 0 &&
+            (post.ImagePath ?? string.Empty).Contains("/media/generated/", StringComparison.OrdinalIgnoreCase))
+        {
+            var cardCaption = string.IsNullOrWhiteSpace(text) ? $"▶ {videoUrl}" : $"{text}\n\n▶ {videoUrl}";
+            using var cardContent = BuildPhotoContent(chatId, photoUrls[0], cardCaption, mediaOptionsAccessor.Value);
+            return await SendAsync(client, options, channel, "sendPhoto", cardContent, cancellationToken);
+        }
+
         if (!string.IsNullOrWhiteSpace(videoUrl))
         {
             return await PublishVideoAsync(options, channel, chatId, post, videoUrl, text, cancellationToken);
