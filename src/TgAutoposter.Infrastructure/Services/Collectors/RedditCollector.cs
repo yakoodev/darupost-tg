@@ -27,7 +27,11 @@ public sealed class RedditCollector(
 {
     private static readonly XNamespace Atom = "http://www.w3.org/2005/Atom";
     private static readonly SemaphoreSlim Gate = new(1, 1);
-    private static readonly TimeSpan MinGap = TimeSpan.FromSeconds(2.5);
+    private static readonly TimeSpan MinGap = TimeSpan.FromSeconds(5);
+    /// <summary>After Reddit answers 403 to anonymous JSON (datacenter IPs), skip JSON and wspanel for a while and go straight to RSS:
+    /// burning those requests first is what makes the following RSS call hit 429.</summary>
+    private static readonly TimeSpan AnonymousBlockCooldown = TimeSpan.FromHours(6);
+    private static DateTimeOffset _anonymousBlockedUntil = DateTimeOffset.MinValue;
     private static DateTimeOffset _lastRequestAt = DateTimeOffset.MinValue;
     private static string? _oauthToken;
     private static DateTimeOffset _oauthExpiresAt = DateTimeOffset.MinValue;
@@ -58,17 +62,31 @@ public sealed class RedditCollector(
             }
         }
 
-        try
+        var anonymousBlocked = DateTimeOffset.UtcNow < _anonymousBlockedUntil;
+        if (anonymousBlocked)
         {
-            var json = await FetchAnonymousListingAsync(source, options, cancellationToken);
-            return await ParseListingAsync(source, profile, json, "json", cancellationToken);
+            errors.Add($"json: пропущен, Reddit блокирует анонимный доступ до {_anonymousBlockedUntil:HH:mm} UTC");
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException)
+        else
         {
-            errors.Add($"json: {ex.Message}");
+            try
+            {
+                var json = await FetchAnonymousListingAsync(source, options, cancellationToken);
+                return await ParseListingAsync(source, profile, json, "json", cancellationToken);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or JsonException)
+            {
+                errors.Add($"json: {ex.Message}");
+                if (ex is HttpRequestException { StatusCode: HttpStatusCode.Forbidden })
+                {
+                    _anonymousBlockedUntil = DateTimeOffset.UtcNow + AnonymousBlockCooldown;
+                    anonymousBlocked = true;
+                    logger.LogInformation("Reddit anonymous JSON is blocked (403); using RSS only until {Until}.", _anonymousBlockedUntil);
+                }
+            }
         }
 
-        if (options.UseWspanelFallback && wspanel.IsConfigured)
+        if (!anonymousBlocked && options.UseWspanelFallback && wspanel.IsConfigured)
         {
             try
             {
@@ -92,7 +110,16 @@ public sealed class RedditCollector(
 
         try
         {
-            return await CollectRssAsync(source, profile, cancellationToken);
+            try
+            {
+                return await CollectRssAsync(source, profile, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                logger.LogInformation("Reddit RSS 429 for r/{Subreddit}; retrying once after a pause.", source.Subreddit);
+                await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+                return await CollectRssAsync(source, profile, cancellationToken);
+            }
         }
         catch (HttpRequestException ex)
         {
