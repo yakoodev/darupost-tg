@@ -110,6 +110,7 @@ public sealed class EditorialService(
             .Where(post => post.ChannelId == channel.Id &&
                            post.CreatedAtUtc >= dayStartUtc &&
                            post.PublicationKind != PublicationKind.Digest &&
+                           post.PublicationKind != PublicationKind.Meme &&
                            post.Status != PostStatus.Duplicate &&
                            post.Status != PostStatus.FactCheckFailed &&
                            post.Status != PostStatus.Rejected)
@@ -362,7 +363,7 @@ public sealed class EditorialService(
             : null;
     }
 
-    private static bool IsInsideWindow(Channel channel, DateTimeOffset localNow)
+    internal static bool IsInsideWindow(Channel channel, DateTimeOffset localNow)
     {
         var time = TimeOnly.FromDateTime(localNow.DateTime);
         return channel.ScheduleWindows.Any(window =>
@@ -370,7 +371,7 @@ public sealed class EditorialService(
             time >= window.StartTime && time <= window.EndTime);
     }
 
-    private static TimeZoneInfo ResolveTimeZone(string id)
+    internal static TimeZoneInfo ResolveTimeZone(string id)
     {
         try
         {

@@ -21,4 +21,9 @@ public sealed class EditorialOptions
     public int CisScoreDiscount { get; set; } = 0;
     /// <summary>Only draft posts inside the channel's schedule windows (local time).</summary>
     public bool RespectScheduleWindows { get; set; } = true;
+
+    /// <summary>Meme lane: memes per local day drafted from meme-only sources (0 = off).</summary>
+    public int MemesPerDay { get; set; } = 1;
+    public int MemeLookbackHours { get; set; } = 36;
+    public int MemeAttemptsPerRun { get; set; } = 3;
 }

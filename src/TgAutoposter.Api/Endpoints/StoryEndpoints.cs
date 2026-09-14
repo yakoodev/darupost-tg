@@ -231,6 +231,12 @@ public static class StoryEndpoints
             return Results.Ok(result);
         }).WithTags("Editorial").RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
 
+        app.MapPost("/api/channels/{channelId:guid}/memes/run", async (Guid channelId, bool? force, MemeService service, CancellationToken cancellationToken) =>
+        {
+            var result = await service.RunAsync(channelId, force ?? true, cancellationToken);
+            return Results.Ok(result);
+        }).WithTags("Editorial").RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
+
         digest.MapPost("/run", async (Guid channelId, DigestService service, CancellationToken cancellationToken) =>
         {
             var result = await service.RunAsync(channelId, cancellationToken);

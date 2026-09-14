@@ -52,6 +52,7 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<StoryClusteringService>();
         services.AddScoped<DigestService>();
         services.AddScoped<EditorialService>();
+        services.AddScoped<MemeService>();
         services.AddScoped<IAutopostingPipeline, AutopostingPipeline>();
         services.AddScoped<DbSeeder>();
 

@@ -782,6 +782,17 @@
       "url": "https://hololive.hololivepro.com/news/feed/",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest"
+    },
+    {
+      "name": "r/okbuddyhololive (мемы)",
+      "kind": "reddit",
+      "subreddit": "okbuddyhololive",
+      "redditListing": "hot",
+      "minimumScore": 50,
+      "minimumComments": 0,
+      "checkEveryMinutes": 90,
+      "allowedPublicationKindsCsv": "Meme",
+      "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai"
     }
   ],
   "footerLinks": [

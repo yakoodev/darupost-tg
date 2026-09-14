@@ -58,6 +58,9 @@ public sealed class AutopostingWorker(
                         var editorial = scope.ServiceProvider.GetRequiredService<EditorialService>();
                         var result = await editorial.RunAsync(channelId, force: false, stoppingToken);
                         logger.LogInformation("Editorial run for {ChannelId}: {Note}", channelId, result.Note);
+                        var memes = scope.ServiceProvider.GetRequiredService<MemeService>();
+                        var memeResult = await memes.RunAsync(channelId, force: false, stoppingToken);
+                        logger.LogInformation("Meme run for {ChannelId}: {Note}", channelId, memeResult.Note);
                         continue;
                     }
 
