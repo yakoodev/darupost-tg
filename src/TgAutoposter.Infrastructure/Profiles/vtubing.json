@@ -1213,6 +1213,146 @@
       "group": "RU agency",
       "aliases": "89 сквад",
       "priority": 3
+    },
+    {
+      "priority": 2,
+      "name": "Moona Hoshinova",
+      "agency": "hololive",
+      "group": "ID 1st gen",
+      "aliases": "Moona, ムーナ"
+    },
+    {
+      "priority": 2,
+      "name": "Ayunda Risu",
+      "agency": "hololive",
+      "group": "ID 1st gen",
+      "aliases": "Risu"
+    },
+    {
+      "priority": 2,
+      "name": "Airani Iofifteen",
+      "agency": "hololive",
+      "group": "ID 1st gen",
+      "aliases": "Iofi"
+    },
+    {
+      "priority": 2,
+      "name": "Anya Melfissa",
+      "agency": "hololive",
+      "group": "ID 2nd gen",
+      "aliases": "Anya"
+    },
+    {
+      "priority": 2,
+      "name": "Pavolia Reine",
+      "agency": "hololive",
+      "group": "ID 2nd gen",
+      "aliases": "Reine"
+    },
+    {
+      "priority": 2,
+      "name": "Vestia Zeta",
+      "agency": "hololive",
+      "group": "ID 3rd gen",
+      "aliases": "Zeta"
+    },
+    {
+      "priority": 2,
+      "name": "Kaela Kovalskia",
+      "agency": "hololive",
+      "group": "ID 3rd gen",
+      "aliases": "Kaela"
+    },
+    {
+      "priority": 2,
+      "name": "Kobo Kanaeru",
+      "agency": "hololive",
+      "group": "ID 3rd gen",
+      "aliases": "Kobo"
+    },
+    {
+      "priority": 2,
+      "name": "Elizabeth Rose Bloodflame",
+      "agency": "hololive",
+      "group": "EN Justice",
+      "aliases": "Elizabeth, ERB"
+    },
+    {
+      "priority": 2,
+      "name": "Gigi Murin",
+      "agency": "hololive",
+      "group": "EN Justice",
+      "aliases": "Gigi"
+    },
+    {
+      "priority": 2,
+      "name": "Cecilia Immergreen",
+      "agency": "hololive",
+      "group": "EN Justice",
+      "aliases": "Cecilia, CC"
+    },
+    {
+      "priority": 2,
+      "name": "Raora Panthera",
+      "agency": "hololive",
+      "group": "EN Justice",
+      "aliases": "Raora"
+    },
+    {
+      "priority": 2,
+      "name": "Tsunomaki Watame",
+      "agency": "hololive",
+      "group": "JP 4th gen",
+      "aliases": "Watame"
+    },
+    {
+      "priority": 2,
+      "name": "Minato Aqua",
+      "agency": "hololive",
+      "group": "JP 2nd gen",
+      "aliases": "Aqua, あくあ"
+    },
+    {
+      "priority": 2,
+      "name": "Nakiri Ayame",
+      "agency": "hololive",
+      "group": "JP 2nd gen",
+      "aliases": "Ayame"
+    },
+    {
+      "priority": 2,
+      "name": "Kizuna AI",
+      "agency": "Kizuna AI",
+      "group": "indie",
+      "aliases": "キズナアイ"
+    },
+    {
+      "priority": 2,
+      "name": "Tsukino Mito",
+      "agency": "NIJISANJI",
+      "group": "JP",
+      "aliases": "月ノ美兎, Mito"
+    },
+    {
+      "priority": 2,
+      "name": "Enna Alouette",
+      "agency": "NIJISANJI",
+      "group": "EN Ethyria",
+      "aliases": "Enna"
+    },
+    {
+      "priority": 2,
+      "name": "Millie Parfait",
+      "agency": "NIJISANJI",
+      "group": "EN Lazulight",
+      "aliases": "Millie"
+    },
+    {
+      "priority": 2,
+      "name": "Shoto",
+      "agency": "indie",
+      "group": "indie",
+      "aliases": "Shxtou"
     }
   ]
 }
