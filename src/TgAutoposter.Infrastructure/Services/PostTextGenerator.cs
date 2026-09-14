@@ -113,6 +113,27 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             new[] { template, linkLine }.Where(part => !string.IsNullOrWhiteSpace(part)));
     }
 
+    private static string FormatNow(string? timeZone)
+    {
+        var now = DateTimeOffset.UtcNow;
+        try
+        {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(string.IsNullOrWhiteSpace(timeZone) ? "Europe/Moscow" : timeZone);
+            return $"{TimeZoneInfo.ConvertTime(now, zone):dd.MM.yyyy HH:mm} ({zone.Id})";
+        }
+        catch (Exception)
+        {
+            return $"{now:dd.MM.yyyy HH:mm} UTC";
+        }
+    }
+
+    private static string FormatAgo(DateTimeOffset foundAtUtc)
+    {
+        var age = DateTimeOffset.UtcNow - foundAtUtc;
+        if (age < TimeSpan.Zero) age = TimeSpan.Zero;
+        return age.TotalHours < 1 ? $"{Math.Max(1, (int)age.TotalMinutes)} мин назад" : age.TotalHours < 48 ? $"{(int)age.TotalHours} ч назад" : $"{(int)age.TotalDays} дн назад";
+    }
+
     private static string BuildPrompt(
         Channel channel,
         NicheProfile profile,
@@ -129,6 +150,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         rules.Add("- пиши только то, что есть в источниках; не сообщай, чего в них нет (никаких «агентство не указано», «подробностей пока нет», «официальных деталей нет»);");
         rules.Add("- никаких концовок-ожиданий и призывов («дальше ждём», «стоит следить», «если вы фанат — заходите»); закончи последним фактом;");
         rules.Add("- если это слух, явно пометь это в первом предложении.");
+        rules.Add("- сверяй даты с текущим временем: если событие (стрим, дебют, премьера) уже прошло, пиши о нём в прошедшем времени и не подавай как анонс;");
 
         var context = string.IsNullOrWhiteSpace(storyContext)
             ? string.Empty
@@ -153,9 +175,12 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         Дополнительные правила типа:
         {publicationType.SystemPrompt}
 
+        Сейчас: {FormatNow(channel.TimeZone)}
+
         Инфоповод:
         Заголовок: {candidate.Title}
         URL: {candidate.Url}
+        Найдено: {FormatAgo(candidate.FoundAtUtc)}
         Видео: {candidate.VideoUrl}
         Резюме: {candidate.Summary}
         {context}

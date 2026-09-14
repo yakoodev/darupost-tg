@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
@@ -31,6 +32,8 @@ public sealed class TelegramModerationNotifier(
             ? null
             : post.FinalText ?? post.GeneratedText;
 
+        var sourcesBlock = await BuildSourcesBlockAsync(post, cancellationToken);
+
         var text = $"""
         Пост ожидает модерации
 
@@ -39,6 +42,8 @@ public sealed class TelegramModerationNotifier(
         Статус фактчека: {post.FactCheckStatus}
         Дедупликация: {post.DeduplicationStatus}
         План: {post.ScheduledForUtc:yyyy-MM-dd HH:mm} UTC
+
+        {sourcesBlock}
 
         {post.Header}
 
@@ -182,6 +187,54 @@ public sealed class TelegramModerationNotifier(
         const int limit = 3900;
         var value = text.Trim();
         return value.Length <= limit ? value : $"{value[..(limit - 3)].TrimEnd()}...";
+    }
+
+    /// <summary>Moderators want to see where the news came from: the lead URL, the video and every other source of the story.</summary>
+    private async Task<string> BuildSourcesBlockAsync(Post post, CancellationToken cancellationToken)
+    {
+        var lines = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void Add(string? label, string? url)
+        {
+            if (!string.IsNullOrWhiteSpace(url) && seen.Add(url.Trim()))
+            {
+                lines.Add(string.IsNullOrWhiteSpace(label) ? $"• {url.Trim()}" : $"• {label}: {url.Trim()}");
+            }
+        }
+
+        Add("Основной", post.SourceUrl);
+        Add("Видео", post.VideoUrl);
+        string? verdict = null;
+        try
+        {
+            var story = await db.Stories.AsNoTracking().FirstOrDefaultAsync(item => item.PostId == post.Id, cancellationToken);
+            if (story is not null)
+            {
+                if (story.EditorScore is not null)
+                {
+                    verdict = $"Редактор: {story.EditorScore}/10 — {story.EditorNote}";
+                }
+
+                var others = await db.SourceCandidates.AsNoTracking()
+                    .Where(candidate => candidate.StoryId == story.Id)
+                    .OrderByDescending(candidate => candidate.Score ?? 0)
+                    .Select(candidate => new { candidate.Url, SourceName = candidate.Source != null ? candidate.Source.Name : null })
+                    .Take(12)
+                    .ToListAsync(cancellationToken);
+                foreach (var other in others)
+                {
+                    if (lines.Count >= 8) break;
+                    Add(other.SourceName, other.Url);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not load story sources for post {PostId}.", post.Id);
+        }
+
+        var block = lines.Count == 0 ? "Источники: не найдены" : "Источники:" + Environment.NewLine + string.Join(Environment.NewLine, lines);
+        return verdict is null ? block : verdict + Environment.NewLine + block;
     }
 
     private static string? BuildVideoLine(Post post)

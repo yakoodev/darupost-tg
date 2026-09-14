@@ -47,6 +47,8 @@ public sealed class EditorialService(
         4–0: не новость: анонс или старт обычного стрима, смена игры или статуса на стриме, просьбы о донатах и бусти, личные посты и болтовня, фан-арт, мемы, клипы и нарезки, обсуждения и мнения фанатов, розыгрыши, реклама.
 
         СНГ-сцена в приоритете: канал в первую очередь для русскоязычных витуберов. Реальные события RU/СНГ-витуберов (дебют, новая модель, уход или перерыв, запуск или набор агентства, премия, фестиваль, крупный коллаб, релиз песни, заметный майлстоун) оценивай на 2 балла выше, чем такое же событие у зарубежного инди-таланта, и ставь им rubric "RU-сцена". Рутина RU-витуберов (старт стрима, благодарности, личные посты) остаётся 0–3.
+        Время важно: в запросе указано текущее время и возраст каждого упоминания. Анонс события, которое по дате или времени уже прошло (стрим, дебют, премьера, розыгрыш), — 0–2, это больше не новость. Если дата события не ясна, суди по возрасту упоминания.
+        Жёсткие потолки (важнее СНГ-бонуса): кавер, клип или песня малоизвестного витубера — максимум 5; анонс обычного или дебютного стрима малоизвестного витубера без подтверждённой аудитории — максимум 5; фанатские посты, пересказы, «скоро будет», конкурсы, наборы артов, сходки, дни рождения — максимум 3. 7+ только для события, о котором через неделю всё ещё будут говорить, с конкретным фактом и первоисточником.
         Будь строг: в день набирается 3–5 новостей уровня 7+. Сомневаешься — ставь ниже.
         kind: News, BreakingNews (только для 9–10 срочных), Rumor (неподтверждённое), Trailer (главное — видео: MV, дебют-стрим, 3D-лайв), Deal (мерч, билеты, ивенты).
         rubric: одно-два слова для плашки на карточке: Дебют, Graduation, Музыка, Коллаб, Агентства, Индустрия, RU-сцена, Мерч, Ивент, Слух, Скандал, Софт, Майлстоун.
@@ -62,6 +64,25 @@ public sealed class EditorialService(
 
     private static int RequiredScore(Story story, EditorialOptions options) =>
         IsCisScene(story) ? Math.Max(options.RejectBelow, options.MinScore - options.CisScoreDiscount) : options.MinScore;
+
+    private static string FormatLocal(DateTimeOffset utc, string? timeZone)
+    {
+        try
+        {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(string.IsNullOrWhiteSpace(timeZone) ? "Europe/Moscow" : timeZone);
+            return $"{TimeZoneInfo.ConvertTime(utc, zone):dd.MM.yyyy HH:mm} ({zone.Id})";
+        }
+        catch (Exception)
+        {
+            return $"{utc:dd.MM.yyyy HH:mm} UTC";
+        }
+    }
+
+    private static string FormatAge(TimeSpan age)
+    {
+        if (age < TimeSpan.Zero) age = TimeSpan.Zero;
+        return age.TotalHours < 1 ? $"{Math.Max(1, (int)age.TotalMinutes)} мин назад" : age.TotalHours < 48 ? $"{(int)age.TotalHours} ч назад" : $"{(int)age.TotalDays} дн назад";
+    }
 
     public async Task<EditorialRunResult> RunAsync(Guid channelId, bool force, CancellationToken cancellationToken)
     {
@@ -222,6 +243,8 @@ public sealed class EditorialService(
             .ToDictionaryAsync(source => source.Id, source => source.Name, cancellationToken);
 
         var user = new StringBuilder();
+        var nowUtc = clock.UtcNow;
+        user.AppendLine($"Сейчас: {FormatLocal(nowUtc, channel.TimeZone)}.");
         user.AppendLine($"Сюжеты ({stories.Count}):");
         for (var i = 0; i < stories.Count; i++)
         {
@@ -233,7 +256,7 @@ public sealed class EditorialService(
             {
                 var name = sourceNames.TryGetValue(item.SourceId, out var sourceName) ? sourceName : "источник";
                 var summary = Truncate(item.Summary.ReplaceLineEndings(" "), 260);
-                user.AppendLine($"    - ({name}) {Truncate(item.Title, 160)}{(summary.Length > 0 && !summary.StartsWith(item.Title, StringComparison.OrdinalIgnoreCase) ? $": {summary}" : string.Empty)}");
+                user.AppendLine($"    - ({name}, {FormatAge(nowUtc - item.FoundAtUtc)}) {Truncate(item.Title, 160)}{(summary.Length > 0 && !summary.StartsWith(item.Title, StringComparison.OrdinalIgnoreCase) ? $": {summary}" : string.Empty)}");
             }
         }
 
