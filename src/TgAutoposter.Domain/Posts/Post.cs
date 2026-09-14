@@ -34,6 +34,10 @@ public sealed class Post : Entity
     public string? GeneratedText { get; set; }
     public string? FinalText { get; set; }
     public string? Header { get; set; }
+    /// <summary>Short headline for the image card (4–9 words), written together with the text.</summary>
+    public string? Headline { get; set; }
+    /// <summary>Card rubric chosen by the editor (Дебют, Музыка, RU-сцена...); falls back to the kind's rubric.</summary>
+    public string? Rubric { get; set; }
     public string? Footer { get; set; }
     public string? ImagePath { get; set; }
     public string? MediaUrlsJson { get; set; }

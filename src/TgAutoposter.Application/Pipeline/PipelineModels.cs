@@ -22,4 +22,6 @@ public sealed record PipelineRunOptions(
     /// <summary>Run the ingest phase for due sources before generating. False = only consume what is already collected.</summary>
     bool CollectSources = true,
     /// <summary>Generate from this specific candidate only (manual "make a post" from the Today screen).</summary>
-    Guid? CandidateId = null);
+    Guid? CandidateId = null,
+    /// <summary>Story the candidate belongs to: its other sources are passed to the writer and the story is marked drafted.</summary>
+    Guid? StoryId = null);

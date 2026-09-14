@@ -132,6 +132,7 @@ export default function PublicationTypes() {
                     <option value="UseSourceImage">UseSourceImage</option>
                     <option value="GeneratePoster">GeneratePoster</option>
                     <option value="TranslateMeme">TranslateMeme</option>
+                    <option value="BrandCard">BrandCard (фирменная карточка)</option>
                   </Select>
                 </Field>
 

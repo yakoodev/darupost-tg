@@ -345,6 +345,8 @@ public sealed class DigestService(
             PublicationTypeId = digestType.Id,
             PublicationKind = PublicationKind.Digest,
             SourceTitle = $"Дайджест за {localDate:dd.MM.yyyy}",
+            Headline = $"Главное за {localDate.ToString("d MMMM", new System.Globalization.CultureInfo("ru-RU"))}",
+            Rubric = "Дайджест",
             SourceUrl = null,
             OriginalSummary = string.Join("\n", plan.Items.Select(item => views.First(view => view.Index == item.Index).Story.Title)),
             RelatedSourcesJson = JsonSerializer.Serialize(related, JsonOptions),
@@ -364,7 +366,7 @@ public sealed class DigestService(
             CostCurrency = "RUB"
         };
 
-        if (digestType.MediaMode == MediaGenerationMode.GeneratePoster)
+        if (digestType.MediaMode is MediaGenerationMode.GeneratePoster or MediaGenerationMode.BrandCard)
         {
             try
             {

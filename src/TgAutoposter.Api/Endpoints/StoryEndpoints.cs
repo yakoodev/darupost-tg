@@ -225,6 +225,12 @@ public static class StoryEndpoints
                 open));
         });
 
+        app.MapPost("/api/channels/{channelId:guid}/editorial/run", async (Guid channelId, bool? force, EditorialService service, CancellationToken cancellationToken) =>
+        {
+            var result = await service.RunAsync(channelId, force ?? true, cancellationToken);
+            return Results.Ok(result);
+        }).WithTags("Editorial").RequireChannelRole(ChannelRoleType.ChannelAdmin, "channelId");
+
         digest.MapPost("/run", async (Guid channelId, DigestService service, CancellationToken cancellationToken) =>
         {
             var result = await service.RunAsync(channelId, cancellationToken);

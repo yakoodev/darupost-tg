@@ -157,7 +157,7 @@ public static class ChannelEndpoints
                     type.ModerationMode = ModerationMode.Manual;
                     type.FactCheckMode = FactCheckMode.Medium;
                     type.RequiresFactCheck = true;
-                    type.MediaMode = MediaGenerationMode.None;
+                    type.MediaMode = type.MediaMode == MediaGenerationMode.BrandCard ? MediaGenerationMode.BrandCard : MediaGenerationMode.None;
                     continue;
                 }
 
@@ -165,7 +165,7 @@ public static class ChannelEndpoints
                 type.FactCheckMode = FactCheckMode.Soft;
                 type.MediaMode = type.Kind == PublicationKind.Meme
                     ? MediaGenerationMode.TranslateMeme
-                    : MediaGenerationMode.GeneratePoster;
+                    : type.MediaMode == MediaGenerationMode.BrandCard ? MediaGenerationMode.BrandCard : MediaGenerationMode.GeneratePoster;
             }
 
             await db.SaveChangesAsync(cancellationToken);

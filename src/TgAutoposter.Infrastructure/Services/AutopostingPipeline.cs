@@ -9,6 +9,7 @@ using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
 using TgAutoposter.Domain.Posts;
 using TgAutoposter.Domain.Sources;
+using TgAutoposter.Domain.Stories;
 using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
@@ -132,8 +133,15 @@ public sealed class AutopostingPipeline(
                 continue;
             }
 
-            var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken);
+            var story = options.StoryId is Guid storyId
+                ? await db.Stories.FirstOrDefaultAsync(item => item.Id == storyId && item.ChannelId == channel.Id, cancellationToken)
+                : null;
+            var storyContext = story is null ? null : await BuildStoryContextAsync(story, candidate.Id, cancellationToken);
+
+            var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken, storyContext);
             var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
+            post.Headline = generated.Headline;
+            post.Rubric = string.IsNullOrWhiteSpace(story?.EditorRubric) ? null : story!.EditorRubric;
             post.EmbeddingJson = await ComputeEmbeddingJsonAsync(channel.Id, post, cancellationToken);
 
             if (ShouldGenerateImage(channel, publicationType, post))
@@ -171,6 +179,12 @@ public sealed class AutopostingPipeline(
 
             candidate.IsConsumed = true;
             candidate.ConsumedReason = "post";
+            if (story is not null)
+            {
+                story.PostId = post.Id;
+                story.Status = StoryStatus.Drafted;
+            }
+
             await db.SaveChangesAsync(cancellationToken);
             postsCreated++;
 
@@ -490,6 +504,29 @@ public sealed class AutopostingPipeline(
         }
     }
 
+    private async Task<string> BuildStoryContextAsync(Story story, Guid leadCandidateId, CancellationToken cancellationToken)
+    {
+        var others = await db.SourceCandidates
+            .AsNoTracking()
+            .Where(item => item.StoryId == story.Id && item.Id != leadCandidateId)
+            .OrderByDescending(item => item.Score ?? 0)
+            .ThenBy(item => item.FoundAtUtc)
+            .Take(5)
+            .Select(item => new { item.Title, item.Summary, item.Url, SourceName = item.Source!.Name })
+            .ToListAsync(cancellationToken);
+
+        return string.Join(Environment.NewLine, others.Select(item =>
+        {
+            var summary = item.Summary.ReplaceLineEndings(" ").Trim();
+            if (summary.Length > 400)
+            {
+                summary = summary[..400] + "…";
+            }
+
+            return $"- ({item.SourceName}) {item.Title}: {summary}";
+        }));
+    }
+
     private async Task<string?> ComputeEmbeddingJsonAsync(Guid channelId, Post post, CancellationToken cancellationToken)
     {
         var vector = await embeddingProvider.EmbedAsync(
@@ -507,7 +544,7 @@ public sealed class AutopostingPipeline(
             return false;
         }
 
-        if (publicationType.MediaMode == MediaGenerationMode.GeneratePoster)
+        if (publicationType.MediaMode is MediaGenerationMode.GeneratePoster or MediaGenerationMode.BrandCard)
         {
             return true;
         }

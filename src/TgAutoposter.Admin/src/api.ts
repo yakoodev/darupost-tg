@@ -26,7 +26,7 @@ export type SourceKind = 'Reddit' | 'Web' | 'AiWebSearch' | 'Rss' | 'Telegram'
 export type RedditListingKind = 'Hot' | 'New' | 'Rising' | 'Top'
 export type FactCheckMode = 'Soft' | 'Medium' | 'Strict' | 'Custom'
 export type RumorPolicy = 'Deny' | 'AllowWithLabel' | 'WhitelistedOnly' | 'AlwaysManual'
-export type MediaGenerationMode = 'None' | 'UseSourceImage' | 'GeneratePoster' | 'TranslateMeme'
+export type MediaGenerationMode = 'None' | 'UseSourceImage' | 'GeneratePoster' | 'TranslateMeme' | 'BrandCard'
 export type PublicationKind =
   | 'News'
   | 'BreakingNews'

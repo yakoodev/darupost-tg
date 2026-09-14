@@ -31,6 +31,14 @@ public sealed class Story : Entity
     /// <summary>Best candidate to generate a standalone post from.</summary>
     public Guid? LeadCandidateId { get; set; }
     public Guid? PostId { get; set; }
+
+    /// <summary>Editor's newsworthiness rating 0–10 (null = not rated yet).</summary>
+    public int? EditorScore { get; set; }
+    public string? EditorNote { get; set; }
+    public string? EditorRubric { get; set; }
+    public DateTimeOffset? EditorCheckedAtUtc { get; set; }
+    /// <summary>Candidates count at the time of rating; the story is re-rated when it grows.</summary>
+    public int EditorCandidatesCount { get; set; }
     public Guid? DigestPostId { get; set; }
 
     public List<SourceCandidate> Candidates { get; set; } = [];

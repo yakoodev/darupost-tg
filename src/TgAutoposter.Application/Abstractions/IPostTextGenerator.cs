@@ -9,7 +9,8 @@ public interface IPostTextGenerator
         Channel channel,
         PublicationTypeSetting publicationType,
         SourceCandidate candidate,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? storyContext = null);
 }
 
 public sealed record PostTextResult(
@@ -24,4 +25,5 @@ public sealed record PostTextResult(
     int? TotalTokens = null,
     decimal? CostAmount = null,
     string CostCurrency = "USD",
-    string? UsageMetadataJson = null);
+    string? UsageMetadataJson = null,
+    string? Headline = null);

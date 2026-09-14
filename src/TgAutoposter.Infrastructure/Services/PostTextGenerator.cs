@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Profiles;
@@ -8,20 +9,32 @@ using TgAutoposter.Infrastructure.Persistence;
 
 namespace TgAutoposter.Infrastructure.Services;
 
+/// <summary>
+/// Writes the post body and a short card headline in one call (JSON). Story context (other sources on the same
+/// event) is passed in so the text can combine facts instead of retelling a single thin source.
+/// </summary>
 public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, INicheProfileProvider profiles) : IPostTextGenerator
 {
+    private static readonly string[] BannedPhrases =
+    [
+        "агентство не указано", "агентство в исходной новости не указано", "подробностей нет", "деталей пока нет",
+        "официальных деталей", "в доступном резюме", "в доступном анонсе", "дальше ждём", "дальше стоит ждать",
+        "стоит следить", "если следите за"
+    ];
+
     public async Task<PostTextResult> GenerateAsync(
         Channel channel,
         PublicationTypeSetting publicationType,
         SourceCandidate candidate,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? storyContext = null)
     {
         var header = string.IsNullOrWhiteSpace(publicationType.HeaderTemplate)
             ? string.Empty
             : publicationType.HeaderTemplate.Trim();
 
         var footer = await BuildFooterAsync(channel.Id, publicationType, cancellationToken);
-        var prompt = BuildPrompt(channel, profiles.Get(channel.ProfileKey), publicationType, candidate);
+        var prompt = BuildPrompt(channel, profiles.Get(channel.ProfileKey), publicationType, candidate, storyContext);
 
         if (publicationType.Kind == PublicationKind.Meme)
         {
@@ -42,14 +55,23 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
                 channel.Id,
                 AiTaskType.PostGeneration,
                 channel.SystemPrompt,
-                prompt),
+                prompt,
+                RequireJson: true),
             cancellationToken);
 
-        var text = response.Provider == "local-fallback" || string.IsNullOrWhiteSpace(response.Text)
-            ? BuildLocalText(publicationType, candidate)
-            : response.Text.Trim();
+        string text;
+        string? headline = null;
+        if (response.Provider == "local-fallback" || string.IsNullOrWhiteSpace(response.Text))
+        {
+            text = BuildLocalText(publicationType, candidate);
+        }
+        else
+        {
+            (headline, text) = ParseResponse(response.Text);
+        }
 
         text = ClampText(TextSanitizer.Clean(text), publicationType.MaxTextLength);
+        headline = CleanHeadline(headline);
 
         return new PostTextResult(
             text,
@@ -63,7 +85,8 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             response.TotalTokens,
             response.CostAmount,
             response.CostCurrency,
-            response.UsageMetadataJson);
+            response.UsageMetadataJson,
+            headline);
     }
 
     private async Task<string> BuildFooterAsync(Guid channelId, PublicationTypeSetting publicationType, CancellationToken cancellationToken)
@@ -90,15 +113,30 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             new[] { template, linkLine }.Where(part => !string.IsNullOrWhiteSpace(part)));
     }
 
-    private static string BuildPrompt(Channel channel, NicheProfile profile, PublicationTypeSetting publicationType, SourceCandidate candidate)
+    private static string BuildPrompt(
+        Channel channel,
+        NicheProfile profile,
+        PublicationTypeSetting publicationType,
+        SourceCandidate candidate,
+        string? storyContext)
     {
         var rules = new List<string> { "- русский язык;" };
         rules.AddRange(profile.Prompts.TextRules
             .Select(rule => rule.TrimStart('-', ' ').Trim())
             .Where(rule => rule.Length > 0)
             .Select(rule => $"- {rule}"));
-        rules.Add($"- максимум {publicationType.MaxTextLength} символов;");
-        rules.Add("- если это слух, явно пометь это в начале.");
+        rules.Add($"- текст не длиннее {publicationType.MaxTextLength} символов;");
+        rules.Add("- пиши только то, что есть в источниках; не сообщай, чего в них нет (никаких «агентство не указано», «подробностей пока нет», «официальных деталей нет»);");
+        rules.Add("- никаких концовок-ожиданий и призывов («дальше ждём», «стоит следить», «если вы фанат — заходите»); закончи последним фактом;");
+        rules.Add("- если это слух, явно пометь это в первом предложении.");
+
+        var context = string.IsNullOrWhiteSpace(storyContext)
+            ? string.Empty
+            : $"""
+
+        Другие источники об этом же событии (используй факты, не противоречь им):
+        {storyContext}
+        """;
 
         return $"""
         Сформируй Telegram-пост для канала "{channel.Name}".
@@ -120,10 +158,58 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         URL: {candidate.Url}
         Видео: {candidate.VideoUrl}
         Резюме: {candidate.Summary}
+        {context}
 
-        Требования:
+        Требования к тексту:
         {string.Join(Environment.NewLine, rules)}
+
+        Требования к заголовку карточки (headline):
+        - 4–9 слов, не длиннее 70 символов;
+        - по-русски, имена талантов и агентств латиницей;
+        - кто + что произошло, конкретно; без кавычек, эмодзи, двоеточий-кликбейта и точки в конце;
+        - не копируй первое предложение текста дословно.
+
+        Верни СТРОГО один JSON-объект без markdown:
+        {"{"}"headline": "...", "text": "..."{"}"}
         """;
+    }
+
+    private static (string? Headline, string Text) ParseResponse(string raw)
+    {
+        var trimmed = raw.Trim();
+        var start = trimmed.IndexOf('{');
+        var end = trimmed.LastIndexOf('}');
+        if (start >= 0 && end > start)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed[start..(end + 1)]);
+                var root = doc.RootElement;
+                var text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String ? textEl.GetString() : null;
+                var headline = root.TryGetProperty("headline", out var headEl) && headEl.ValueKind == JsonValueKind.String ? headEl.GetString() : null;
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    return (headline, text.Trim());
+                }
+            }
+            catch (JsonException)
+            {
+                // fall through: treat the whole response as text
+            }
+        }
+
+        return (null, trimmed);
+    }
+
+    private static string? CleanHeadline(string? headline)
+    {
+        if (string.IsNullOrWhiteSpace(headline))
+        {
+            return null;
+        }
+
+        var value = TextSanitizer.Clean(headline).ReplaceLineEndings(" ").Trim().Trim('"', '«', '»', '.', ' ');
+        return value.Length <= 90 ? value : value[..value.LastIndexOf(' ', 89)];
     }
 
     private static string BuildLocalText(PublicationTypeSetting publicationType, SourceCandidate candidate)
@@ -136,18 +222,26 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         {prefix}{candidate.Title}
 
         {summary}
-
-        Коротко: инфоповод стоит проверить и решить, выпускать ли его в канал.
         """.Trim();
     }
 
+    /// <summary>Drops trailing "waiting/next" filler sentences the model sometimes still adds, then clamps at a sentence boundary.</summary>
     private static string ClampText(string text, int maxLength)
     {
+        var paragraphs = text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        while (paragraphs.Count > 1 && BannedPhrases.Any(phrase => paragraphs[^1].Contains(phrase, StringComparison.OrdinalIgnoreCase)))
+        {
+            paragraphs.RemoveAt(paragraphs.Count - 1);
+        }
+
+        text = string.Join("\n\n", paragraphs);
         if (maxLength <= 0 || text.Length <= maxLength)
         {
             return text;
         }
 
-        return $"{text[..Math.Max(0, maxLength - 3)]}...";
+        var cut = text[..maxLength];
+        var lastStop = cut.LastIndexOfAny(['.', '!', '?']);
+        return lastStop > maxLength / 2 ? cut[..(lastStop + 1)] : $"{cut[..Math.Max(0, maxLength - 1)]}…";
     }
 }

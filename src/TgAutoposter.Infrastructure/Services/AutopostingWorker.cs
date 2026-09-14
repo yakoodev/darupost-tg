@@ -13,6 +13,7 @@ namespace TgAutoposter.Infrastructure.Services;
 public sealed class AutopostingWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<WorkerOptions> optionsAccessor,
+    IOptions<EditorialOptions> editorialAccessor,
     ILogger<AutopostingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,6 +50,17 @@ public sealed class AutopostingWorker(
 
                 foreach (var channelId in channelIds)
                 {
+                    if (editorialAccessor.Value.Enabled)
+                    {
+                        // Editorial mode: publish (or draft for moderation) whatever is already due, then let the
+                        // editor pick at most one story. Collection happens in IngestWorker.
+                        await pipeline.RunForChannelAsync(channelId, runOptions with { MaxPostsToCreate = 0, CollectSources = false, CandidateId = Guid.Empty }, stoppingToken);
+                        var editorial = scope.ServiceProvider.GetRequiredService<EditorialService>();
+                        var result = await editorial.RunAsync(channelId, force: false, stoppingToken);
+                        logger.LogInformation("Editorial run for {ChannelId}: {Note}", channelId, result.Note);
+                        continue;
+                    }
+
                     await pipeline.RunForChannelAsync(channelId, runOptions, stoppingToken);
                 }
 

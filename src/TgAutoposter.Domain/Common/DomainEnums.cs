@@ -117,7 +117,9 @@ public enum MediaGenerationMode
     None = 0,
     UseSourceImage = 1,
     GeneratePoster = 2,
-    TranslateMeme = 3
+    TranslateMeme = 3,
+    /// <summary>Branded card rendered from the real source image (no AI art).</summary>
+    BrandCard = 4
 }
 
 public enum StoryStatus

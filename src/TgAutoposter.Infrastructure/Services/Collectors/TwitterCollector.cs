@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -42,7 +43,7 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
             throw new InvalidOperationException("Коллектор X требует настроенный wspanel (Wspanel:Enabled/BaseUrl/ApiKey/Profile).");
         }
 
-        var pages = await wspanel.ReadAsync([$"https://x.com/{handle}"], includeHtml: false, ReadProfileOverride(source), cancellationToken);
+        var pages = await wspanel.ReadAsync([$"https://x.com/{handle}"], includeHtml: true, ReadProfileOverride(source), cancellationToken);
         var page = pages.FirstOrDefault();
         if (page is null)
         {
@@ -66,7 +67,12 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
             throw new InvalidOperationException($"X отдал почти пустую страницу для @{handle} ({text.Length} символов) — похоже на ограничение или капчу; повторим позже.");
         }
 
-        var tweets = ParseTweets(text, handle, DateTimeOffset.UtcNow);
+        // Rendered HTML carries status ids and tweet photos; the plain-text parser is only a fallback.
+        var tweets = ParseArticles(page.Html ?? string.Empty, handle, DateTimeOffset.UtcNow);
+        if (tweets.Count == 0)
+        {
+            tweets = ParseTweets(text, handle, DateTimeOffset.UtcNow);
+        }
         var filters = CreateFilters(source);
         var result = new List<CollectedCandidate>();
         foreach (var tweet in tweets)
@@ -77,13 +83,14 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
             }
 
             var title = FirstLine(tweet.Body, 160);
-            var externalId = Sha1($"{tweet.Author}|{tweet.DateLine}|{tweet.Body[..Math.Min(tweet.Body.Length, 120)]}");
+            var externalId = tweet.StatusId ?? Sha1($"{tweet.Author}|{tweet.DateLine}|{tweet.Body[..Math.Min(tweet.Body.Length, 120)]}");
+            var images = tweet.Images ?? [];
             result.Add(new CollectedCandidate(
                 title,
-                $"https://x.com/{tweet.Author}",
+                tweet.StatusId is null ? $"https://x.com/{tweet.Author}" : $"https://x.com/{tweet.Author}/status/{tweet.StatusId}",
                 BuildSummary(title, tweet.Body.Length > 800 ? $"{tweet.Body[..800]}..." : tweet.Body),
                 tweet.Body,
-                null,
+                images.FirstOrDefault(),
                 null,
                 null,
                 tweet.PostedAt,
@@ -95,8 +102,10 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
                     dateLine = tweet.DateLine,
                     isRepost = tweet.IsRepost,
                     isPinned = tweet.IsPinned,
-                    transport = "wspanel-x-text"
+                    statusId = tweet.StatusId,
+                    transport = tweet.StatusId is null ? "wspanel-x-text" : "wspanel-x-html"
                 }),
+                MediaUrls: images.Count > 0 ? images : null,
                 ExternalId: externalId,
                 Author: tweet.Author));
         }
@@ -104,7 +113,83 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
         return result;
     }
 
-    internal sealed record ParsedTweet(string Author, string DateLine, DateTimeOffset PostedAt, string Body, bool IsRepost, bool IsPinned);
+    internal sealed record ParsedTweet(
+        string Author,
+        string DateLine,
+        DateTimeOffset PostedAt,
+        string Body,
+        bool IsRepost,
+        bool IsPinned,
+        string? StatusId = null,
+        IReadOnlyList<string>? Images = null);
+
+    /// <summary>
+    /// Parses the profile timeline HTML returned by wspanel: one &lt;article&gt; per tweet with the status link
+    /// (whose text is the relative time), the tweet text in div[dir=auto] and photos on pbs.twimg.com.
+    /// </summary>
+    internal static List<ParsedTweet> ParseArticles(string html, string handle, DateTimeOffset now)
+    {
+        var result = new List<ParsedTweet>();
+        if (string.IsNullOrEmpty(html))
+        {
+            return result;
+        }
+
+        foreach (Match article in ArticleBlockRegex().Matches(html))
+        {
+            var body = article.Groups["body"].Value;
+            var status = StatusTimeRegex().Match(body);
+            if (!status.Success)
+            {
+                continue;
+            }
+
+            var author = status.Groups["user"].Value;
+            var statusId = status.Groups["id"].Value;
+            var dateLine = WebUtility.HtmlDecode(status.Groups["time"].Value).Trim();
+            var postedAt = TryParseDate(dateLine, now) ?? now;
+
+            var textMatch = TweetBodyRegex().Match(body);
+            var text = textMatch.Success ? HtmlToText(textMatch.Groups["body"].Value) : string.Empty;
+            var images = MediaUrlRegex().Matches(body)
+                .Select(match => NormalizeTwitterMedia(match.Value))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(4)
+                .ToList();
+
+            if (text.Length < 3 && images.Count == 0)
+            {
+                continue;
+            }
+
+            var isPinned = body.Contains("Закреплено", StringComparison.OrdinalIgnoreCase) || body.Contains(">Pinned<", StringComparison.OrdinalIgnoreCase);
+            var isRepost = !author.Equals(handle, StringComparison.OrdinalIgnoreCase);
+            result.Add(new ParsedTweet(author, dateLine, postedAt, text.Length < 3 ? "Медиа без текста" : text, isRepost, isPinned, statusId, images));
+        }
+
+        return result
+            .GroupBy(tweet => tweet.StatusId)
+            .Select(group => group.First())
+            .ToList();
+    }
+
+    private static string HtmlToText(string html)
+    {
+        var value = ButtonRegex().Replace(html, string.Empty);
+        value = BreakRegex().Replace(value, "\n");
+        value = TagRegex().Replace(value, string.Empty);
+        value = WebUtility.HtmlDecode(value).Replace('\u00a0', ' ');
+        var lines = value.Split('\n').Select(line => line.Trim());
+        return MultiBlankRegex().Replace(string.Join("\n", lines), "\n\n").Trim();
+    }
+
+    private static string NormalizeTwitterMedia(string url)
+    {
+        var decoded = WebUtility.HtmlDecode(url);
+        var question = decoded.IndexOf('?');
+        var basePath = question >= 0 ? decoded[..question] : decoded;
+        return $"{basePath}?format=jpg&name=large";
+    }
 
     /// <summary>Parses X's rendered profile text into tweets.</summary>
     internal static List<ParsedTweet> ParseTweets(string text, string handle, DateTimeOffset now)
@@ -305,6 +390,30 @@ public sealed partial class TwitterCollector(WspanelClient wspanel) : ISourceCol
     {
         return Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
     }
+
+    [GeneratedRegex("<article\\b[^>]*>(?<body>.*?)</article>", RegexOptions.Singleline)]
+    private static partial Regex ArticleBlockRegex();
+
+    [GeneratedRegex("href=\"/(?<user>[A-Za-z0-9_]{1,15})/status/(?<id>\\d{6,})\"[^>]*>(?<time>[^<]{1,24})</a>", RegexOptions.Singleline)]
+    private static partial Regex StatusTimeRegex();
+
+    [GeneratedRegex("<div dir=\"auto\"[^>]*>(?<body>.*?)</div>", RegexOptions.Singleline)]
+    private static partial Regex TweetBodyRegex();
+
+    [GeneratedRegex("https://pbs\\.twimg\\.com/(?:media|amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)/[^\"'\\s?<&]+")]
+    private static partial Regex MediaUrlRegex();
+
+    [GeneratedRegex("<button\\b.*?</button>", RegexOptions.Singleline)]
+    private static partial Regex ButtonRegex();
+
+    [GeneratedRegex("<br\\s*/?>", RegexOptions.IgnoreCase)]
+    private static partial Regex BreakRegex();
+
+    [GeneratedRegex("<[^>]+>")]
+    private static partial Regex TagRegex();
+
+    [GeneratedRegex("\\n{3,}")]
+    private static partial Regex MultiBlankRegex();
 
     [GeneratedRegex("^@[A-Za-z0-9_]{1,15}$")]
     private static partial Regex HandleRegex();

@@ -10,6 +10,7 @@ using TgAutoposter.Application.Profiles;
 using TgAutoposter.Infrastructure.Persistence;
 using TgAutoposter.Infrastructure.Profiles;
 using TgAutoposter.Infrastructure.Services;
+using TgAutoposter.Infrastructure.Services.Cards;
 using TgAutoposter.Infrastructure.Services.Collectors;
 
 namespace TgAutoposter.Infrastructure;
@@ -32,6 +33,7 @@ public static class InfrastructureDependencyInjection
         services.Configure<IngestOptions>(configuration.GetSection("Ingest"));
         services.Configure<WspanelOptions>(configuration.GetSection("Wspanel"));
         services.Configure<DigestOptions>(configuration.GetSection("Digest"));
+        services.Configure<EditorialOptions>(configuration.GetSection("Editorial"));
         services.Configure<RedditOptions>(configuration.GetSection("Reddit"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
@@ -49,12 +51,21 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<TalentMatcher>();
         services.AddScoped<StoryClusteringService>();
         services.AddScoped<DigestService>();
+        services.AddScoped<EditorialService>();
         services.AddScoped<IAutopostingPipeline, AutopostingPipeline>();
         services.AddScoped<DbSeeder>();
 
         services.AddHttpClient<IAiProvider, PolzaAiProvider>();
         services.AddHttpClient<IEmbeddingProvider, PolzaEmbeddingClient>();
-        services.AddHttpClient<IImageGenerator, PolzaImageGenerator>();
+        services.AddHttpClient<PolzaImageGenerator>();
+        services.AddSingleton(_ => new BrandCardRenderer(BrandCardRenderer.DefaultFontsDirectory));
+        services.AddHttpClient(BrandCardImageGenerator.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(25);
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "ru,en;q=0.8");
+        });
+        services.AddScoped<IImageGenerator, BrandCardImageGenerator>();
         services.AddHttpClient<IAiAccountStatusClient, PolzaAccountStatusClient>();
         services.AddHttpClient<VideoEnricher>();
         services.AddHttpClient<RedditCollector>();

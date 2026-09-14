@@ -180,6 +180,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             builder.Property(x => x.Title).HasMaxLength(512).IsRequired();
             builder.Property(x => x.Summary).HasMaxLength(4000);
             builder.Property(x => x.TalentsCsv).HasMaxLength(1000);
+            builder.Property(x => x.EditorNote).HasMaxLength(500);
+            builder.Property(x => x.EditorRubric).HasMaxLength(40);
             builder.HasIndex(x => new { x.ChannelId, x.Status, x.LastSeenAtUtc });
             builder.HasOne(x => x.Channel)
                 .WithMany()
@@ -190,6 +192,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Post>(builder =>
         {
             builder.Property(x => x.SourceTitle).HasMaxLength(512).IsRequired();
+            builder.Property(x => x.Headline).HasMaxLength(200);
+            builder.Property(x => x.Rubric).HasMaxLength(40);
             builder.Property(x => x.SourceUrl).HasMaxLength(1024);
             builder.Property(x => x.VideoUrl).HasMaxLength(2048);
             builder.Property(x => x.MediaUrlsJson);

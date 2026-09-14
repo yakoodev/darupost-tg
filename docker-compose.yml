@@ -57,6 +57,9 @@ services:
       Reddit__ClientId: ${REDDIT_CLIENT_ID:-}
       Reddit__ClientSecret: ${REDDIT_CLIENT_SECRET:-}
       Reddit__UserAgent: ${REDDIT_USER_AGENT:-linux:tg-autoposter:v0.2 (news aggregator)}
+      Editorial__Enabled: ${EDITORIAL_ENABLED:-true}
+      Editorial__MinMinutesBetweenPosts: ${EDITORIAL_MIN_MINUTES_BETWEEN_POSTS:-150}
+      Editorial__MinScore: ${EDITORIAL_MIN_SCORE:-7}
       Digest__Enabled: ${DIGEST_ENABLED:-true}
       Digest__CheckIntervalMinutes: ${DIGEST_CHECK_INTERVAL_MINUTES:-5}
       Wspanel__Enabled: ${WSPANEL_ENABLED:-false}
