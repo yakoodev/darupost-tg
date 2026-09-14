@@ -36,7 +36,8 @@ public static class PipelineEndpoints
                     PublishNewPostsImmediately: publishNewPostsImmediately == true,
                     MaxPostsToCreate: maxPostsToCreate,
                     IgnoreSourceSchedule: ignoreSourceSchedule == true,
-                    BypassDailyLimit: bypassDailyLimit == true,
+                    // Manual runs from the admin never depend on the daily limit; it only throttles automatic posting.
+                    BypassDailyLimit: true,
                     PublicationKind: publicationKind),
                 cancellationToken);
 
