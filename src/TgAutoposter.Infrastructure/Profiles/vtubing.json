@@ -720,6 +720,76 @@
       "checkEveryMinutes": 120,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
       "blacklistKeywordsCsv": "кастомка,фанарт,арт,запись в блоге,мем"
+    },
+    {
+      "name": "Vtuber News | RU Community (TG)",
+      "kind": "telegram",
+      "url": "@vtuber_news",
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "VT Data RU (TG)",
+      "kind": "telegram",
+      "url": "@VTData",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "89SQUAD VTuber (TG)",
+      "kind": "telegram",
+      "url": "@vtuber89squad",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Simfonira (TG)",
+      "kind": "telegram",
+      "url": "@simfonira",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Fropsya (TG)",
+      "kind": "telegram",
+      "url": "@fropsya",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "nubchan (TG)",
+      "kind": "telegram",
+      "url": "@nubchan",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "AlexstraWho (TG)",
+      "kind": "telegram",
+      "url": "@alexstrastudios",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "VTuber NewsDrop (RSS)",
+      "kind": "rss",
+      "url": "https://vtubernewsdrop.com/feed/",
+      "checkEveryMinutes": 90,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest"
+    },
+    {
+      "name": "hololive official news (RSS)",
+      "kind": "rss",
+      "url": "https://hololive.hololivepro.com/news/feed/",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest"
     }
   ],
   "footerLinks": [
@@ -1353,6 +1423,41 @@
       "agency": "indie",
       "group": "indie",
       "aliases": "Shxtou"
+    },
+    {
+      "name": "Simfonira",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "simfonira",
+      "priority": 2
+    },
+    {
+      "name": "Fropsya",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "фропси, Фропся",
+      "priority": 2
+    },
+    {
+      "name": "nubchan",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "нубчан",
+      "priority": 2
+    },
+    {
+      "name": "AlexstraWho",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Alexstra, Алекстра",
+      "priority": 2
+    },
+    {
+      "name": "Melody Note",
+      "agency": "indie (RU)",
+      "group": "RU",
+      "aliases": "Meowlody Note",
+      "priority": 2
     }
   ]
 }
