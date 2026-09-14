@@ -237,8 +237,32 @@ public sealed class AutopostingPipeline(
                 cancellationToken);
 
         var take = Math.Max(20, (options.MaxPostsToCreate ?? 5) * 10);
-        return await db.SourceCandidates
-            .Where(candidate => candidate.ChannelId == channel.Id && !candidate.IsConsumed && candidate.FoundAtUtc >= staleSince)
+        var pool = db.SourceCandidates
+            .Where(candidate => candidate.ChannelId == channel.Id && !candidate.IsConsumed && candidate.FoundAtUtc >= staleSince);
+
+        if (options.PublicationKind is PublicationKind requestedKind)
+        {
+            // A requested kind (e.g. "Мем" from the dashboard) must not lose to the newest items of other kinds:
+            // narrow the pool to sources that allow it before taking the newest N. Exact matching happens later.
+            var pattern = $"%{requestedKind}%";
+            pool = pool.Where(candidate =>
+                candidate.Source != null &&
+                (candidate.Source.AllowedPublicationKindsCsv == null ||
+                 candidate.Source.AllowedPublicationKindsCsv == "" ||
+                 EF.Functions.ILike(candidate.Source.AllowedPublicationKindsCsv, pattern)));
+
+            if (requestedKind == PublicationKind.Meme)
+            {
+                return await pool
+                    .Where(candidate => candidate.ImageUrl != null)
+                    .OrderByDescending(candidate => candidate.Score ?? 0)
+                    .ThenByDescending(candidate => candidate.FoundAtUtc)
+                    .Take(take)
+                    .ToListAsync(cancellationToken);
+            }
+        }
+
+        return await pool
             .OrderByDescending(candidate => candidate.FoundAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);
