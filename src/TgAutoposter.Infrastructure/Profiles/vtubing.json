@@ -445,17 +445,9 @@
       "name": "Polza Web Search (VTuber news)",
       "kind": "aiWebSearch",
       "url": "VTuber news today hololive nijisanji vshojo phase connect debut graduation collab milestone announcement",
-      "checkEveryMinutes": 45,
+      "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Deal",
       "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list"
-    },
-    {
-      "name": "Polza Video Search (VTuber)",
-      "kind": "aiWebSearch",
-      "url": "VTuber official debut stream original song MV 3D live concert today hololive nijisanji vshojo YouTube",
-      "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "Trailer",
-      "blacklistKeywordsCsv": "clip,compilation,reaction,fan made,fanmade"
     },
     {
       "name": "hololive production (YouTube)",
