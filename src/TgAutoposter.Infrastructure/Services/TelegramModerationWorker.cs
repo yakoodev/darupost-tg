@@ -374,7 +374,7 @@ public sealed class TelegramModerationWorker(
             PromptTokens = generated.PromptTokens,
             CompletionTokens = generated.CompletionTokens,
             TotalTokens = generated.TotalTokens,
-            CostAmount = null,
+            CostAmount = generated.CostAmount,
             CostCurrency = generated.CostCurrency,
             ProviderCostAmount = generated.CostAmount,
             ProviderCostCurrency = generated.CostCurrency,

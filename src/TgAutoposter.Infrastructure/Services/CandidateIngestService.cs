@@ -112,7 +112,7 @@ public sealed class CandidateIngestService(
             Provider = "polza",
             Model = source.Name,
             TaskType = AiTaskType.StructuredOutput,
-            CostAmount = null,
+            CostAmount = usageCandidate.ProviderCostAmount,
             CostCurrency = AiCostDefaults.Currency,
             ProviderCostAmount = usageCandidate.ProviderCostAmount,
             ProviderCostCurrency = usageCandidate.ProviderCostCurrency,

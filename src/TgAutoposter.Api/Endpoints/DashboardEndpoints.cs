@@ -34,12 +34,12 @@ public static class DashboardEndpoints
                 cancellationToken);
 
             var spendToday = await usage
-                .Where(record => record.CreatedAtUtc >= dayStart && record.CostAmount != null)
-                .SumAsync(record => record.CostAmount ?? 0, cancellationToken);
+                .Where(record => record.CreatedAtUtc >= dayStart && (record.CostAmount != null || record.ProviderCostAmount != null))
+                .SumAsync(record => record.CostAmount ?? record.ProviderCostAmount ?? 0, cancellationToken);
 
             var spendMonth = await usage
-                .Where(record => record.CreatedAtUtc >= monthStart && record.CostAmount != null)
-                .SumAsync(record => record.CostAmount ?? 0, cancellationToken);
+                .Where(record => record.CreatedAtUtc >= monthStart && (record.CostAmount != null || record.ProviderCostAmount != null))
+                .SumAsync(record => record.CostAmount ?? record.ProviderCostAmount ?? 0, cancellationToken);
 
             var providerSpendToday = await usage
                 .Where(record => record.CreatedAtUtc >= dayStart && record.ProviderCostAmount != null)
@@ -51,8 +51,8 @@ public static class DashboardEndpoints
 
             var publishedAll = await posts.CountAsync(post => post.Status == PostStatus.Published, cancellationToken);
             var spendAll = await usage
-                .Where(record => record.CostAmount != null)
-                .SumAsync(record => record.CostAmount ?? 0, cancellationToken);
+                .Where(record => (record.CostAmount != null || record.ProviderCostAmount != null))
+                .SumAsync(record => record.CostAmount ?? record.ProviderCostAmount ?? 0, cancellationToken);
             var averagePublishedCost = publishedAll == 0 ? 0 : spendAll / publishedAll;
 
             var response = new DashboardResponse(

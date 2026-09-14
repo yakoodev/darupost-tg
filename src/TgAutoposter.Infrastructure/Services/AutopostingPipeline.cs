@@ -111,6 +111,21 @@ public sealed class AutopostingPipeline(
                 continue;
             }
 
+            // Claim the candidate before the slow AI steps: a scheduled run and a manual one must not both draft it.
+            if (options.CandidateId is null)
+            {
+                var claimed = await db.SourceCandidates
+                    .Where(item => item.Id == candidate.Id && !item.IsConsumed)
+                    .ExecuteUpdateAsync(updates => updates
+                        .SetProperty(item => item.IsConsumed, true)
+                        .SetProperty(item => item.ConsumedReason, "processing"),
+                        cancellationToken);
+                if (claimed == 0)
+                {
+                    continue;
+                }
+            }
+
             var deduplication = await deduplicationService.CheckAsync(candidate, cancellationToken);
             if (deduplication.Status == DeduplicationStatus.Duplicate)
             {
@@ -170,7 +185,7 @@ public sealed class AutopostingPipeline(
                 PromptTokens = generated.PromptTokens,
                 CompletionTokens = generated.CompletionTokens,
                 TotalTokens = generated.TotalTokens,
-                CostAmount = null,
+                CostAmount = generated.CostAmount,
                 CostCurrency = generated.CostCurrency,
                 ProviderCostAmount = generated.CostAmount,
                 ProviderCostCurrency = generated.CostCurrency,

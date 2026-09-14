@@ -93,6 +93,17 @@ public sealed class MemeService(
         foreach (var candidate in candidates)
         {
             tried++;
+            var claimed = await db.SourceCandidates
+                .Where(item => item.Id == candidate.Id && !item.IsConsumed)
+                .ExecuteUpdateAsync(updates => updates
+                    .SetProperty(item => item.IsConsumed, true)
+                    .SetProperty(item => item.ConsumedReason, "processing"),
+                    cancellationToken);
+            if (claimed == 0)
+            {
+                continue;
+            }
+
             var result = await pipeline.RunForChannelAsync(
                 channel.Id,
                 new PipelineRunOptions(

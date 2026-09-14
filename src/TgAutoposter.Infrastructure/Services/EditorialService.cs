@@ -283,7 +283,7 @@ public sealed class EditorialService(
             PromptTokens = response.PromptTokens,
             CompletionTokens = response.CompletionTokens,
             TotalTokens = response.TotalTokens,
-            CostAmount = null,
+            CostAmount = response.CostAmount,
             CostCurrency = response.CostCurrency,
             ProviderCostAmount = response.CostAmount,
             ProviderCostCurrency = response.CostCurrency,
