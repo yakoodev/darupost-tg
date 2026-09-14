@@ -776,15 +776,12 @@
       "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest"
     },
     {
-      "name": "r/okbuddyhololive (мемы)",
-      "kind": "reddit",
-      "subreddit": "okbuddyhololive",
-      "redditListing": "hot",
-      "minimumScore": 50,
-      "minimumComments": 0,
-      "checkEveryMinutes": 90,
+      "name": "r/VirtualYoutubers — мемы (флаер Meme)",
+      "kind": "rss",
+      "url": "https://www.reddit.com/r/VirtualYoutubers/search.rss?q=flair%3AMeme&restrict_sr=1&sort=top&t=week",
+      "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "Meme",
-      "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai"
+      "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai,died,death,suicide,nazi,sieg"
     }
   ],
   "footerLinks": [

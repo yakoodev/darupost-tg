@@ -35,8 +35,11 @@ public sealed class FeedCollector(HttpClient httpClient, VideoEnricher videoEnri
             .Where(element => element.Name.LocalName is "item" or "entry")
             .Take(30);
 
+        var position = 0;
+        var rankByPosition = SourceAllowsMeme(source);
         foreach (var entry in entries)
         {
+            position++;
             var title = GetChildValue(entry, "title");
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -73,7 +76,8 @@ public sealed class FeedCollector(HttpClient httpClient, VideoEnricher videoEnri
                 BuildSummary(title, text),
                 text,
                 imageUrl,
-                null,
+                // Meme feeds are requested pre-sorted (top of the week): keep that order as the score.
+                rankByPosition ? Math.Max(1, 124 - position * 4) : null,
                 null,
                 publishedAt,
                 JsonSerializer.Serialize(new
