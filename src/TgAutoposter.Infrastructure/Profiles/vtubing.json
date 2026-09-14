@@ -690,14 +690,6 @@
       "requireNewsSignal": false
     },
     {
-      "name": "Polza Web Search (RU/СНГ витуберы)",
-      "kind": "aiWebSearch",
-      "url": "ТОЛЬКО русскоязычные витуберы из России и СНГ (RU VTuber, витуберы, втуберы). Ищи на русском: VK-паблики, Telegram-каналы, DTF, Shazoo, Pikabu, YouTube и Twitch русскоязычных витуберов, агентства Идея, Kaibutsu, FruLive, CEPHALON VTUBE, VStars, премия RU VTuber Awards. События: дебют, новая модель или костюм, уход или перерыв, набор в агентство, коллаб, песня или кавер, фестиваль, майлстоун. Японские, английские и корейские таланты и агентства (hololive, nijisanji и т.п.) НЕ бери, даже если статья на русском. Если свежих RU-новостей нет, верни пустой список.",
-      "checkEveryMinutes": 90,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "blacklistKeywordsCsv": "фанарт,fan art,мем,розыгрыш,giveaway"
-    },
-    {
       "name": "CEPHALON VTUBE Agency (TG)",
       "kind": "telegram",
       "url": "@CEPHALONVTUBE",
