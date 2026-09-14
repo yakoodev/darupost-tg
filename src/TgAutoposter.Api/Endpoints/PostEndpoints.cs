@@ -221,6 +221,7 @@ public static class PostEndpoints
             ClaimsPrincipal principal,
             IAuditLogger audit,
             AppDbContext db,
+            IModerationNotifier moderationNotifier,
             IImageGenerator imageGenerator,
             ITelegramPublisher publisher,
             IDateTimeProvider clock,
@@ -287,6 +288,7 @@ public static class PostEndpoints
             audit.Record(principal, "post.publish", nameof(Post), post.Id.ToString(), post.ChannelId);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("post-published", post.ChannelId, post.Id, cancellationToken);
+            await moderationNotifier.ResolveAsync(post.Id, $"✅ Опубликовано из админки: {post.TelegramPostUrl}", cancellationToken);
 
             return Results.Ok(ToResponse(post));
         }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
@@ -443,6 +445,7 @@ public static class PostEndpoints
             IAuditLogger audit,
             AppDbContext db,
             IRealtimeNotifier realtimeNotifier,
+            IModerationNotifier moderationNotifier,
             CancellationToken cancellationToken) =>
         {
             var post = await db.Posts.FirstOrDefaultAsync(post => post.Id == id, cancellationToken);
@@ -457,6 +460,10 @@ public static class PostEndpoints
             audit.Record(principal, "post.reject", nameof(Post), post.Id.ToString(), post.ChannelId, request.Reason);
             await db.SaveChangesAsync(cancellationToken);
             await realtimeNotifier.StateChangedAsync("post-rejected", post.ChannelId, post.Id, cancellationToken);
+            var rejectText = string.IsNullOrWhiteSpace(request.Reason)
+                ? "🛑 Не публикуем. Пост отклонён в админке."
+                : $"🛑 Не публикуем. Пост отклонён в админке: {request.Reason}";
+            await moderationNotifier.ResolveAsync(post.Id, rejectText, cancellationToken);
             return Results.NoContent();
         }).RequirePostChannelRole(ChannelRoleType.Moderator, "id");
 

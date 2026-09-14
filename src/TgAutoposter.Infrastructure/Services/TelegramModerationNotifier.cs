@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -110,6 +111,68 @@ public sealed class TelegramModerationNotifier(
                 ImageMessageId = imageMessageId,
                 IsActive = true
             });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ResolveAsync(Guid postId, string text, CancellationToken cancellationToken)
+    {
+        var options = optionsAccessor.Value;
+        if (string.IsNullOrWhiteSpace(options.BotToken))
+        {
+            return;
+        }
+
+        var messages = await db.ModerationMessages
+            .Where(message => message.PostId == postId && message.IsActive)
+            .ToListAsync(cancellationToken);
+        if (messages.Count == 0)
+        {
+            return;
+        }
+
+        using var client = httpClientFactory.CreateClient();
+        foreach (var message in messages)
+        {
+            try
+            {
+                if (message.ImageMessageId is not null)
+                {
+                    using var deleteContent = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        ["chat_id"] = message.ChatId,
+                        ["message_id"] = message.ImageMessageId.Value.ToString(CultureInfo.InvariantCulture)
+                    });
+                    using var deleteResponse = await client.PostAsync($"https://api.telegram.org/bot{options.BotToken}/deleteMessage", deleteContent, cancellationToken);
+                    if (!deleteResponse.IsSuccessStatusCode)
+                    {
+                        logger.LogWarning("Telegram deleteMessage failed for post {PostId}: {Response}", postId, await deleteResponse.Content.ReadAsStringAsync(cancellationToken));
+                    }
+                }
+
+                using var editContent = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["chat_id"] = message.ChatId,
+                    ["message_id"] = message.TextMessageId.ToString(CultureInfo.InvariantCulture),
+                    ["text"] = ClampText(text),
+                    ["disable_web_page_preview"] = "false",
+                    ["reply_markup"] = JsonSerializer.Serialize(new { inline_keyboard = Array.Empty<object[]>() })
+                });
+                using var editResponse = await client.PostAsync($"https://api.telegram.org/bot{options.BotToken}/editMessageText", editContent, cancellationToken);
+                if (!editResponse.IsSuccessStatusCode)
+                {
+                    logger.LogWarning("Telegram editMessageText failed for post {PostId}: {Response}", postId, await editResponse.Content.ReadAsStringAsync(cancellationToken));
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogWarning(ex, "Could not update moderation message for post {PostId} in chat {ChatId}.", postId, message.ChatId);
+            }
+
+            message.IsActive = false;
+            message.Resolution = text.Length <= 120 ? text : text[..120];
+            message.ResolvedAtUtc = DateTimeOffset.UtcNow;
         }
 
         await db.SaveChangesAsync(cancellationToken);
