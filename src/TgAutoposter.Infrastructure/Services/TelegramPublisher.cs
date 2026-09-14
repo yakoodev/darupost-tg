@@ -44,7 +44,7 @@ public sealed class TelegramPublisher(
         if (!string.IsNullOrWhiteSpace(videoUrl) &&
             !LooksLikeDirectVideo(videoUrl) &&
             photoUrls.Count > 0 &&
-            (post.ImagePath ?? string.Empty).Contains("/media/generated/", StringComparison.OrdinalIgnoreCase))
+            (post.ImagePath ?? string.Empty).Replace('\\', '/').Contains("media/generated/", StringComparison.OrdinalIgnoreCase))
         {
             var cardCaption = string.IsNullOrWhiteSpace(text) ? $"▶ {videoUrl}" : $"{text}\n\n▶ {videoUrl}";
             using var cardContent = BuildPhotoContent(chatId, photoUrls[0], cardCaption, mediaOptionsAccessor.Value);
