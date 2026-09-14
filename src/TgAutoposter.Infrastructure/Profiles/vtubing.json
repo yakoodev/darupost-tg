@@ -688,6 +688,30 @@
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false
+    },
+    {
+      "name": "Polza Web Search (RU/СНГ витуберы)",
+      "kind": "aiWebSearch",
+      "url": "новости русскоязычных витуберов СНГ дебют новая модель агентство Идея Kaibutsu FruLive CEPHALON RU VTuber Awards",
+      "checkEveryMinutes": 90,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "blacklistKeywordsCsv": "фанарт,fan art,мем,розыгрыш,giveaway"
+    },
+    {
+      "name": "CEPHALON VTUBE Agency (TG)",
+      "kind": "telegram",
+      "url": "@CEPHALONVTUBE",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "RU VTuber Awards (TG)",
+      "kind": "telegram",
+      "url": "@VTuberAwards",
+      "checkEveryMinutes": 120,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
     }
   ],
   "footerLinks": [

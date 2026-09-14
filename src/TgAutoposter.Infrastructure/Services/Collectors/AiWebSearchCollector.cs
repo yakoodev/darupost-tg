@@ -56,6 +56,11 @@ public sealed class AiWebSearchCollector(
             .Replace("{brand}", brand, StringComparison.Ordinal)
             .Replace("{itemJson}", ItemJsonSchema, StringComparison.Ordinal);
 
+        // Each source narrows the search with its own query; templates without a {query} slot get it appended.
+        userPrompt = userPrompt.Contains("{query}", StringComparison.Ordinal)
+            ? userPrompt.Replace("{query}", searchPrompt, StringComparison.Ordinal)
+            : $"{userPrompt}{Environment.NewLine}{Environment.NewLine}Фокус поиска (главный приоритет): {searchPrompt}";
+
         var payload = new
         {
             model = options.DefaultModel,
