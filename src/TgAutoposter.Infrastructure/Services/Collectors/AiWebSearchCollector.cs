@@ -71,7 +71,7 @@ public sealed class AiWebSearchCollector(
             },
             response_format = new { type = "json_object" },
             temperature = 0.2,
-            max_tokens = 1400,
+            max_tokens = 3000,
             plugins = new[]
             {
                 new

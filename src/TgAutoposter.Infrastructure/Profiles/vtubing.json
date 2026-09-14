@@ -692,7 +692,7 @@
     {
       "name": "Polza Web Search (RU/СНГ витуберы)",
       "kind": "aiWebSearch",
-      "url": "новости русскоязычных витуберов СНГ дебют новая модель агентство Идея Kaibutsu FruLive CEPHALON RU VTuber Awards",
+      "url": "ТОЛЬКО русскоязычные витуберы из России и СНГ (RU VTuber, витуберы, втуберы). Ищи на русском: VK-паблики, Telegram-каналы, DTF, Shazoo, Pikabu, YouTube и Twitch русскоязычных витуберов, агентства Идея, Kaibutsu, FruLive, CEPHALON VTUBE, VStars, премия RU VTuber Awards. События: дебют, новая модель или костюм, уход или перерыв, набор в агентство, коллаб, песня или кавер, фестиваль, майлстоун. Японские, английские и корейские таланты и агентства (hololive, nijisanji и т.п.) НЕ бери, даже если статья на русском. Если свежих RU-новостей нет, верни пустой список.",
       "checkEveryMinutes": 90,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
       "blacklistKeywordsCsv": "фанарт,fan art,мем,розыгрыш,giveaway"
@@ -712,6 +712,14 @@
       "checkEveryMinutes": 120,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
       "requireNewsSignal": false
+    },
+    {
+      "name": "DTF #vtuber (RSS)",
+      "kind": "rss",
+      "url": "https://dtf.ru/rss/tag/vtuber",
+      "checkEveryMinutes": 120,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
+      "blacklistKeywordsCsv": "кастомка,фанарт,арт,запись в блоге,мем"
     }
   ],
   "footerLinks": [
