@@ -46,6 +46,7 @@ public sealed class EditorialService(
         6–5: мелочь для узкого круга: небольшой коллаб, обычный кавер, мелкое агентство.
         4–0: не новость: анонс или старт обычного стрима, смена игры или статуса на стриме, просьбы о донатах и бусти, личные посты и болтовня, фан-арт, мемы, клипы и нарезки, обсуждения и мнения фанатов, розыгрыши, реклама.
 
+        СНГ-сцена в приоритете: канал в первую очередь для русскоязычных витуберов. Реальные события RU/СНГ-витуберов (дебют, новая модель, уход или перерыв, запуск или набор агентства, премия, фестиваль, крупный коллаб, релиз песни, заметный майлстоун) оценивай на 2 балла выше, чем такое же событие у зарубежного инди-таланта, и ставь им rubric "RU-сцена". Рутина RU-витуберов (старт стрима, благодарности, личные посты) остаётся 0–3.
         Будь строг: в день набирается 3–5 новостей уровня 7+. Сомневаешься — ставь ниже.
         kind: News, BreakingNews (только для 9–10 срочных), Rumor (неподтверждённое), Trailer (главное — видео: MV, дебют-стрим, 3D-лайв), Deal (мерч, билеты, ивенты).
         rubric: одно-два слова для плашки на карточке: Дебют, Graduation, Музыка, Коллаб, Агентства, Индустрия, RU-сцена, Мерч, Ивент, Слух, Скандал, Софт, Майлстоун.
@@ -54,6 +55,13 @@ public sealed class EditorialService(
         {"items":[{"index":0,"score":7,"kind":"News","rubric":"Музыка","reason":"до 12 слов"}]}
         Оцени все сюжеты из списка.
         """;
+
+    /// <summary>CIS-scene stories are the channel's core audience: a softer bar and a tie-break bonus.</summary>
+    private static bool IsCisScene(Story story) =>
+        string.Equals(story.EditorRubric, "RU-сцена", StringComparison.OrdinalIgnoreCase);
+
+    private static int RequiredScore(Story story, EditorialOptions options) =>
+        IsCisScene(story) ? Math.Max(options.RejectBelow, options.MinScore - options.CisScoreDiscount) : options.MinScore;
 
     public async Task<EditorialRunResult> RunAsync(Guid channelId, bool force, CancellationToken cancellationToken)
     {
@@ -157,8 +165,8 @@ public sealed class EditorialService(
         }
 
         var pick = stories
-            .Where(story => story.Status == StoryStatus.Open && story.LeadCandidateId is not null && story.EditorScore >= options.MinScore)
-            .OrderByDescending(story => story.EditorScore)
+            .Where(story => story.Status == StoryStatus.Open && story.LeadCandidateId is not null && story.EditorScore >= RequiredScore(story, options))
+            .OrderByDescending(story => story.EditorScore + (IsCisScene(story) ? 1 : 0))
             .ThenByDescending(story => story.Score)
             .FirstOrDefault();
 
