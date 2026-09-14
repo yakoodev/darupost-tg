@@ -73,6 +73,15 @@ public sealed partial class TelegramCollector : ISourceCollector
             var video = VideoRegex().Match(body).Groups["url"].Value;
             var preview = LinkPreviewRegex().Match(body).Groups["url"].Value;
             var author = AuthorRegex().Match(body).Groups["name"].Value;
+            if (string.IsNullOrWhiteSpace(video))
+            {
+                // Newslines often link the original YouTube video instead of embedding it; keep it as the story's video source.
+                var youTube = YouTubeLinkRegex().Match(WebUtility.HtmlDecode(preview ?? string.Empty) + " " + text);
+                if (youTube.Success)
+                {
+                    video = youTube.Value;
+                }
+            }
 
             var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var title = lines.Length > 0 ? lines[0] : text;
@@ -149,6 +158,9 @@ public sealed partial class TelegramCollector : ISourceCollector
     }
 
     // One message block: from the data-post marker to the next message (or end of the section).
+    [GeneratedRegex(@"https?://(?:www\.|m\.)?(?:youtube\.com/(?:watch\?v=|shorts/|live/)|youtu\.be/)[A-Za-z0-9_-]{6,}", RegexOptions.IgnoreCase)]
+    private static partial Regex YouTubeLinkRegex();
+
     [GeneratedRegex("class=\"tgme_widget_message[^\"]*\"[^>]*data-post=\"(?<post>[A-Za-z0-9_]+/\\d+)\"(?<body>.*?)(?=class=\"tgme_widget_message[^\"]*\"[^>]*data-post=|</section>)", RegexOptions.Singleline)]
     private static partial Regex MessageBlockRegex();
 
