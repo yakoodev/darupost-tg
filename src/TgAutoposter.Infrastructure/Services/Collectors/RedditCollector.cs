@@ -321,8 +321,11 @@ public sealed class RedditCollector(
         var filters = CreateFilters(source);
         var result = new List<CollectedCandidate>();
 
+        var position = 0;
+        var rankByPosition = SourceAllowsMeme(source);
         foreach (var entry in document.Descendants(Atom + "entry").Take(25))
         {
+            position++;
             var title = entry.Element(Atom + "title")?.Value.Trim();
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -362,7 +365,8 @@ public sealed class RedditCollector(
                 BuildSummary(title, text),
                 text,
                 imageUrl,
-                null,
+                // Top-of-day feed is ordered by upvotes: the first entry gets 100, then down in steps of 4.
+                rankByPosition ? Math.Max(1, 104 - position * 4) : null,
                 null,
                 updated,
                 JsonSerializer.Serialize(new
@@ -404,7 +408,11 @@ public sealed class RedditCollector(
 
     private static string BuildRssUrl(Source source)
     {
-        return $"https://www.reddit.com/r/{Uri.EscapeDataString(source.Subreddit!)}/.rss";
+        var subreddit = Uri.EscapeDataString(source.Subreddit!);
+        // Meme sources want what the community liked, not what was posted last: the day's top, in score order.
+        return SourceAllowsMeme(source)
+            ? $"https://www.reddit.com/r/{subreddit}/top/.rss?t=day"
+            : $"https://www.reddit.com/r/{subreddit}/.rss";
     }
 
     private static IReadOnlyList<string> ExtractRedditImageUrls(JsonElement item)

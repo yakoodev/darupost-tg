@@ -39,6 +39,13 @@ public sealed class DigestService(
     ILogger<DigestService> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    /// <summary>Only stories the editor rated at least this make it into the digest.</summary>
+    private const int DigestMinEditorScore = 6;
+    /// <summary>Separate drafts proposed by the digest need a publishable editor score.</summary>
+    private const int DigestDraftMinEditorScore = 7;
+    /// <summary>Fewer good items than this and there is no digest today.</summary>
+    private const int DigestMinItems = 3;
+    private const string CisRubric = "RU-сцена";
 
     public async Task<DigestRunResult> RunAsync(Guid channelId, CancellationToken cancellationToken)
     {
@@ -63,16 +70,21 @@ public sealed class DigestService(
             since = now.AddHours(-48);
         }
 
+        // The digest follows the editor: only stories it rated as worth telling, CIS scene first.
         var stories = await db.Stories
-            .Where(story => story.ChannelId == channel.Id && story.Status == StoryStatus.Open && story.LastSeenAtUtc >= since)
-            .OrderByDescending(story => story.Score)
-            .ThenByDescending(story => story.LastSeenAtUtc)
+            .Where(story => story.ChannelId == channel.Id &&
+                            (story.Status == StoryStatus.Open || story.Status == StoryStatus.Drafted) &&
+                            story.EditorScore != null && story.EditorScore >= DigestMinEditorScore &&
+                            story.LastSeenAtUtc >= since)
+            .OrderByDescending(story => story.EditorRubric == CisRubric)
+            .ThenByDescending(story => story.EditorScore)
+            .ThenByDescending(story => story.Score)
             .Take(Math.Clamp(channel.DigestMaxStories, 3, 30))
             .ToListAsync(cancellationToken);
 
-        if (stories.Count == 0)
+        if (stories.Count < DigestMinItems)
         {
-            warnings.Add("За период нет сюжетов для дайджеста.");
+            warnings.Add($"За период только {stories.Count} сюжетов с оценкой редактора {DigestMinEditorScore}+ — дайджест не делаем (нужно минимум {DigestMinItems}).");
             channel.LastDigestAtUtc = now;
             await db.SaveChangesAsync(cancellationToken);
             return new DigestRunResult(channel.Id, null, 0, 0, 0, warnings);
@@ -94,7 +106,9 @@ public sealed class DigestService(
                 .OrderByDescending(candidate => candidate.Score ?? 0)
                 .Take(3)
                 .ToList();
-            var lead = own.FirstOrDefault(candidate => candidate.Id == story.LeadCandidateId) ?? own.FirstOrDefault();
+            var primary = own.FirstOrDefault(candidate =>
+                !(sourceNames.TryGetValue(candidate.SourceId, out var sourceName) && sourceName.StartsWith("Polza", StringComparison.OrdinalIgnoreCase)));
+            var lead = primary ?? own.FirstOrDefault(candidate => candidate.Id == story.LeadCandidateId) ?? own.FirstOrDefault();
             return new StoryView(
                 index,
                 story,
@@ -115,9 +129,9 @@ public sealed class DigestService(
         {
             warnings.Add("Тип «Дайджест» выключен — пост-выжимка не создан, только черновики.");
         }
-        else if (plan.Items.Count == 0)
+        else if (plan.Items.Count < DigestMinItems)
         {
-            warnings.Add("Модель не выбрала ни одного пункта для дайджеста.");
+            warnings.Add($"Модель оставила {plan.Items.Count} пунктов — меньше {DigestMinItems}, дайджест не делаем.");
         }
         else
         {
@@ -128,6 +142,10 @@ public sealed class DigestService(
         foreach (var pick in plan.Posts.Take(Math.Clamp(channel.DigestMaxDrafts, 0, 10)))
         {
             var view = views.FirstOrDefault(item => item.Index == pick.Index);
+            if (view is not null && (view.Story.Status != StoryStatus.Open || (view.Story.EditorScore ?? 0) < DigestDraftMinEditorScore))
+            {
+                continue;
+            }
             if (view?.Story.LeadCandidateId is null)
             {
                 continue;
@@ -193,7 +211,8 @@ public sealed class DigestService(
             .AppendLine(profile.Prompts.DigestInstructions)
             .AppendLine("Ответь СТРОГО одним JSON-объектом без markdown:")
             .AppendLine("{\"items\":[{\"index\":0,\"headline\":\"короткий заголовок по-русски\",\"text\":\"1-2 предложения по-русски\"}],\"posts\":[{\"index\":0,\"kind\":\"News|BreakingNews|Rumor|Trailer|Deal\",\"reason\":\"почему нужен отдельный пост\"}]}")
-            .AppendLine("items — 4-7 самых важных сюжетов в порядке важности (index из списка). posts — до 3 сюжетов для отдельных постов, самые сильные. Не выдумывай факты, используй только данные из списка.")
+            .AppendLine("items — 3-7 самых важных сюжетов в порядке важности (index из списка); сюжеты RU/СНГ-сцены ставь выше при сопоставимой важности. posts — до 3 сюжетов для отдельных постов, самые сильные. Не выдумывай факты, используй только данные из списка.")
+            .AppendLine("Имена талантов, агентств и юнитов пиши латиницей, как в оригинале; иероглифы и японские названия не оставляй — переводи на русский или опускай. В text коротко поясни, кто это, если герой малоизвестен русскоязычной аудитории.")
             .ToString();
 
         var user = new StringBuilder();
