@@ -32,7 +32,13 @@ export default function Dashboard() {
     try {
       if (action === 'generate') {
         const r = await api.runPipeline(selectedChannelId, { maxPostsToCreate: 1, publicationKind: kind, ignoreSourceSchedule: true })
-        toast.success(`Готово: создано ${r.postsCreated}, дублей ${r.duplicatesSkipped}`)
+        if (r.postsCreated === 0 && r.duplicatesSkipped === 0 && r.warnings.length > 0) {
+          toast.error(`Не создано: ${r.warnings[0]}`)
+        } else if (r.postsCreated === 0 && r.duplicatesSkipped === 0) {
+          toast.error('Не создано: нет подходящих материалов этого типа в пуле')
+        } else {
+          toast.success(`Готово: создано ${r.postsCreated}, дублей ${r.duplicatesSkipped}`)
+        }
       } else {
         const r = await api.runPipeline(selectedChannelId, { maxPostsToCreate: 1, publishNewPostsImmediately: true, ignoreSourceSchedule: true, bypassDailyLimit: true })
         toast.success(`Запуск: опубликовано ${r.publishedThisRun}, создано ${r.postsCreated}`)

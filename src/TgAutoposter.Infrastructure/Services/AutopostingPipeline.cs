@@ -85,7 +85,10 @@ public sealed class AutopostingPipeline(
                 break;
             }
 
-            if (!options.BypassDailyLimit && await IsDailyLimitReachedAsync(channel.Id, channel.DailyPostLimit, cancellationToken))
+            // The daily limit is about news posts; memes have their own daily lane.
+            if (!options.BypassDailyLimit &&
+                options.PublicationKind != PublicationKind.Meme &&
+                await IsDailyLimitReachedAsync(channel.Id, channel.DailyPostLimit, cancellationToken))
             {
                 warnings.Add($"Канал {channel.Name}: дневной лимит {channel.DailyPostLimit} постов достигнут.");
                 break;
@@ -384,7 +387,10 @@ public sealed class AutopostingPipeline(
             post.CreatedAtUtc >= start &&
             post.CreatedAtUtc < end &&
             post.Status != PostStatus.Duplicate &&
-            post.Status != PostStatus.Rejected,
+            post.Status != PostStatus.Rejected &&
+            post.Status != PostStatus.FactCheckFailed &&
+            post.PublicationKind != PublicationKind.Meme &&
+            post.PublicationKind != PublicationKind.Digest,
             cancellationToken);
 
         return count >= dailyLimit;
