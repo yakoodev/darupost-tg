@@ -338,7 +338,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         }
 
         var value = TextSanitizer.Clean(headline).ReplaceLineEndings(" ").Trim().Trim('"', '.', ' ');
-        const int limit = 70;
+        const int limit = 110; // the card fits four lines; only trim really long headlines
         if (value.Length > limit)
         {
             // Shorten at a word boundary so the card never shows a phrase cut in the middle.
