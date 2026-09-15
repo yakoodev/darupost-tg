@@ -15,7 +15,9 @@ public sealed record AiRequest(
     string? Model = null,
     bool RequireJson = false,
     /// <summary>Override the provider's default completion budget (long structured outputs like the digest plan).</summary>
-    int? MaxTokens = null);
+    int? MaxTokens = null,
+    /// <summary>Per-request sampling temperature (judge ~0.2, writer ~0.7); null uses the provider default.</summary>
+    double? Temperature = null);
 
 public sealed record AiResponse(
     string Text,

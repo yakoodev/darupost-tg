@@ -10,7 +10,9 @@ public interface IPostTextGenerator
         PublicationTypeSetting publicationType,
         SourceCandidate candidate,
         CancellationToken cancellationToken,
-        string? storyContext = null);
+        string? storyContext = null,
+        /// <summary>Facts about the talents in the story from the channel's registry (agency, group, notes).</summary>
+        string? talentFacts = null);
 }
 
 public sealed record PostTextResult(

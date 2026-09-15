@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Pipeline;
+using TgAutoposter.Application.Profiles;
 using TgAutoposter.Domain.Ai;
 using TgAutoposter.Domain.Channels;
 using TgAutoposter.Domain.Common;
@@ -33,24 +34,44 @@ public sealed class EditorialService(
     StoryClusteringService clustering,
     IAiProvider aiProvider,
     IAutopostingPipeline pipeline,
+    INicheProfileProvider profiles,
     IDateTimeProvider clock,
     IOptions<EditorialOptions> optionsAccessor,
     ILogger<EditorialService> logger)
 {
     private const string JudgeSystemPrompt = """
-        Ты главный редактор русскоязычного Telegram-канала, который объединяет витуберов: новости RU-сцены и мировой VTuber-индустрии для самих витуберов и их зрителей.
-        Оцени каждый сюжет по шкале 0–10 — насколько он стоит отдельного поста в канале.
+        Ты главный редактор русскоязычного Telegram-канала для витуберов и их зрителей. Приоритет — RU/СНГ-сцена; мировая VTuber-индустрия — только крупные события.
+        Оцени каждый сюжет по шкале 0–10: насколько вероятно, что владелец канала опубликует его отдельным постом.
 
-        10–9: крупное событие: закрытие/запуск агентства, graduation или дебют известного таланта, скандал с официальными заявлениями, большой концерт, коллаб с крупным брендом или игрой, важное обновление VTube Studio / Live2D / стриминговых платформ.
-        8–7: заметная новость: MV или оригинальная песня известного таланта, крупный майлстоун, новый ген крупного агентства, заметное событие RU-сцены (дебют, уход, новая модель у известного RU-витубера), крупный мерч или ивент.
-        6–5: мелочь для узкого круга: небольшой коллаб, обычный кавер, мелкое агентство.
-        4–0: не новость: анонс или старт обычного стрима, смена игры или статуса на стриме, просьбы о донатах и бусти, личные посты и болтовня, фан-арт, мемы, клипы и нарезки, обсуждения и мнения фанатов, розыгрыши, реклама.
+        Как решает владелец канала (по его реальным решениям).
+        ПУБЛИКУЕТ:
+        - официальные новости крупных агентств с понятным фактом: обновления, новый ген, концерты, закрытия, уходы известных талантов;
+        - события, где пересекаются агентства или большие аудитории;
+        - настоящие события известных RU-витуберов (помечены [RU★]): новая модель, сбор или аукцион, уход или перерыв, крупный коллаб, премия, резонансное высказывание.
+        ОТКЛОНЯЕТ:
+        - дебюты, каверы, MV и анонсы стримов малоизвестных талантов, в том числе русскоязычных;
+        - пересказы японских пресс-релизов мелких агентств, мерч и голосовые пакеты;
+        - самопромо, комиссии, расписания, благодарности, личный быт, фан-посты и обсуждения;
+        - повторы уже опубликованного и анонсы событий, которые уже прошли.
 
-        СНГ-сцена в приоритете: канал в первую очередь для русскоязычных витуберов. Реальные события RU/СНГ-витуберов (дебют, новая модель, уход или перерыв, запуск или набор агентства, премия, фестиваль, крупный коллаб, релиз песни, заметный майлстоун) оценивай на 2 балла выше, чем такое же событие у зарубежного инди-таланта, и ставь им rubric "RU-сцена". Рутина RU-витуберов (старт стрима, благодарности, личные посты) остаётся 0–3.
-        Время важно: в запросе указано текущее время и возраст каждого упоминания. Анонс события, которое по дате или времени уже прошло (стрим, дебют, премьера, розыгрыш), — 0–2, это больше не новость. Если дата события не ясна, суди по возрасту упоминания.
-        Жёсткие потолки (важнее СНГ-бонуса): кавер, клип или песня малоизвестного витубера — максимум 5; анонс обычного или дебютного стрима малоизвестного витубера без подтверждённой аудитории — максимум 5; фанатские посты, пересказы, «скоро будет», конкурсы, наборы артов, сходки, дни рождения — максимум 3. 7+ только для события, о котором через неделю всё ещё будут говорить, с конкретным фактом и первоисточником.
-        Будь строг: в день набирается 3–5 новостей уровня 7+. Сомневаешься — ставь ниже.
-        kind: News, BreakingNews (только для 9–10 срочных), Rumor (неподтверждённое), Trailer (главное — видео: MV, дебют-стрим, 3D-лайв), Deal (мерч, билеты, ивенты).
+        Примеры его решений:
+        - «hololive обновляет FANCLUB ко второму году» (официальный аккаунт агентства) → 7, опубликовал
+        - «Mori Calliope позвала на 3D-концерт гостей из других агентств» → 7, опубликовал
+        - «Planya пошутила над исследованием ТАСС» [RU★], обсуждали широко → 6, опубликовал
+        - «Снежа просит помочь со сбором на домик» [RU★] → 6, опубликовал
+        - «Lyutomir проведёт дебютный стрим» (малоизвестный RU-витубер) → 3, отклонил
+        - «У Aki вышел кавер на Blood» (малоизвестный) → 3, отклонил
+        - «Moona Hoshinova выпустила MV с KARDI» (обычный релиз без события) → 5, отклонил
+        - «Агентство くえにこ! дебютировало двух талантов» (пресс-релиз мелкого агентства) → 2, отклонил
+        - «AuroraRisalia открыли комиссии на монтаж» (самопромо) → 0, отклонил
+        - «Kaibutsu: расписание стримов на неделю» → 0
+
+        У каждого упоминания указана роль источника: агентство (официальный аккаунт), новостник, личный канал, сообщество (Reddit, фанаты), поиск (ИИ-поиск по вебу).
+        Подтверждение: 7+ только если среди упоминаний есть агентство или новостник, либо 2+ независимых источника. Сюжет только из сообщества, поиска или личного канала малоизвестного таланта — максимум 5. Личный канал известного RU-витубера [RU★] сам считается первоисточником.
+        Время: указаны текущее время, когда сюжет впервые появился и возраст каждого упоминания. Анонс события, которое уже прошло, — 0–2. Сюжет старше 48 часов без нового факта — максимум 4.
+        Повторы: в запросе список недавно опубликованного. Тот же сюжет — 0–2; продолжение — только при существенном новом факте, иначе максимум 4.
+        Шкала: 9–10 — главное событие дня; 7–8 — уверенная публикация; 6 — публикуем только для RU-сцены; 5 и ниже — не публикуем. Сомневаешься — ставь ниже.
+        kind: News, BreakingNews (только для 9–10 срочных), Rumor (неподтверждённое), Trailer (главное — видео: MV, дебют, 3D-лайв), Deal (мерч, билеты, ивенты).
         rubric: одно-два слова для плашки на карточке: Дебют, Graduation, Музыка, Коллаб, Агентства, Индустрия, RU-сцена, Мерч, Ивент, Слух, Скандал, Софт, Майлстоун.
 
         Ответь СТРОГО одним JSON-объектом без markdown:
@@ -77,6 +98,39 @@ public sealed class EditorialService(
             return $"{utc:dd.MM.yyyy HH:mm} UTC";
         }
     }
+
+    /// <summary>Editorial role of a source from the niche profile (matched by URL, subreddit or name), with a kind-based fallback.</summary>
+    private static string ResolveRole(NicheProfile profile, string name, string? url, string? subreddit, SourceKind kind)
+    {
+        var match = profile.Sources.FirstOrDefault(item =>
+            (!string.IsNullOrWhiteSpace(url) && string.Equals(item.Url, url, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrWhiteSpace(subreddit) && string.Equals(item.Subreddit, subreddit, StringComparison.OrdinalIgnoreCase)) ||
+            string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(match?.Role))
+        {
+            return match.Role!;
+        }
+
+        return kind switch
+        {
+            SourceKind.AiWebSearch => "search",
+            SourceKind.Reddit => "community",
+            SourceKind.Rss or SourceKind.Web => "newsline",
+            SourceKind.Telegram or SourceKind.YouTube => "personal",
+            _ => "community"
+        };
+    }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "agency" => "агентство",
+        "newsline" => "новостник",
+        "personal" => "личный канал",
+        "community" => "сообщество",
+        "search" => "поиск",
+        "meme" => "мемы",
+        _ => "источник"
+    };
 
     private static string FormatAge(TimeSpan age)
     {
@@ -188,7 +242,7 @@ public sealed class EditorialService(
 
         var pick = stories
             .Where(story => story.Status == StoryStatus.Open && story.LeadCandidateId is not null && story.EditorScore >= RequiredScore(story, options))
-            .OrderByDescending(story => story.EditorScore + (IsCisScene(story) ? 1 : 0))
+            .OrderByDescending(story => story.EditorScore)
             .ThenByDescending(story => story.Score)
             .FirstOrDefault();
 
@@ -243,21 +297,80 @@ public sealed class EditorialService(
             .Where(source => source.ChannelId == channel.Id)
             .ToDictionaryAsync(source => source.Id, source => source.Name, cancellationToken);
 
+        var profile = profiles.Get(channel.ProfileKey);
+        var sourceRoles = (await db.Sources
+                .AsNoTracking()
+                .Where(source => source.ChannelId == channel.Id)
+                .Select(source => new { source.Id, source.Name, source.Url, source.Subreddit, source.Kind })
+                .ToListAsync(cancellationToken))
+            .ToDictionary(source => source.Id, source => RoleLabel(ResolveRole(profile, source.Name, source.Url, source.Subreddit, source.Kind)));
+        var talentInfo = (await db.Talents
+                .AsNoTracking()
+                .Where(talent => talent.ChannelId == channel.Id && talent.IsActive)
+                .Select(talent => new { talent.Name, talent.Agency, talent.Group, talent.Priority })
+                .ToListAsync(cancellationToken))
+            .GroupBy(talent => talent.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var recentPublished = await db.Posts
+            .AsNoTracking()
+            .Where(post => post.ChannelId == channel.Id && post.Status == PostStatus.Published && post.PublishedAtUtc >= clock.UtcNow.AddDays(-30))
+            .OrderByDescending(post => post.PublishedAtUtc)
+            .Take(20)
+            .Select(post => post.Headline ?? post.SourceTitle)
+            .ToListAsync(cancellationToken);
+
+        string DescribeTalents(string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return string.Empty;
+            }
+
+            var described = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(name =>
+            {
+                if (!talentInfo.TryGetValue(name, out var talent))
+                {
+                    return name;
+                }
+
+                var isRu = (talent.Agency ?? string.Empty).Contains("RU", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(talent.Group, "RU", StringComparison.OrdinalIgnoreCase);
+                if (isRu && talent.Priority <= 2)
+                {
+                    return $"{talent.Name} [RU★]";
+                }
+
+                return string.IsNullOrWhiteSpace(talent.Agency) ? talent.Name : $"{talent.Name} ({talent.Agency})";
+            });
+            return $", таланты: {string.Join(", ", described)}";
+        }
+
         var user = new StringBuilder();
         var nowUtc = clock.UtcNow;
         user.AppendLine($"Сейчас: {FormatLocal(nowUtc, channel.TimeZone)}.");
+        user.AppendLine(recentPublished.Count == 0
+            ? "Недавно опубликовано: ничего."
+            : "Недавно опубликовано (30 дней):" + Environment.NewLine + string.Join(Environment.NewLine, recentPublished.Select(title => $"  • {Truncate(title, 120)}")));
         user.AppendLine($"Сюжеты ({stories.Count}):");
         for (var i = 0; i < stories.Count; i++)
         {
             var story = stories[i];
             user.AppendLine();
             user.AppendLine($"[{i}] {Truncate(story.Title, 200)}");
-            user.AppendLine($"    источников: {story.SourcesCount}, упоминаний: {story.CandidatesCount}{(string.IsNullOrWhiteSpace(story.TalentsCsv) ? string.Empty : $", таланты: {story.TalentsCsv}")}");
+            user.AppendLine($"    впервые: {FormatAge(nowUtc - story.FirstSeenAtUtc)}, источников: {story.SourcesCount}, упоминаний: {story.CandidatesCount}{DescribeTalents(story.TalentsCsv)}");
             foreach (var item in candidates.Where(candidate => candidate.StoryId == story.Id).OrderByDescending(candidate => candidate.Score ?? 0).Take(3))
             {
                 var name = sourceNames.TryGetValue(item.SourceId, out var sourceName) ? sourceName : "источник";
-                var summary = Truncate(item.Summary.ReplaceLineEndings(" "), 260);
-                user.AppendLine($"    - ({name}, {FormatAge(nowUtc - item.FoundAtUtc)}) {Truncate(item.Title, 160)}{(summary.Length > 0 && !summary.StartsWith(item.Title, StringComparison.OrdinalIgnoreCase) ? $": {summary}" : string.Empty)}");
+                // Summaries are built as "title\nbody": strip the title prefix so the judge actually sees what the post says.
+                var body = item.Summary ?? string.Empty;
+                if (body.StartsWith(item.Title, StringComparison.OrdinalIgnoreCase))
+                {
+                    body = body[item.Title.Length..];
+                }
+
+                body = Truncate(body.ReplaceLineEndings(" ").Trim(), 500);
+                var role = sourceRoles.TryGetValue(item.SourceId, out var sourceRole) ? sourceRole : "источник";
+                user.AppendLine($"    - ({name}, {role}, {FormatAge(nowUtc - item.FoundAtUtc)}) {Truncate(item.Title, 160)}{(body.Length > 0 ? $": {body}" : string.Empty)}");
             }
         }
 
@@ -265,7 +378,7 @@ public sealed class EditorialService(
         try
         {
             response = await aiProvider.CompleteAsync(
-                new AiRequest(channel.Id, AiTaskType.Classification, JudgeSystemPrompt, user.ToString(), RequireJson: true, MaxTokens: 2500),
+                new AiRequest(channel.Id, AiTaskType.Classification, JudgeSystemPrompt, user.ToString(), RequireJson: true, MaxTokens: 2500, Temperature: 0.2),
                 cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

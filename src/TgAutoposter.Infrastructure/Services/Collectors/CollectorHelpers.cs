@@ -29,12 +29,12 @@ internal static class CollectorHelpers
 
     public static bool PassesTextFilters(TextFilters filters, string haystack)
     {
-        if (filters.Blacklist.Count > 0 && filters.Blacklist.Any(keyword => Contains(haystack, keyword)))
+        if (filters.Blacklist.Count > 0 && filters.Blacklist.Any(keyword => TgAutoposter.Infrastructure.Services.MarkerMatcher.Matches(haystack, keyword)))
         {
             return false;
         }
 
-        return filters.Whitelist.Count == 0 || filters.Whitelist.Any(keyword => Contains(haystack, keyword));
+        return filters.Whitelist.Count == 0 || filters.Whitelist.Any(keyword => TgAutoposter.Infrastructure.Services.MarkerMatcher.Matches(haystack, keyword));
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ internal static class CollectorHelpers
 
     public static bool Contains(string text, string keyword) => text.Contains(keyword, StringComparison.OrdinalIgnoreCase);
 
-    public static bool ContainsAny(string text, IEnumerable<string> markers) => markers.Any(marker => text.Contains(marker, StringComparison.OrdinalIgnoreCase));
+    public static bool ContainsAny(string text, IEnumerable<string> markers) => TgAutoposter.Infrastructure.Services.MarkerMatcher.ContainsAny(text, markers);
 
     public static string BuildSummary(string title, string? text)
     {
@@ -113,9 +113,13 @@ internal static class CollectorHelpers
             return null;
         }
 
-        var withoutTags = Regex.Replace(html, "<.*?>", " ");
+        // Keep the line structure: titles are taken from the first line and the editor/writer need paragraphs.
+        var withBreaks = Regex.Replace(html, "<\\s*br\\s*/?>|</\\s*(p|div|li|h[1-6])\\s*>", "\n", RegexOptions.IgnoreCase);
+        var withoutTags = Regex.Replace(withBreaks, "<.*?>", " ");
         var decoded = System.Net.WebUtility.HtmlDecode(withoutTags);
-        return Sanitize(Regex.Replace(decoded, "\\s+", " ").Trim());
+        var collapsedSpaces = Regex.Replace(decoded, "[ \\t\\u00a0]+", " ");
+        var trimmedLines = Regex.Replace(collapsedSpaces, " *\n *", "\n");
+        return Sanitize(Regex.Replace(trimmedLines, "\n{3,}", "\n\n").Trim());
     }
 
     public static string? NormalizeCitationContent(string? content)

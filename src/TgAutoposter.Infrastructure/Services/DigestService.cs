@@ -44,7 +44,7 @@ public sealed class DigestService(
     /// <summary>Separate drafts proposed by the digest need a publishable editor score.</summary>
     private const int DigestDraftMinEditorScore = 7;
     /// <summary>Fewer good items than this and there is no digest today.</summary>
-    private const int DigestMinItems = 3;
+    private const int DigestMinItems = 2;
     private const string CisRubric = "RU-сцена";
 
     public async Task<DigestRunResult> RunAsync(Guid channelId, CancellationToken cancellationToken)
@@ -211,7 +211,7 @@ public sealed class DigestService(
             .AppendLine(profile.Prompts.DigestInstructions)
             .AppendLine("Ответь СТРОГО одним JSON-объектом без markdown:")
             .AppendLine("{\"items\":[{\"index\":0,\"headline\":\"короткий заголовок по-русски\",\"text\":\"1-2 предложения по-русски\"}],\"posts\":[{\"index\":0,\"kind\":\"News|BreakingNews|Rumor|Trailer|Deal\",\"reason\":\"почему нужен отдельный пост\"}]}")
-            .AppendLine("items — 3-7 самых важных сюжетов в порядке важности (index из списка); сюжеты RU/СНГ-сцены ставь выше при сопоставимой важности. posts — до 3 сюжетов для отдельных постов, самые сильные. Не выдумывай факты, используй только данные из списка.")
+            .AppendLine("items — 2-3 самых сильных сюжета в порядке важности (index из списка), больше не бери; сюжеты RU/СНГ-сцены ставь выше при сопоставимой важности. posts — до 3 сюжетов для отдельных постов, самые сильные. Не выдумывай факты, используй только данные из списка.")
             .AppendLine("Имена талантов, агентств и юнитов пиши латиницей, как в оригинале; иероглифы и японские названия не оставляй — переводи на русский или опускай. В text коротко поясни, кто это, если герой малоизвестен русскоязычной аудитории.")
             .ToString();
 

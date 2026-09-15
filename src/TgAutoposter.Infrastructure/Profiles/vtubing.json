@@ -6,7 +6,7 @@
   "channel": {
     "name": "VTube News",
     "timeZone": "Europe/Moscow",
-    "positioning": "Новостной Telegram-канал, который объединяет витуберов: главное из RU-сцены и мировой VTuber-индустрии — дебюты, graduation, агентства, музыка, коллабы, ивенты, софт для витуберов. 3–5 проверенных новостей в день, без пересказа сплетен и стримерской болтовни.",
+    "positioning": "Новостной Telegram-канал, который объединяет русскоязычных витуберов: главное из RU-сцены — дебюты, новые модели, уходы и перерывы, агентства и объединения СНГ, коллабы, релизы, премии и фестивали — плюс только самые крупные события мировой VTuber-индустрии. 3–5 проверенных новостей в день, без стримерской рутины и сплетен.",
     "systemPrompt": "Ты редактор русскоязычного новостного Telegram-канала про витуберов (VTuber). Пиши как человек из комьюнити, который быстро и точно объясняет, что случилось: конкретно, спокойно, без пресс-релизного тона, без ИИ-шаблонов. Имена талантов и агентств пиши в оригинальной латинице.",
     "styleGuide": "Русский язык, короткие абзацы, факт сначала. Термины комьюнити допустимы (дебют, graduation, коллаб, MV, 3D-лайв, мемберство), но без перегруза сленгом. Драму подавать только как подтверждённые факты и заявления сторон, без оценок и домыслов.",
     "dailyPostLimit": 5,
@@ -19,16 +19,15 @@
     "factCheckStrictRule": "Строгий режим: пропускай (passed) только официально подтверждённое агентством или самим талантом. Иначе needs_review или failed.",
     "dedupPersona": "Ты редактор новостного канала про витуберов. Решаешь, дублирует ли новый инфоповод уже опубликованные. Разные имена одного таланта (Gura / Gawr Gura, Pekora / Usada Pekora) — это один и тот же субъект.",
     "textRules": [
-      "3 коротких абзаца, как пишет живой редактор Telegram-канала, а не пресс-релиз;",
-      "первый абзац — сам факт: кто и что сделал, когда; без разгона и кликбейта;",
-      "второй абзац — контекст для русскоязычного читателя, который может не знать героя: кто этот витубер или агентство, чем известен, откуда (hololive, NIJISANJI, RU-сцена и т.п.), сколько примерно аудитории, если это есть в источниках;",
-      "третий абзац — детали из источников: что именно показали или объявили, даты, где смотреть; без домыслов;",
-      "имена талантов, агентств и групп пиши в оригинальной латинице (Gawr Gura, hololive English), не транслитерируй; японские названия песен и стримов переводи на русский или опускай, иероглифы не оставляй;",
-      "термины комьюнити поясняй по-русски при первом упоминании: graduation — уход из агентства и завершение деятельности персонажа, 3D-лайв — концерт или стрим в полноценной 3D-модели, ген — набор новых талантов агентства, мемберство — платная подписка на канал, дебют — первый стрим нового витубера;",
+      "1–2 коротких абзаца, 3–5 предложений: так пишет живой редактор Telegram-канала, а не пресс-релиз;",
+      "первое предложение — факт: кто, что сделал и когда;",
+      "контекст о герое — одна фраза и только из переданных фактов (агентство, чем известен, масштаб аудитории); если фактов о герое нет, не придумывай биографию;",
+      "если в источнике есть прямая цитата, дай её коротко в кавычках вместо пересказа;",
+      "имена талантов, агентств и групп — в оригинальной латинице (Gawr Gura, hololive English), не транслитерируй; японские названия песен и мероприятий переведи на русский или опусти, иероглифы не оставляй;",
+      "термины комьюнити поясняй по-русски при первом упоминании, если они не очевидны: graduation — уход из агентства и завершение деятельности персонажа; 3D-лайв — стрим или концерт в полноценной 3D-модели; ген — набор новых талантов агентства;",
       "драму и конфликты подавай только как подтверждённые факты и заявления сторон, без оценок;",
-      "без шаблонов «Почему это важно», «Что это значит», «Для фанатов», «комьюнити в шоке»;",
-      "без эмодзи, без длинных URL в тексте;",
-      "источники чаще всего японские и английские: переводи смысл, а не дословно; японские названия песен, стримов и мероприятий переводи на русский, в скобках можно оставить английское название;"
+      "не используй штампы: «стоит отметить», «в мире VTuber-индустрии», «не просто X, а Y», «невероятно», «друзья», «Почему это важно», «Что это значит», «Для фанатов», «комьюнити в шоке»; без восклицательных знаков, риторических вопросов и эмодзи;",
+      "без ссылок в тексте и без призывов в конце («заходите», «ждём», «следите»); закончи последним фактом;"
     ],
     "imageStyle": "Создай вертикальный полнокадровый визуал 4:5 для новостной карточки Telegram-канала про витуберов.\n\nЭто фон на всю карточку (full-bleed): атмосферный кадр в духе стрим-культуры и аниме-эстетики, который заполняет весь кадр без рамок и полей.\nСтиль: тёмный editorial с неоновыми акцентами (розовый, циан, фиолетовый), стилизованные сцены и силуэты: студия стримера с подсветкой, сцена концерта со световым шоу, ночной город, экран с окном стрима. Не копировать реальных персонажей и дизайны талантов. Не AI-art-китч, не 3D-render-пластик, не инфографика, не коллаж.",
     "imageSubjectHint": "предмет новости «{subject}» в виде безопасной метафоры без официальных логотипов, без узнаваемых дизайнов персонажей и без скриншотов стримов; если упомянут талант, агентство или ивент, показать не персонажа и не логотип, а контекстный объект: силуэт стримера за столом в свете монитора, сцену концерта с пенлайтами, микрофон и наушники, календарь события, витрину с мерчем, экран с окном стрима без UI-брендинга.",
@@ -42,7 +41,7 @@
       "Trailer": "ВИДЕО",
       "Meme": "МЕМ"
     },
-    "digestInstructions": "Собери главные события дня в витуберском комьюнити в короткий дайджест: 4-7 пунктов, каждый 1-2 предложения, талант и агентство названы, самое важное сверху (graduation и дебюты крупных агентств выше коллабов и майлстоунов), без воды."
+    "digestInstructions": "Собери 2–3 самых сильных события дня для витуберского комьюнити, не больше: каждый пункт 1–2 предложения, талант и агентство названы, RU-сцена выше при сопоставимой важности, без воды и без мелочей."
   },
   "markers": {
     "lowValue": [
@@ -104,7 +103,6 @@
       "re-debut",
       "merch",
       "goods",
-      "birthday",
       "anniversary",
       "hiatus",
       "return",
@@ -123,14 +121,12 @@
       "mv",
       "sponsor",
       "partnership",
-      "event",
       "expo",
       "fes",
       "convention",
       "gen ",
       "wave",
       "auditions",
-      "official",
       "statement",
       "apolog",
       "contract",
@@ -143,9 +139,7 @@
       "phase connect",
       "idol corp",
       "prism",
-      "vtuber",
       "дебют",
-      "выпуск",
       "граду",
       "коллаб",
       "анонс",
@@ -172,9 +166,21 @@
       "разбан",
       "ребрендинг",
       "новый канал",
-      "3d",
       "лайв2д",
-      "live2d"
+      "live2d",
+      "сбор",
+      "аукцион",
+      "новый аватар",
+      "модельк",
+      "ухожу",
+      "уход",
+      "набор",
+      "премия",
+      "фестиваль",
+      "песня",
+      "альбом",
+      "агентство",
+      "объединение"
     ],
     "dedupStopWords": [
       "official",
@@ -224,7 +230,6 @@
       "leaving",
       "retire",
       "contract ended",
-      "выпуск",
       "покин",
       "ушл",
       "ушёл",
@@ -270,7 +275,6 @@
         "contract ended",
         "leaves hololive",
         "leaves nijisanji",
-        "выпуск",
         "покида",
         "уходит"
       ]
@@ -398,7 +402,8 @@
       "minimumComments": 15,
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Rumor,Digest,Trailer,Deal",
-      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my"
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my",
+      "role": "community"
     },
     {
       "name": "r/Hololive",
@@ -408,7 +413,8 @@
       "minimumComments": 20,
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
-      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip"
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip",
+      "role": "community"
     },
     {
       "name": "r/Nijisanji",
@@ -418,7 +424,8 @@
       "minimumComments": 10,
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
-      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip"
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip",
+      "role": "community"
     },
     {
       "name": "r/VShojo",
@@ -428,7 +435,8 @@
       "minimumComments": 5,
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
-      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,fan art,fanart,wallpaper"
+      "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,fan art,fanart,wallpaper",
+      "role": "community"
     },
     {
       "name": "r/Hololive memes",
@@ -440,7 +448,9 @@
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "Meme",
       "whitelistKeywordsCsv": "meme,shitpost",
-      "isEnabled": false
+      "isEnabled": false,
+      "role": "meme",
+      "blacklistKeywordsCsv": "hiatus,died,death,dead,sick,hospital,cancer,suicide,diarrhea,poop,toilet,nazi,sieg,nsfw,lewd,horny,sex,balls,boobs,porn,hentai"
     },
     {
       "name": "Polza Web Search (VTuber news)",
@@ -448,7 +458,8 @@
       "url": "VTuber news today hololive nijisanji vshojo phase connect debut graduation collab milestone announcement",
       "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Deal",
-      "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list"
+      "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list",
+      "role": "search"
     },
     {
       "name": "hololive production (YouTube)",
@@ -456,7 +467,8 @@
       "url": "https://www.youtube.com/@hololive",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "hololive English (YouTube)",
@@ -464,7 +476,8 @@
       "url": "https://www.youtube.com/@hololiveEnglish",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "NIJISANJI EN (YouTube)",
@@ -472,7 +485,8 @@
       "url": "https://www.youtube.com/@NIJISANJI_EN",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "VShojo (YouTube)",
@@ -480,7 +494,8 @@
       "url": "https://www.youtube.com/@VShojo",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "Phase Connect (YouTube)",
@@ -488,7 +503,8 @@
       "url": "https://www.youtube.com/@PhaseConnect",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "DTF #vtuber (RSS)",
@@ -496,21 +512,24 @@
       "url": "https://dtf.ru/rss/tag/vtuber",
       "checkEveryMinutes": 120,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
-      "blacklistKeywordsCsv": "кастомка,фанарт,арт,запись в блоге,мем"
+      "blacklistKeywordsCsv": "кастомка,фанарт,арт,запись в блоге,мем",
+      "role": "newsline"
     },
     {
       "name": "VTuber NewsDrop (RSS)",
       "kind": "rss",
       "url": "https://vtubernewsdrop.com/feed/",
       "checkEveryMinutes": 90,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
+      "role": "newsline"
     },
     {
       "name": "hololive official news (RSS)",
       "kind": "rss",
       "url": "https://hololive.hololivepro.com/news/feed/",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "r/hololive — мемы (флаер Meme)",
@@ -518,49 +537,56 @@
       "url": "https://www.reddit.com/r/hololive/search.rss?q=flair%3AMeme&restrict_sr=1&sort=top&t=week",
       "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "Meme",
-      "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai,sex,horny,balls,boobs"
+      "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai,sex,horny,balls,boobs,hiatus,died,death,dead,sick,hospital,cancer,suicide,diarrhea,poop,toilet,nazi,sieg",
+      "role": "meme"
     },
     {
       "name": "hololive JP (X)",
       "kind": "twitter",
       "url": "@hololivetv",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "hololive Indonesia (X)",
       "kind": "twitter",
       "url": "@hololive_Id",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "NIJISANJI JP (X)",
       "kind": "twitter",
       "url": "@nijisanji_app",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "VSPO! (X)",
       "kind": "twitter",
       "url": "@Vspo77",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "VSPO! EN (X)",
       "kind": "twitter",
       "url": "@VSPO_EN",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "VShojo (X)",
       "kind": "twitter",
       "url": "@VShojo",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "Niche Gamer — VTuber (RSS)",
@@ -568,28 +594,32 @@
       "url": "https://nichegamer.com/tag/vtuber/feed/",
       "checkEveryMinutes": 180,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
-      "blacklistKeywordsCsv": "waifu wednesday,review,giveaway"
+      "blacklistKeywordsCsv": "waifu wednesday,review,giveaway",
+      "role": "newsline"
     },
     {
       "name": "VTuber NewsDrop (X)",
       "kind": "twitter",
       "url": "@VTuberNewsDrop",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "newsline"
     },
     {
       "name": "Phase Connect (X)",
       "kind": "twitter",
       "url": "@PhaseConnect",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "ChromaSHIFT (X)",
       "kind": "twitter",
       "url": "@ChromaSHIFT_FTW",
       "checkEveryMinutes": 60,
-      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "role": "agency"
     },
     {
       "name": "Planya (TG)",
@@ -597,7 +627,8 @@
       "url": "@planyach",
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Kaibutsu (TG)",
@@ -605,7 +636,8 @@
       "url": "@kaibutsuvtp",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "Sati Akura (TG)",
@@ -613,7 +645,8 @@
       "url": "@sati_akura",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Severina Soda (TG)",
@@ -621,7 +654,8 @@
       "url": "@SeverinaSodaVtuber",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "xKamysh (TG)",
@@ -629,7 +663,8 @@
       "url": "@kamyshovnik",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Trixie Vox (TG)",
@@ -637,7 +672,8 @@
       "url": "@trixie_vox",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Rera Tapaten (TG)",
@@ -645,7 +681,8 @@
       "url": "@rera_seal_vtuber",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "YuiSlime (TG)",
@@ -653,7 +690,8 @@
       "url": "@yuislime",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Снежа (TG)",
@@ -661,7 +699,8 @@
       "url": "@snezha_mrr",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "nyamuras (TG)",
@@ -669,7 +708,8 @@
       "url": "@nyamuras",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Mana Renewal (TG)",
@@ -677,7 +717,8 @@
       "url": "@manarenewal",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Higanbanban (TG)",
@@ -685,7 +726,8 @@
       "url": "@higanbanban",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "BanshaMeow (TG)",
@@ -693,7 +735,8 @@
       "url": "@banshamw",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Орк-подкастер (YouTube)",
@@ -701,7 +744,8 @@
       "url": "UCedqnsVXjFlao53mKg7mnkQ",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Planyach (YouTube)",
@@ -709,7 +753,8 @@
       "url": "UCQaGj_l3dqmGWJLEbEmwgFQ",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Милшу (YouTube)",
@@ -717,7 +762,8 @@
       "url": "UC-aAG_0NYUetd6gIKYd1S5g",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Sati Akura (YouTube)",
@@ -725,7 +771,8 @@
       "url": "UCFj0cD6Bk53XQzAIydxdO_w",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "KyOresu (YouTube)",
@@ -733,7 +780,8 @@
       "url": "UCsFgdazMeQtf8lHvISB1DLQ",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Severina Soda (YouTube)",
@@ -741,7 +789,8 @@
       "url": "UCyu3y1sc7SshB7VI1MoKinw",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Mana Renewal (YouTube)",
@@ -749,7 +798,8 @@
       "url": "UC3czs41x7HD5-nk_cZ-Eo3g",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Higanbanban (YouTube)",
@@ -757,7 +807,8 @@
       "url": "UC8ojNuWa4Zi3iWFWtGTJU6w",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Trixie Vox (YouTube)",
@@ -765,7 +816,8 @@
       "url": "https://www.youtube.com/@trixie_vox",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "xKamysh (YouTube)",
@@ -773,7 +825,8 @@
       "url": "https://www.youtube.com/@kamyshnya",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Снежа (YouTube)",
@@ -781,7 +834,8 @@
       "url": "https://www.youtube.com/@snezha_39",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "CEPHALON VTUBE Agency (TG)",
@@ -789,7 +843,8 @@
       "url": "@CEPHALONVTUBE",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "RU VTuber Awards (TG)",
@@ -797,7 +852,8 @@
       "url": "@VTuberAwards",
       "checkEveryMinutes": 120,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "agency"
     },
     {
       "name": "Vtuber News | RU Community (TG)",
@@ -805,7 +861,8 @@
       "url": "@vtuber_news",
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "newsline"
     },
     {
       "name": "VT Data RU (TG)",
@@ -813,7 +870,8 @@
       "url": "@VTData",
       "checkEveryMinutes": 45,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "newsline"
     },
     {
       "name": "89SQUAD VTuber (TG)",
@@ -821,7 +879,8 @@
       "url": "@vtuber89squad",
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": false,
+      "role": "community"
     },
     {
       "name": "Simfonira (TG)",
@@ -829,7 +888,8 @@
       "url": "@simfonira",
       "checkEveryMinutes": 45,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "Fropsya (TG)",
@@ -837,7 +897,8 @@
       "url": "@fropsya",
       "checkEveryMinutes": 45,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "nubchan (TG)",
@@ -845,7 +906,8 @@
       "url": "@nubchan",
       "checkEveryMinutes": 45,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     },
     {
       "name": "AlexstraWho (TG)",
@@ -853,7 +915,8 @@
       "url": "@alexstrastudios",
       "checkEveryMinutes": 45,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "requireNewsSignal": false
+      "requireNewsSignal": true,
+      "role": "personal"
     }
   ],
   "footerLinks": [

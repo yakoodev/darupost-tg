@@ -156,7 +156,8 @@ public sealed class AutopostingPipeline(
                 : null;
             var storyContext = story is null ? null : await BuildStoryContextAsync(story, candidate.Id, cancellationToken);
 
-            var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken, storyContext);
+            var talentFacts = await BuildTalentFactsAsync(channel.Id, story?.TalentsCsv, cancellationToken);
+            var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken, storyContext, talentFacts);
             var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
             post.Headline = generated.Headline;
             post.Rubric = string.IsNullOrWhiteSpace(story?.EditorRubric) ? null : story!.EditorRubric;
@@ -549,6 +550,35 @@ public sealed class AutopostingPipeline(
         }
     }
 
+    /// <summary>Registry facts for the story's talents, so the writer explains who they are without inventing it.</summary>
+    private async Task<string?> BuildTalentFactsAsync(Guid channelId, string? talentsCsv, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(talentsCsv))
+        {
+            return null;
+        }
+
+        var names = talentsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        var talents = await db.Talents
+            .AsNoTracking()
+            .Where(talent => talent.ChannelId == channelId && names.Contains(talent.Name))
+            .Select(talent => new { talent.Name, talent.Agency, talent.Group, talent.Notes })
+            .ToListAsync(cancellationToken);
+        if (talents.Count == 0)
+        {
+            return null;
+        }
+
+        return string.Join(Environment.NewLine, talents.Select(talent =>
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(talent.Agency)) parts.Add($"агентство: {talent.Agency}");
+            if (!string.IsNullOrWhiteSpace(talent.Group)) parts.Add($"группа: {talent.Group}");
+            if (!string.IsNullOrWhiteSpace(talent.Notes)) parts.Add($"заметка: {talent.Notes}");
+            return $"- {talent.Name}" + (parts.Count > 0 ? ": " + string.Join("; ", parts) : string.Empty);
+        }));
+    }
+
     private async Task<string> BuildStoryContextAsync(Story story, Guid leadCandidateId, CancellationToken cancellationToken)
     {
         var others = await db.SourceCandidates
@@ -556,19 +586,19 @@ public sealed class AutopostingPipeline(
             .Where(item => item.StoryId == story.Id && item.Id != leadCandidateId)
             .OrderByDescending(item => item.Score ?? 0)
             .ThenBy(item => item.FoundAtUtc)
-            .Take(5)
-            .Select(item => new { item.Title, item.Summary, item.Url, SourceName = item.Source!.Name })
+            .Take(6)
+            .Select(item => new { item.Title, item.Summary, item.RawText, item.Url, item.FoundAtUtc, SourceName = item.Source!.Name })
             .ToListAsync(cancellationToken);
 
         return string.Join(Environment.NewLine, others.Select(item =>
         {
-            var summary = item.Summary.ReplaceLineEndings(" ").Trim();
-            if (summary.Length > 400)
+            var body = (string.IsNullOrWhiteSpace(item.RawText) ? item.Summary : item.RawText).ReplaceLineEndings(" ").Trim();
+            if (body.Length > 700)
             {
-                summary = summary[..400] + "…";
+                body = body[..700] + "…";
             }
 
-            return $"- ({item.SourceName}) {item.Title}: {summary}";
+            return $"- ({item.SourceName}, {item.FoundAtUtc:dd.MM HH:mm} UTC) {item.Title}: {body} [{item.Url}]";
         }));
     }
 
@@ -707,7 +737,7 @@ public sealed class AutopostingPipeline(
 
     private static bool ContainsAny(string text, IEnumerable<string> markers)
     {
-        return markers.Any(marker => text.Contains(marker, StringComparison.OrdinalIgnoreCase));
+        return MarkerMatcher.ContainsAny(text, markers);
     }
 
     private static bool HasCreatedEnough(PipelineRunOptions options, int postsCreated)

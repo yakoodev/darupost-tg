@@ -131,6 +131,8 @@ public sealed class NicheSource
     public string Language { get; init; } = "en";
     public bool AllowNsfw { get; init; }
     public bool? RequireNewsSignal { get; init; }
+    /// <summary>Editorial role: agency, newsline, personal, community, search or meme. Shown to the editor.</summary>
+    public string? Role { get; init; }
     public bool IsEnabled { get; init; } = true;
 }
 

@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Application.Abstractions;
@@ -27,14 +28,15 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         PublicationTypeSetting publicationType,
         SourceCandidate candidate,
         CancellationToken cancellationToken,
-        string? storyContext = null)
+        string? storyContext = null,
+        string? talentFacts = null)
     {
         var header = string.IsNullOrWhiteSpace(publicationType.HeaderTemplate)
             ? string.Empty
             : publicationType.HeaderTemplate.Trim();
 
         var footer = await BuildFooterAsync(channel.Id, publicationType, cancellationToken);
-        var prompt = BuildPrompt(channel, profiles.Get(channel.ProfileKey), publicationType, candidate, storyContext);
+        var prompt = BuildPrompt(channel, profiles.Get(channel.ProfileKey), publicationType, candidate, storyContext, talentFacts);
 
         if (publicationType.Kind == PublicationKind.Meme)
         {
@@ -56,11 +58,14 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
                 AiTaskType.PostGeneration,
                 channel.SystemPrompt,
                 prompt,
-                RequireJson: true),
+                RequireJson: true,
+                MaxTokens: 2000,
+                Temperature: 0.7),
             cancellationToken);
 
         string text;
         string? headline = null;
+        AiResponse? critic = null;
         if (response.Provider == "local-fallback" || string.IsNullOrWhiteSpace(response.Text))
         {
             text = BuildLocalText(publicationType, candidate);
@@ -68,6 +73,18 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         else
         {
             (headline, text) = ParseResponse(response.Text);
+
+            // Second pass: a sub-editor checks the draft against the sources and removes invented facts, translationese and clichés.
+            critic = await CheckDraftAsync(channel, headline, text, candidate, storyContext, talentFacts, cancellationToken);
+            if (critic is not null && !string.IsNullOrWhiteSpace(critic.Text))
+            {
+                var (checkedHeadline, checkedText) = ParseResponse(critic.Text);
+                if (!string.IsNullOrWhiteSpace(checkedText) && checkedText.Length >= 80)
+                {
+                    text = checkedText;
+                    headline = string.IsNullOrWhiteSpace(checkedHeadline) ? headline : checkedHeadline;
+                }
+            }
         }
 
         text = ClampText(TextSanitizer.Clean(text), publicationType.MaxTextLength);
@@ -80,10 +97,10 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             prompt,
             response.Provider,
             response.Model,
-            response.PromptTokens,
-            response.CompletionTokens,
-            response.TotalTokens,
-            response.CostAmount,
+            Sum(response.PromptTokens, critic?.PromptTokens),
+            Sum(response.CompletionTokens, critic?.CompletionTokens),
+            Sum(response.TotalTokens, critic?.TotalTokens),
+            response.CostAmount is null && critic?.CostAmount is null ? null : (response.CostAmount ?? 0) + (critic?.CostAmount ?? 0),
             response.CostCurrency,
             response.UsageMetadataJson,
             headline);
@@ -139,7 +156,8 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         NicheProfile profile,
         PublicationTypeSetting publicationType,
         SourceCandidate candidate,
-        string? storyContext)
+        string? storyContext,
+        string? talentFacts = null)
     {
         var rules = new List<string> { "- русский язык;" };
         rules.AddRange(profile.Prompts.TextRules
@@ -180,9 +198,12 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         Инфоповод:
         Заголовок: {candidate.Title}
         URL: {candidate.Url}
-        Найдено: {FormatAgo(candidate.FoundAtUtc)}
+        Опубликовано в источнике: {FormatLocal(candidate.FoundAtUtc, channel.TimeZone)} ({FormatAgo(candidate.FoundAtUtc)})
         Видео: {candidate.VideoUrl}
-        Резюме: {candidate.Summary}
+        Текст источника:
+        {SourceText(candidate)}
+
+        {DescribeTalentFacts(talentFacts)}
         {context}
 
         Требования к тексту:
@@ -198,6 +219,86 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         {"{"}"headline": "...", "text": "..."{"}"}
         """;
     }
+
+    private async Task<AiResponse?> CheckDraftAsync(
+        Channel channel,
+        string? headline,
+        string text,
+        SourceCandidate candidate,
+        string? storyContext,
+        string? talentFacts,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        const string system = """
+            Ты выпускающий редактор русскоязычного Telegram-канала о витуберах. Проверь черновик поста по источникам и исправь его.
+            - Убери любой факт, которого нет в источниках или в фактах о героях: придуманные биографии, цифры, даты, причины, оценки.
+            - Перепиши кальки с английского и японского на естественный русский; иероглифы не оставляй.
+            - Убери штампы и воду: «стоит отметить», «в мире VTuber-индустрии», «не просто X, а Y», «невероятно», «друзья», восклицания, риторические вопросы, призывы в конце.
+            - Первое предложение — факт: кто, что и когда. Итог — 3–5 предложений, 1–2 абзаца.
+            - Не добавляй ничего нового от себя. Если черновик уже хороший, верни его почти без изменений.
+            Верни СТРОГО один JSON-объект без markdown: {"headline": "...", "text": "...", "issues": ["что исправил, коротко"]}
+            """;
+
+        var user = new StringBuilder()
+            .AppendLine("Источник:")
+            .AppendLine($"Заголовок: {candidate.Title}")
+            .AppendLine($"Опубликовано: {FormatLocal(candidate.FoundAtUtc, channel.TimeZone)}")
+            .AppendLine(SourceText(candidate))
+            .AppendLine()
+            .AppendLine(string.IsNullOrWhiteSpace(storyContext) ? "Других источников нет." : "Другие источники:" + Environment.NewLine + storyContext)
+            .AppendLine()
+            .AppendLine(DescribeTalentFacts(talentFacts))
+            .AppendLine()
+            .AppendLine("Черновик:")
+            .AppendLine($"headline: {headline}")
+            .AppendLine($"text: {text}")
+            .ToString();
+
+        try
+        {
+            return await aiProvider.CompleteAsync(
+                new AiRequest(channel.Id, AiTaskType.Rewrite, system, user, RequireJson: true, MaxTokens: 2000, Temperature: 0.2),
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    private static string SourceText(SourceCandidate candidate)
+    {
+        var value = string.IsNullOrWhiteSpace(candidate.RawText) ? candidate.Summary : candidate.RawText;
+        value = (value ?? string.Empty).Trim();
+        return value.Length <= 2500 ? value : value[..2500] + "…";
+    }
+
+    private static string DescribeTalentFacts(string? talentFacts)
+    {
+        return string.IsNullOrWhiteSpace(talentFacts)
+            ? "Фактов о героях из реестра нет: не пиши биографию и не угадывай агентство."
+            : "Факты о героях из реестра канала (используй только их для контекста):" + Environment.NewLine + talentFacts;
+    }
+
+    private static string FormatLocal(DateTimeOffset utc, string? timeZone)
+    {
+        try
+        {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(string.IsNullOrWhiteSpace(timeZone) ? "Europe/Moscow" : timeZone);
+            return $"{TimeZoneInfo.ConvertTime(utc, zone):dd.MM.yyyy HH:mm}";
+        }
+        catch (Exception)
+        {
+            return $"{utc:dd.MM.yyyy HH:mm} UTC";
+        }
+    }
+
+    private static int? Sum(int? first, int? second) => first is null && second is null ? null : (first ?? 0) + (second ?? 0);
 
     private static (string? Headline, string Text) ParseResponse(string raw)
     {

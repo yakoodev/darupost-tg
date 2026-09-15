@@ -147,9 +147,11 @@ public sealed class AiWebSearchCollector(
                 continue;
             }
 
-            var foundAt = DateTimeOffset.TryParse(GetString(item, "publishedAt"), out var parsed)
-                ? parsed
-                : DateTimeOffset.UtcNow;
+            // Undated items look fresh and turn into stale "news": require a publish date.
+            if (!DateTimeOffset.TryParse(GetString(item, "publishedAt"), out var foundAt))
+            {
+                continue;
+            }
 
             var url = GetString(item, "url");
             result.Add(new CollectedCandidate(

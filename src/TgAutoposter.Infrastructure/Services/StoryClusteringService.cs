@@ -282,7 +282,7 @@ public sealed class StoryClusteringService(
     }
 
     private static bool ContainsAny(string text, IEnumerable<string> markers)
-        => markers.Any(marker => text.Contains(marker, StringComparison.OrdinalIgnoreCase));
+        => MarkerMatcher.ContainsAny(text, markers);
 
     private static HashSet<string> TopicTokens(string? value, HashSet<string> stopWords)
     {
