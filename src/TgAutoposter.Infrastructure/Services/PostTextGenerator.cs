@@ -337,8 +337,28 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             return null;
         }
 
-        var value = TextSanitizer.Clean(headline).ReplaceLineEndings(" ").Trim().Trim('"', '«', '»', '.', ' ');
-        return value.Length <= 90 ? value : value[..value.LastIndexOf(' ', 89)];
+        var value = TextSanitizer.Clean(headline).ReplaceLineEndings(" ").Trim().Trim('"', '.', ' ');
+        const int limit = 70;
+        if (value.Length > limit)
+        {
+            // Shorten at a word boundary so the card never shows a phrase cut in the middle.
+            var cut = value.LastIndexOf(' ', limit - 1);
+            value = (cut > 20 ? value[..cut] : value[..limit]).TrimEnd(' ', ',', ':', ';', '—', '-', '«') + "…";
+        }
+
+        // Balance Russian quotes: drop a dangling opening one or close it.
+        var opens = value.Count(ch => ch == '«');
+        var closes = value.Count(ch => ch == '»');
+        if (opens > closes)
+        {
+            value = value.EndsWith('…') ? value[..^1] + "»…" : value + "»";
+        }
+        else if (closes > opens)
+        {
+            value = value.Replace("»", string.Empty);
+        }
+
+        return value.Trim();
     }
 
     private static string BuildLocalText(PublicationTypeSetting publicationType, SourceCandidate candidate)

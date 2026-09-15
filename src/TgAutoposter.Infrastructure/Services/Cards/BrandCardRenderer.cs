@@ -68,7 +68,7 @@ public sealed partial class BrandCardRenderer : IDisposable
         var footerTop = Height - Margin - FooterHeight;
         var blockBottom = footerTop - 64f;
 
-        var (titlePaint, lines) = FitHeadline(headline, contentWidth, hasVisual ? 3 : 5, hasVisual ? 90f : 110f, 54f);
+        var (titlePaint, lines) = FitHeadline(headline, contentWidth, hasVisual ? 4 : 5, hasVisual ? 90f : 110f, 44f);
         using var _ = titlePaint;
         var lineHeight = titlePaint.TextSize * 1.08f;
         var kickerSize = 30f;
