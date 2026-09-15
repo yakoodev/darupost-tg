@@ -18,7 +18,7 @@ public sealed class EditorialOptions
     /// <summary>Score that lets a story bypass the interval between posts.</summary>
     public int BreakingScore { get; set; } = 9;
     /// <summary>How many points lower the publish bar is for stories rated as RU/CIS scene.</summary>
-    public int CisScoreDiscount { get; set; } = 0;
+    public int CisScoreDiscount { get; set; } = 1;
     /// <summary>Only draft posts inside the channel's schedule windows (local time).</summary>
     public bool RespectScheduleWindows { get; set; } = true;
 
