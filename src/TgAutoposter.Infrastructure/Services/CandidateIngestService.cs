@@ -54,6 +54,9 @@ public sealed class CandidateIngestService(
 
         var staleSince = now.AddHours(-StaleHours);
         var fresh = 0;
+        // A collector can return the same post twice in one batch (pinned + timeline, reposts):
+        // the database check below only sees rows saved earlier, so also dedupe within this batch.
+        var batchHashes = new HashSet<string>(StringComparer.Ordinal);
         foreach (var item in collected)
         {
             if (item.FoundAtUtc < staleSince)
@@ -63,6 +66,11 @@ public sealed class CandidateIngestService(
 
             var hash = ComputeHash(source, item);
             var legacyHash = ComputeLegacyHash(item);
+            if (!batchHashes.Add(hash) | !batchHashes.Add(legacyHash))
+            {
+                continue;
+            }
+
             var exists = await db.SourceCandidates.AnyAsync(
                 candidate => candidate.ChannelId == channel.Id && (candidate.NormalizedHash == hash || candidate.NormalizedHash == legacyHash),
                 cancellationToken);
@@ -94,7 +102,26 @@ public sealed class CandidateIngestService(
             fresh++;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            // Typically a unique-hash race with another run. Drop this batch, record the error on the source and move on.
+            logger.LogWarning(ex, "Source {SourceId} ({SourceName}): saving candidates failed; batch skipped.", source.Id, source.Name);
+            db.ChangeTracker.Clear();
+            var tracked = await db.Sources.FirstOrDefaultAsync(item => item.Id == source.Id, cancellationToken);
+            if (tracked is not null)
+            {
+                tracked.LastCheckedAtUtc = now;
+                tracked.LastError = Truncate("\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u044f: " + (ex.InnerException?.Message ?? ex.Message), 500);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            return new IngestResult(source.Id, source.Name, collected.Count, 0, ex.InnerException?.Message ?? ex.Message);
+        }
+
         return new IngestResult(source.Id, source.Name, collected.Count, fresh, null);
     }
 
