@@ -583,6 +583,13 @@
       "url": "@PhaseConnect",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "ChromaSHIFT (X)",
+      "kind": "twitter",
+      "url": "@ChromaSHIFT_FTW",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
     }
   ],
   "footerLinks": [
