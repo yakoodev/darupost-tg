@@ -16,6 +16,8 @@ public sealed class AutopostingWorker(
     IOptions<EditorialOptions> editorialAccessor,
     ILogger<AutopostingWorker> logger) : BackgroundService
 {
+    private static readonly TimeSpan ChannelIterationTimeout = TimeSpan.FromMinutes(10);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var options = optionsAccessor.Value;
@@ -48,23 +50,35 @@ public sealed class AutopostingWorker(
                     .Select(channel => channel.Id)
                     .ToListAsync(stoppingToken);
 
+                logger.LogInformation("Autoposting worker tick: {Count} channel(s).", channelIds.Count);
                 foreach (var channelId in channelIds)
                 {
+                    // One slow channel run (publishing, AI calls) must not freeze the worker for hours.
+                    using var channelTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                    channelTimeout.CancelAfter(ChannelIterationTimeout);
+                    var token = channelTimeout.Token;
+                    try
+                    {
                     if (editorialAccessor.Value.Enabled)
                     {
                         // Editorial mode: publish (or draft for moderation) whatever is already due, then let the
                         // editor pick at most one story. Collection happens in IngestWorker.
-                        await pipeline.RunForChannelAsync(channelId, runOptions with { MaxPostsToCreate = 0, CollectSources = false, CandidateId = Guid.Empty }, stoppingToken);
+                        await pipeline.RunForChannelAsync(channelId, runOptions with { MaxPostsToCreate = 0, CollectSources = false, CandidateId = Guid.Empty }, token);
                         var editorial = scope.ServiceProvider.GetRequiredService<EditorialService>();
-                        var result = await editorial.RunAsync(channelId, force: false, stoppingToken);
+                        var result = await editorial.RunAsync(channelId, force: false, token);
                         logger.LogInformation("Editorial run for {ChannelId}: {Note}", channelId, result.Note);
                         var memes = scope.ServiceProvider.GetRequiredService<MemeService>();
-                        var memeResult = await memes.RunAsync(channelId, force: false, stoppingToken);
+                        var memeResult = await memes.RunAsync(channelId, force: false, token);
                         logger.LogInformation("Meme run for {ChannelId}: {Note}", channelId, memeResult.Note);
                         continue;
                     }
 
-                    await pipeline.RunForChannelAsync(channelId, runOptions, stoppingToken);
+                    await pipeline.RunForChannelAsync(channelId, runOptions, token);
+                    }
+                    catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+                    {
+                        logger.LogWarning("Autoposting run for channel {ChannelId} timed out after {Timeout}; continuing with the next tick.", channelId, ChannelIterationTimeout);
+                    }
                 }
 
                 consecutiveFailures = 0;

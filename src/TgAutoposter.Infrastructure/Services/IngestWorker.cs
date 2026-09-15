@@ -20,6 +20,8 @@ public sealed class IngestWorker(
     IOptions<IngestOptions> optionsAccessor,
     ILogger<IngestWorker> logger) : BackgroundService
 {
+    private static readonly TimeSpan SourceTimeout = TimeSpan.FromMinutes(3);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var options = optionsAccessor.Value;
@@ -108,8 +110,21 @@ public sealed class IngestWorker(
             foreach (var source in due)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var result = await ingest.IngestSourceAsync(channel, profile, source, cancellationToken);
-                newTotal += result.NewCandidates;
+                // A single hung source (network, panel, retries) must not freeze the whole sweep for hours.
+                using var sourceTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                sourceTimeout.CancelAfter(SourceTimeout);
+                try
+                {
+                    var result = await ingest.IngestSourceAsync(channel, profile, source, sourceTimeout.Token);
+                    newTotal += result.NewCandidates;
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    logger.LogWarning("Ingest: source {Source} timed out after {Timeout} and was skipped.", source.Name, SourceTimeout);
+                    source.LastCheckedAtUtc = clock.UtcNow;
+                    source.LastError = $"Таймаут сбора ({SourceTimeout.TotalMinutes:0} мин)";
+                    await db.SaveChangesAsync(cancellationToken);
+                }
             }
 
             logger.LogInformation(
