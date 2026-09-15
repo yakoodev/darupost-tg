@@ -6,7 +6,7 @@
   "channel": {
     "name": "VTube News",
     "timeZone": "Europe/Moscow",
-    "positioning": "Новостной Telegram-канал, который объединяет русскоязычных витуберов: главное из RU-сцены — дебюты, новые модели, уходы и перерывы, агентства и объединения СНГ, коллабы, релизы, премии и фестивали — плюс только самые крупные события мировой VTuber-индустрии. 3–5 проверенных новостей в день, без стримерской рутины и сплетен.",
+    "positioning": "Новостной Telegram-канал о RU/СНГ-сцене витуберов: дебюты, новые модели, уходы и перерывы, агентства и объединения СНГ, коллабы, релизы, премии и фестивали. Только русскоязычные витуберы, 3–5 проверенных новостей в день, без стримерской рутины и сплетен.",
     "systemPrompt": "Ты редактор русскоязычного новостного Telegram-канала про витуберов (VTuber). Пиши как человек из комьюнити, который быстро и точно объясняет, что случилось: конкретно, спокойно, без пресс-релизного тона, без ИИ-шаблонов. Имена талантов и агентств пиши в оригинальной латинице.",
     "styleGuide": "Русский язык, короткие абзацы, факт сначала. Термины комьюнити допустимы (дебют, graduation, коллаб, MV, 3D-лайв, мемберство), но без перегруза сленгом. Драму подавать только как подтверждённые факты и заявления сторон, без оценок и домыслов.",
     "dailyPostLimit": 5,
@@ -403,7 +403,8 @@
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Rumor,Digest,Trailer,Deal",
       "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my",
-      "role": "community"
+      "role": "community",
+      "isEnabled": false
     },
     {
       "name": "r/Hololive",
@@ -414,7 +415,8 @@
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
       "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip",
-      "role": "community"
+      "role": "community",
+      "isEnabled": false
     },
     {
       "name": "r/Nijisanji",
@@ -425,7 +427,8 @@
       "checkEveryMinutes": 20,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
       "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,discussion thread,fan art,fanart,wallpaper,rate my,clip",
-      "role": "community"
+      "role": "community",
+      "isEnabled": false
     },
     {
       "name": "r/VShojo",
@@ -436,7 +439,8 @@
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Trailer,Deal",
       "blacklistKeywordsCsv": "weekly,daily,thread,megathread,free talk,fan art,fanart,wallpaper",
-      "role": "community"
+      "role": "community",
+      "isEnabled": false
     },
     {
       "name": "r/Hololive memes",
@@ -459,7 +463,8 @@
       "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest,Deal",
       "blacklistKeywordsCsv": "fan art,fanart,wallpaper,quiz,tier list",
-      "role": "search"
+      "role": "search",
+      "isEnabled": false
     },
     {
       "name": "hololive production (YouTube)",
@@ -468,7 +473,8 @@
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false,
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "hololive English (YouTube)",
@@ -477,7 +483,8 @@
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false,
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "NIJISANJI EN (YouTube)",
@@ -486,7 +493,8 @@
       "checkEveryMinutes": 30,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false,
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "VShojo (YouTube)",
@@ -495,7 +503,8 @@
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false,
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "Phase Connect (YouTube)",
@@ -504,7 +513,8 @@
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
       "requireNewsSignal": false,
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "DTF #vtuber (RSS)",
@@ -513,7 +523,8 @@
       "checkEveryMinutes": 120,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
       "blacklistKeywordsCsv": "кастомка,фанарт,арт,запись в блоге,мем",
-      "role": "newsline"
+      "role": "newsline",
+      "isEnabled": false
     },
     {
       "name": "VTuber NewsDrop (RSS)",
@@ -521,7 +532,8 @@
       "url": "https://vtubernewsdrop.com/feed/",
       "checkEveryMinutes": 90,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
-      "role": "newsline"
+      "role": "newsline",
+      "isEnabled": false
     },
     {
       "name": "hololive official news (RSS)",
@@ -529,7 +541,8 @@
       "url": "https://hololive.hololivepro.com/news/feed/",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "r/hololive — мемы (флаер Meme)",
@@ -546,7 +559,8 @@
       "url": "@hololivetv",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "hololive Indonesia (X)",
@@ -554,7 +568,8 @@
       "url": "@hololive_Id",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "NIJISANJI JP (X)",
@@ -562,7 +577,8 @@
       "url": "@nijisanji_app",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "VSPO! (X)",
@@ -570,7 +586,8 @@
       "url": "@Vspo77",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "VSPO! EN (X)",
@@ -578,7 +595,8 @@
       "url": "@VSPO_EN",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "VShojo (X)",
@@ -586,7 +604,8 @@
       "url": "@VShojo",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "Niche Gamer — VTuber (RSS)",
@@ -595,7 +614,8 @@
       "checkEveryMinutes": 180,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
       "blacklistKeywordsCsv": "waifu wednesday,review,giveaway",
-      "role": "newsline"
+      "role": "newsline",
+      "isEnabled": false
     },
     {
       "name": "VTuber NewsDrop (X)",
@@ -603,7 +623,8 @@
       "url": "@VTuberNewsDrop",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "newsline"
+      "role": "newsline",
+      "isEnabled": false
     },
     {
       "name": "Phase Connect (X)",
@@ -611,7 +632,8 @@
       "url": "@PhaseConnect",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "ChromaSHIFT (X)",
@@ -619,7 +641,8 @@
       "url": "@ChromaSHIFT_FTW",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
-      "role": "agency"
+      "role": "agency",
+      "isEnabled": false
     },
     {
       "name": "Planya (TG)",
