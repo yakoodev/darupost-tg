@@ -576,6 +576,13 @@
       "url": "@VTuberNewsDrop",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "Phase Connect (X)",
+      "kind": "twitter",
+      "url": "@PhaseConnect",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
     }
   ],
   "footerLinks": [
