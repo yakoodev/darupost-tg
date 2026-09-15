@@ -20,7 +20,8 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
     [
         "агентство не указано", "агентство в исходной новости не указано", "подробностей нет", "деталей пока нет",
         "официальных деталей", "в доступном резюме", "в доступном анонсе", "дальше ждём", "дальше стоит ждать",
-        "стоит следить", "если следите за"
+        "стоит следить", "если следите за", "подробностей в источнике нет", "других подробностей", "в источнике нет",
+        "больше подробностей нет", "деталей не сообщается", "подробности не раскрываются", "пока неизвестно"
     ];
 
     public async Task<PostTextResult> GenerateAsync(
@@ -168,6 +169,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         rules.Add("- пиши только то, что есть в источниках; не сообщай, чего в них нет (никаких «агентство не указано», «подробностей пока нет», «официальных деталей нет»);");
         rules.Add("- никаких концовок-ожиданий и призывов («дальше ждём», «стоит следить», «если вы фанат — заходите»); закончи последним фактом;");
         rules.Add("- если это слух, явно пометь это в первом предложении.");
+        rules.Add("- не называй пользователей Reddit, фанатов и ники из комментариев источником новости; если сведения только фанатские, пиши «по данным фанатов» или не публикуй факт как подтверждённый;");
         rules.Add("- сверяй даты с текущим временем: если событие (стрим, дебют, премьера) уже прошло, пиши о нём в прошедшем времени и не подавай как анонс;");
 
         var context = string.IsNullOrWhiteSpace(storyContext)
@@ -240,6 +242,7 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             - Перепиши кальки с английского и японского на естественный русский; иероглифы не оставляй.
             - Убери штампы и воду: «стоит отметить», «в мире VTuber-индустрии», «не просто X, а Y», «невероятно», «друзья», восклицания, риторические вопросы, призывы в конце.
             - Первое предложение — факт: кто, что и когда. Итог — 3–5 предложений, 1–2 абзаца.
+            - Убери фразы о том, чего нет в источнике («других подробностей нет», «пока неизвестно»), и не подавай пользователя Reddit или фаната как источник новости.
             - Не добавляй ничего нового от себя. Если черновик уже хороший, верни его почти без изменений.
             Верни СТРОГО один JSON-объект без markdown: {"headline": "...", "text": "...", "issues": ["что исправил, коротко"]}
             """;
@@ -354,13 +357,14 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
     /// <summary>Drops trailing "waiting/next" filler sentences the model sometimes still adds, then clamps at a sentence boundary.</summary>
     private static string ClampText(string text, int maxLength)
     {
-        var paragraphs = text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-        while (paragraphs.Count > 1 && BannedPhrases.Any(phrase => paragraphs[^1].Contains(phrase, StringComparison.OrdinalIgnoreCase)))
-        {
-            paragraphs.RemoveAt(paragraphs.Count - 1);
-        }
+        // Drop filler sentences ("no further details", "stay tuned") wherever they are, keeping the rest of the paragraph.
+        var paragraphs = text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(paragraph => string.Join(" ", System.Text.RegularExpressions.Regex.Split(paragraph, "(?<=[.!?…])\\s+")
+                .Where(sentence => !BannedPhrases.Any(phrase => sentence.Contains(phrase, StringComparison.OrdinalIgnoreCase)))))
+            .Where(paragraph => !string.IsNullOrWhiteSpace(paragraph))
+            .ToList();
 
-        text = string.Join("\n\n", paragraphs);
+        text = paragraphs.Count == 0 ? text : string.Join("\n\n", paragraphs);
         if (maxLength <= 0 || text.Length <= maxLength)
         {
             return text;
