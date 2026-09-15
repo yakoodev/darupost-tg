@@ -519,6 +519,56 @@
       "checkEveryMinutes": 240,
       "allowedPublicationKindsCsv": "Meme",
       "blacklistKeywordsCsv": "nsfw,lewd,porn,hentai,sex,horny,balls,boobs"
+    },
+    {
+      "name": "hololive JP (X)",
+      "kind": "twitter",
+      "url": "@hololivetv",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "hololive Indonesia (X)",
+      "kind": "twitter",
+      "url": "@hololive_Id",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "NIJISANJI JP (X)",
+      "kind": "twitter",
+      "url": "@nijisanji_app",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "VSPO! (X)",
+      "kind": "twitter",
+      "url": "@Vspo77",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "VSPO! EN (X)",
+      "kind": "twitter",
+      "url": "@VSPO_EN",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "VShojo (X)",
+      "kind": "twitter",
+      "url": "@VShojo",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "Niche Gamer — VTuber (RSS)",
+      "kind": "rss",
+      "url": "https://nichegamer.com/tag/vtuber/feed/",
+      "checkEveryMinutes": 180,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
+      "blacklistKeywordsCsv": "waifu wednesday,review,giveaway"
     }
   ],
   "footerLinks": [
