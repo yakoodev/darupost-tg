@@ -6,7 +6,7 @@
   "channel": {
     "name": "VTube News",
     "timeZone": "Europe/Moscow",
-    "positioning": "Новостной Telegram-канал о мировой VTuber-индустрии для русскоязычной аудитории: главное из hololive, NIJISANJI, VSPO, VShojo, Phase Connect и крупной инди-сцены — дебюты, graduation, концерты, коллабы, музыка, заявления агентств. 3–5 новостей в день.",
+    "positioning": "Новостной Telegram-канал, который объединяет витуберов: главное из RU-сцены и мировой VTuber-индустрии — дебюты, graduation, агентства, музыка, коллабы, ивенты, софт для витуберов. 3–5 проверенных новостей в день, без пересказа сплетен и стримерской болтовни.",
     "systemPrompt": "Ты редактор русскоязычного новостного Telegram-канала про витуберов (VTuber). Пиши как человек из комьюнити, который быстро и точно объясняет, что случилось: конкретно, спокойно, без пресс-релизного тона, без ИИ-шаблонов. Имена талантов и агентств пиши в оригинальной латинице.",
     "styleGuide": "Русский язык, короткие абзацы, факт сначала. Термины комьюнити допустимы (дебют, graduation, коллаб, MV, 3D-лайв, мемберство), но без перегруза сленгом. Драму подавать только как подтверждённые факты и заявления сторон, без оценок и домыслов.",
     "dailyPostLimit": 5,
@@ -21,7 +21,7 @@
     "textRules": [
       "3 коротких абзаца, как пишет живой редактор Telegram-канала, а не пресс-релиз;",
       "первый абзац — сам факт: кто и что сделал, когда; без разгона и кликбейта;",
-      "второй абзац — контекст для русскоязычного читателя, который может не знать героя: кто этот витубер или агентство, чем известен, из какой ветки (hololive JP/EN/ID, NIJISANJI JP/EN, VSPO, VShojo, Phase Connect, инди), примерный масштаб аудитории, если это есть в источниках;",
+      "второй абзац — контекст для русскоязычного читателя, который может не знать героя: кто этот витубер или агентство, чем известен, откуда (hololive, NIJISANJI, RU-сцена и т.п.), сколько примерно аудитории, если это есть в источниках;",
       "третий абзац — детали из источников: что именно показали или объявили, даты, где смотреть; без домыслов;",
       "имена талантов, агентств и групп пиши в оригинальной латинице (Gawr Gura, hololive English), не транслитерируй; японские названия песен и стримов переводи на русский или опускай, иероглифы не оставляй;",
       "термины комьюнити поясняй по-русски при первом упоминании: graduation — уход из агентства и завершение деятельности персонажа, 3D-лайв — концерт или стрим в полноценной 3D-модели, ген — набор новых талантов агентства, мемберство — платная подписка на канал, дебют — первый стрим нового витубера;",
@@ -590,6 +590,270 @@
       "url": "@ChromaSHIFT_FTW",
       "checkEveryMinutes": 60,
       "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
+    },
+    {
+      "name": "Planya (TG)",
+      "kind": "telegram",
+      "url": "@planyach",
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Kaibutsu (TG)",
+      "kind": "telegram",
+      "url": "@kaibutsuvtp",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Sati Akura (TG)",
+      "kind": "telegram",
+      "url": "@sati_akura",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Severina Soda (TG)",
+      "kind": "telegram",
+      "url": "@SeverinaSodaVtuber",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "xKamysh (TG)",
+      "kind": "telegram",
+      "url": "@kamyshovnik",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Trixie Vox (TG)",
+      "kind": "telegram",
+      "url": "@trixie_vox",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Rera Tapaten (TG)",
+      "kind": "telegram",
+      "url": "@rera_seal_vtuber",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "YuiSlime (TG)",
+      "kind": "telegram",
+      "url": "@yuislime",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Снежа (TG)",
+      "kind": "telegram",
+      "url": "@snezha_mrr",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "nyamuras (TG)",
+      "kind": "telegram",
+      "url": "@nyamuras",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Mana Renewal (TG)",
+      "kind": "telegram",
+      "url": "@manarenewal",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Higanbanban (TG)",
+      "kind": "telegram",
+      "url": "@higanbanban",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "BanshaMeow (TG)",
+      "kind": "telegram",
+      "url": "@banshamw",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Орк-подкастер (YouTube)",
+      "kind": "youTube",
+      "url": "UCedqnsVXjFlao53mKg7mnkQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Planyach (YouTube)",
+      "kind": "youTube",
+      "url": "UCQaGj_l3dqmGWJLEbEmwgFQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Милшу (YouTube)",
+      "kind": "youTube",
+      "url": "UC-aAG_0NYUetd6gIKYd1S5g",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Sati Akura (YouTube)",
+      "kind": "youTube",
+      "url": "UCFj0cD6Bk53XQzAIydxdO_w",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "KyOresu (YouTube)",
+      "kind": "youTube",
+      "url": "UCsFgdazMeQtf8lHvISB1DLQ",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Severina Soda (YouTube)",
+      "kind": "youTube",
+      "url": "UCyu3y1sc7SshB7VI1MoKinw",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Mana Renewal (YouTube)",
+      "kind": "youTube",
+      "url": "UC3czs41x7HD5-nk_cZ-Eo3g",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Higanbanban (YouTube)",
+      "kind": "youTube",
+      "url": "UC8ojNuWa4Zi3iWFWtGTJU6w",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Trixie Vox (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@trixie_vox",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "xKamysh (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@kamyshnya",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Снежа (YouTube)",
+      "kind": "youTube",
+      "url": "https://www.youtube.com/@snezha_39",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "CEPHALON VTUBE Agency (TG)",
+      "kind": "telegram",
+      "url": "@CEPHALONVTUBE",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "RU VTuber Awards (TG)",
+      "kind": "telegram",
+      "url": "@VTuberAwards",
+      "checkEveryMinutes": 120,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Vtuber News | RU Community (TG)",
+      "kind": "telegram",
+      "url": "@vtuber_news",
+      "checkEveryMinutes": 20,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "VT Data RU (TG)",
+      "kind": "telegram",
+      "url": "@VTData",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "89SQUAD VTuber (TG)",
+      "kind": "telegram",
+      "url": "@vtuber89squad",
+      "checkEveryMinutes": 30,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Simfonira (TG)",
+      "kind": "telegram",
+      "url": "@simfonira",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "Fropsya (TG)",
+      "kind": "telegram",
+      "url": "@fropsya",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "nubchan (TG)",
+      "kind": "telegram",
+      "url": "@nubchan",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
+    },
+    {
+      "name": "AlexstraWho (TG)",
+      "kind": "telegram",
+      "url": "@alexstrastudios",
+      "checkEveryMinutes": 45,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false
     }
   ],
   "footerLinks": [
