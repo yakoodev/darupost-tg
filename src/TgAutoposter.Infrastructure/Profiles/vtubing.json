@@ -569,6 +569,13 @@
       "checkEveryMinutes": 180,
       "allowedPublicationKindsCsv": "News,BreakingNews,Digest",
       "blacklistKeywordsCsv": "waifu wednesday,review,giveaway"
+    },
+    {
+      "name": "VTuber NewsDrop (X)",
+      "kind": "twitter",
+      "url": "@VTuberNewsDrop",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest"
     }
   ],
   "footerLinks": [
