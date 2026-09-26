@@ -57,6 +57,9 @@ services:
       Reddit__ClientId: ${REDDIT_CLIENT_ID:-}
       Reddit__ClientSecret: ${REDDIT_CLIENT_SECRET:-}
       Reddit__UserAgent: ${REDDIT_USER_AGENT:-linux:tg-autoposter:v0.2 (news aggregator)}
+      Vk__Enabled: ${VK_ENABLED:-true}
+      Vk__ServiceToken: ${VK_SERVICE_TOKEN:-}
+      Vk__ApiVersion: ${VK_API_VERSION:-5.199}
       Editorial__Enabled: ${EDITORIAL_ENABLED:-true}
       Editorial__MinMinutesBetweenPosts: ${EDITORIAL_MIN_MINUTES_BETWEEN_POSTS:-150}
       Editorial__MinScore: ${EDITORIAL_MIN_SCORE:-7}

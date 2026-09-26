@@ -1,6 +1,9 @@
+using System.Net.Http;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using TgAutoposter.Infrastructure.Options;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Pipeline;
 using TgAutoposter.Application.Profiles;
@@ -27,8 +30,65 @@ public sealed class AutopostingPipeline(
     IDateTimeProvider clock,
     IRealtimeNotifier realtimeNotifier,
     INicheProfileProvider profiles,
+    IHttpClientFactory httpClientFactory,
+    IOptions<MediaOptions> mediaOptionsAccessor,
     ILogger<AutopostingPipeline> logger) : IAutopostingPipeline
 {
+    /// <summary>Rubric chip label for scene posts, from the source category (VtuN tags each post, e.g. "° КАВЕР").</summary>
+    private static string StoreRubric(SourceCandidate candidate)
+    {
+        // Twitch clips are tagged in metadata by the collector — give them their own chip by kind.
+        if (!string.IsNullOrEmpty(candidate.MetadataJson) && candidate.MetadataJson.Contains("twitch-clip", StringComparison.OrdinalIgnoreCase))
+        {
+            return candidate.MetadataJson.Contains("\"kind\":\"meme\"", StringComparison.OrdinalIgnoreCase) ? "МЕМ" : "КЛИП";
+        }
+
+        var h = ((candidate.Title ?? string.Empty) + " " + (candidate.RawText ?? string.Empty)).ToUpperInvariant();
+        if (h.Contains("ДЕБЮТ")) return "ДЕБЮТ";
+        if (h.Contains("КАВЕР")) return "КАВЕР";
+        if (h.Contains("3D")) return "3D";
+        if (h.Contains("АУТФИТ") || h.Contains("НОВАЯ МОДЕЛ") || h.Contains("НОВЫЙ ОБРАЗ")) return "МОДЕЛЬ";
+        if (h.Contains("ДЕНЬ РОЖДЕНИЯ")) return "ДР";
+        if (h.Contains("ИНТЕРВЬЮ") || h.Contains("ШОУ") || h.Contains("ПОДКАСТ")) return "ИНТЕРВЬЮ";
+        if (h.Contains("ТУРНИР") || h.Contains("КОНКУРС") || h.Contains("ИВЕНТ") || h.Contains("КОЛЛАБ")) return "ИВЕНТ";
+        return "ВИТУБ";
+    }
+
+    private async Task LocalizeSourceImageAsync(Post post, List<string> warnings, CancellationToken cancellationToken)
+    {
+        var url = post.ImagePath;
+        if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            using var client = httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(30);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; tg-autoposter/0.2)");
+            using var response = await client.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (bytes.Length == 0)
+            {
+                return;
+            }
+
+            var publicPath = LocalMediaPaths.BuildPublicPath("source", $"{Guid.NewGuid():N}.jpg");
+            var fullPath = LocalMediaPaths.BuildFullPath(mediaOptionsAccessor.Value, publicPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            await File.WriteAllBytesAsync(fullPath, bytes, cancellationToken);
+            post.ImagePath = publicPath;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to localize source image {Url} for post {PostId}.", url, post.Id);
+            warnings.Add($"Не удалось скачать картинку источника: {ex.Message}");
+        }
+    }
+
     public async Task<PipelineRunResult> RunForChannelAsync(
         Guid channelId,
         PipelineRunOptions options,
@@ -114,6 +174,25 @@ public sealed class AutopostingPipeline(
                 continue;
             }
 
+            // Store lane posts the source image as-is, so a candidate without any image is not worth drafting — skip it.
+            if (publicationType.MediaMode == MediaGenerationMode.UseSourceImage && string.IsNullOrWhiteSpace(candidate.ImageUrl))
+            {
+                candidate.IsConsumed = true;
+                candidate.ConsumedReason = "no-image";
+                await db.SaveChangesAsync(cancellationToken);
+                continue;
+            }
+
+            // Scene lane (Deal): publish only real events (debut/cover/model/birthday/interview/event/3D),
+            // never plain "X streams today" announcements — those fall to the default "ВИТУБ" rubric.
+            if (publicationType.Kind == PublicationKind.Deal && StoreRubric(candidate) == "ВИТУБ")
+            {
+                candidate.IsConsumed = true;
+                candidate.ConsumedReason = "not-an-event";
+                await db.SaveChangesAsync(cancellationToken);
+                continue;
+            }
+
             // Claim the candidate before the slow AI steps: a scheduled run and a manual one must not both draft it.
             if (options.CandidateId is null)
             {
@@ -160,12 +239,17 @@ public sealed class AutopostingPipeline(
             var generated = await postTextGenerator.GenerateAsync(channel, publicationType, candidate, cancellationToken, storyContext, talentFacts);
             var post = CreatePost(channel, source, candidate, publicationType, deduplication, factCheck, generated, options);
             post.Headline = generated.Headline;
-            post.Rubric = string.IsNullOrWhiteSpace(story?.EditorRubric) ? null : story!.EditorRubric;
+            post.Rubric = !string.IsNullOrWhiteSpace(story?.EditorRubric) ? story!.EditorRubric : StoreRubric(candidate);
             post.EmbeddingJson = await ComputeEmbeddingJsonAsync(channel.Id, post, cancellationToken);
 
             if (ShouldGenerateImage(channel, publicationType, post))
             {
                 await GenerateImageAsync(channel, publicationType, post, warnings, cancellationToken);
+            }
+            else if (publicationType.MediaMode == MediaGenerationMode.UseSourceImage)
+            {
+                // Telegram can't fetch some source hosts (t.me CDN, VK) by URL — download the image and send it as a file.
+                await LocalizeSourceImageAsync(post, warnings, cancellationToken);
             }
 
             db.Posts.Add(post);

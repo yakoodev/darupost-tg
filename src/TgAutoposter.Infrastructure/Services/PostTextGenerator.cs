@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using TgAutoposter.Application.Abstractions;
 using TgAutoposter.Application.Profiles;
@@ -91,6 +92,13 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
         text = ClampText(TextSanitizer.Clean(text), publicationType.MaxTextLength);
         headline = CleanHeadline(headline);
 
+        // Store-channel lane (VtuN debuts/covers/etc.): fixed layout — rubric emoji + bold headline on top,
+        // a clickable link to the primary source (Twitch/YouTube), source image posted as-is.
+        if (publicationType.MediaMode == MediaGenerationMode.UseSourceImage)
+        {
+            text = ApplyStoreStyle(text, headline, candidate);
+        }
+
         return new PostTextResult(
             text,
             header,
@@ -105,6 +113,59 @@ public sealed class PostTextGenerator(AppDbContext db, IAiProvider aiProvider, I
             response.CostCurrency,
             response.UsageMetadataJson,
             headline);
+    }
+
+    private static readonly Regex MarkdownLinkRegex = new(@"\[[^\]]+\]\([^)]+\)", RegexOptions.Compiled);
+    private static readonly Regex BareSourceUrlRegex = new(
+        @"(?:https?://)?(?:www\.)?(?:twitch\.tv/[A-Za-z0-9_]{2,}|youtu\.be/[A-Za-z0-9_-]{4,}|youtube\.com/watch\?v=[A-Za-z0-9_-]{4,})",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>Fixed store-channel layout: "emoji **headline**" on top, then the body with one clickable source link.</summary>
+    private static string ApplyStoreStyle(string text, string? headline, SourceCandidate candidate)
+    {
+        text = LinkifyPrimarySource(text, candidate);
+        var emoji = RubricEmoji(candidate);
+        if (!string.IsNullOrWhiteSpace(headline))
+        {
+            text = $"{emoji} **{headline}**\n\n{text}";
+        }
+
+        return text;
+    }
+
+    private static string RubricEmoji(SourceCandidate candidate)
+    {
+        var hay = ((candidate.Title ?? string.Empty) + " " + (candidate.RawText ?? candidate.Summary ?? string.Empty)).ToLowerInvariant();
+        if (hay.Contains("кавер") || hay.Contains("cover")) return "🎧";
+        if (hay.Contains("дебют")) return "🎀";
+        if (hay.Contains("интервью") || hay.Contains("подкаст") || hay.Contains("разговор")) return "🎙";
+        if (hay.Contains("модел")) return "🎨";
+        return "🔹";
+    }
+
+    /// <summary>Turn the first bare Twitch/YouTube URL into a clickable Markdown link; if none, append the video link.</summary>
+    private static string LinkifyPrimarySource(string text, SourceCandidate candidate)
+    {
+        if (MarkdownLinkRegex.IsMatch(text))
+        {
+            return text;
+        }
+
+        var match = BareSourceUrlRegex.Match(text);
+        if (match.Success)
+        {
+            var token = match.Value;
+            var full = token.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? token : "https://" + token;
+            return text.Remove(match.Index, match.Length).Insert(match.Index, $"[{token}]({full})");
+        }
+
+        if (!string.IsNullOrWhiteSpace(candidate.VideoUrl))
+        {
+            var label = candidate.VideoUrl!.Contains("you", StringComparison.OrdinalIgnoreCase) ? "Смотреть на YouTube" : "Открыть";
+            return text.TrimEnd() + $"\n\n[{label}]({candidate.VideoUrl})";
+        }
+
+        return text;
     }
 
     private async Task<string> BuildFooterAsync(Guid channelId, PublicationTypeSetting publicationType, CancellationToken cancellationToken)

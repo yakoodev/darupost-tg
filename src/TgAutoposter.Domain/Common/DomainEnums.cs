@@ -29,7 +29,9 @@ public enum SourceKind
     Rss = 3,
     Telegram = 4,
     YouTube = 5,
-    Twitter = 6
+    Twitter = 6,
+    Vk = 7,
+    TwitchClip = 8
 }
 
 public enum RedditListingKind

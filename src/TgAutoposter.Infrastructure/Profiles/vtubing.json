@@ -395,6 +395,15 @@
   ],
   "sources": [
     {
+      "name": "VtuN | Новости витуберов (VK)",
+      "kind": "vk",
+      "url": "vtun_vtubernews",
+      "checkEveryMinutes": 60,
+      "allowedPublicationKindsCsv": "News,BreakingNews,Trailer,Deal,Digest",
+      "requireNewsSignal": false,
+      "role": "newsline"
+    },
+    {
       "name": "r/VirtualYoutubers",
       "kind": "reddit",
       "subreddit": "VirtualYoutubers",

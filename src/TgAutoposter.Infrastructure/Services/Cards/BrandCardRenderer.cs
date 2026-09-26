@@ -221,13 +221,24 @@ public sealed partial class BrandCardRenderer : IDisposable
         var textWidth = MeasureSpaced(paint, text, 2.2f);
         var rect = new SKRect(Margin, Margin, Margin + padX + icon + gap + textWidth + padX, Margin + height);
 
-        using var fill = new SKPaint { IsAntialias = true, Color = urgent ? UrgentRed : Accent };
+        using var fill = new SKPaint { IsAntialias = true, Color = urgent ? UrgentRed : RubricColor(text) };
         canvas.DrawRoundRect(rect, height / 2f, height / 2f, fill);
         DrawSparkle(canvas, rect.Left + padX, rect.MidY - icon / 2f, icon, SKColors.White, 255);
 
         var fm = paint.FontMetrics;
         var baseline = rect.MidY - (fm.Ascent + fm.Descent) / 2f;
         DrawSpaced(canvas, text, rect.Left + padX + icon + gap, baseline, paint, 2.2f);
+    }
+
+    /// <summary>Per-rubric chip colour so each rubric reads at a glance (white chip text stays legible on all of these).</summary>
+    private static SKColor RubricColor(string rubricUpper)
+    {
+        if (rubricUpper.Contains("ДЕБЮТ")) return SKColor.Parse("#FF5C8A");
+        if (rubricUpper.Contains("КАВЕР") || rubricUpper.Contains("ПЕСН") || rubricUpper.Contains("МУЗ")) return SKColor.Parse("#8B5CF6");
+        if (rubricUpper.Contains("МОДЕЛ") || rubricUpper.Contains("АУТФИТ") || rubricUpper.Contains("3D")) return SKColor.Parse("#14B8A6");
+        if (rubricUpper.Contains("ДР") || rubricUpper.Contains("РОЖДЕН")) return SKColor.Parse("#EC4899");
+        if (rubricUpper.Contains("ИНТЕРВ") || rubricUpper.Contains("ШОУ") || rubricUpper.Contains("ПОДКАСТ")) return SKColor.Parse("#38BDF8");
+        return Accent; // ИВЕНТ / ВИТУБ / default
     }
 
     private void DrawSourceLabel(SKCanvas canvas, string label)

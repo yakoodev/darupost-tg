@@ -64,6 +64,10 @@ public sealed class AutopostingWorker(
                         // Editorial mode: publish (or draft for moderation) whatever is already due, then let the
                         // editor pick at most one story. Collection happens in IngestWorker.
                         await pipeline.RunForChannelAsync(channelId, runOptions with { MaxPostsToCreate = 0, CollectSources = false, CandidateId = Guid.Empty }, token);
+                        // Scene lane (Deal): drain scene candidates (Twitch clips, vtuber events) into brand-card
+                        // drafts. The news editor only picks story-worthy items, so without this pass Deal-only
+                        // sources would sit pending forever. Collection stays in IngestWorker (CollectSources=false).
+                        await pipeline.RunForChannelAsync(channelId, runOptions with { PublicationKind = TgAutoposter.Domain.Common.PublicationKind.Deal, CollectSources = false, CandidateId = Guid.Empty }, token);
                         var editorial = scope.ServiceProvider.GetRequiredService<EditorialService>();
                         var result = await editorial.RunAsync(channelId, force: false, token);
                         logger.LogInformation("Editorial run for {ChannelId}: {Note}", channelId, result.Note);

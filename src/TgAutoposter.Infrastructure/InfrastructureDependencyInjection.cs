@@ -35,6 +35,8 @@ public static class InfrastructureDependencyInjection
         services.Configure<DigestOptions>(configuration.GetSection("Digest"));
         services.Configure<EditorialOptions>(configuration.GetSection("Editorial"));
         services.Configure<RedditOptions>(configuration.GetSection("Reddit"));
+        services.Configure<VkOptions>(configuration.GetSection("Vk"));
+        services.Configure<TwitchOptions>(configuration.GetSection("Twitch"));
         services.Configure<MediaOptions>(configuration.GetSection("Media"));
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -73,6 +75,8 @@ public static class InfrastructureDependencyInjection
         services.AddHttpClient<FeedCollector>();
         services.AddHttpClient<AiWebSearchCollector>();
         services.AddHttpClient<YouTubeCollector>();
+        services.AddHttpClient<VkCollector>();
+        services.AddHttpClient<TwitchClipCollector>(client => client.Timeout = TimeSpan.FromSeconds(200));
         services.AddSingleton<WspanelClient>();
         services.AddSingleton<TelegramCollector>();
         services.AddSingleton<TwitterCollector>();
@@ -82,6 +86,8 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<YouTubeCollector>());
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<TelegramCollector>());
         services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<TwitterCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<VkCollector>());
+        services.AddScoped<ISourceCollector>(sp => sp.GetRequiredService<TwitchClipCollector>());
         services.AddScoped<IContentCollector, CompositeContentCollector>();
 
         var redisConnection = configuration.GetConnectionString("Redis");
